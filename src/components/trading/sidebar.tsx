@@ -319,7 +319,7 @@ export function TradingSidebar() {
               )}
             >
               <CreditCard className="h-5 w-5 shrink-0" />
-              <span>{t('sidebar.pricing')}</span>}
+              <span>{t('sidebar.pricing')}</span>
             </Button>
           </div>
         </div>
