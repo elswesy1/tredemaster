@@ -1,7 +1,6 @@
 'use client'
 
-// TradeMaster v6.0 - Force Update: Unified Trading Management + Login History + Logout Button
-// Last Update: 2026-04-02 - All features verified and ready
+// TradeMaster v7.0 - User Profile Menu with Logout, Settings, and Upgrade
 
 import { useState, useEffect, useRef } from 'react'
 import { useTradingStore } from '@/lib/store'
@@ -32,7 +31,18 @@ import { Toaster } from '@/components/ui/toaster'
 import { toast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Crown, Sparkles } from 'lucide-react'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { 
+  Crown, 
+  Sparkles, 
+  User, 
+  Settings, 
+  LogOut, 
+  CreditCard,
+  ChevronDown,
+  Mail,
+  Shield
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // User state
@@ -68,6 +78,19 @@ export default function Home() {
   const [appView, setAppView] = useState<'landing' | 'signup' | 'login' | 'dashboard'>('landing')
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef<HTMLDivElement>(null)
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Handle client-side mounting
   useEffect(() => {
@@ -143,6 +166,7 @@ export default function Home() {
   }
 
   const handleLogout = async () => {
+    setProfileMenuOpen(false)
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
     } catch {
@@ -308,7 +332,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background" dir={direction}>
-      <TradingSidebar onLogout={handleLogout} />
+      <TradingSidebar />
       
       {/* Main Content - No margin on mobile, margin on desktop */}
       <div
@@ -346,23 +370,177 @@ export default function Home() {
                 </Badge>
               )}
             </div>
+            
+            {/* Right Side - User Profile Menu */}
             <div className="flex items-center gap-2 sm:gap-3">
-              {user?.plan === 'free' && (
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => setActiveSection('pricing')}
-                  className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hidden sm:flex"
-                >
-                  <Sparkles className="h-4 w-4 mr-1" />
-                  {t('common.upgrade')}
-                </Button>
-              )}
               <LanguageToggle />
               <ThemeToggle />
+              
+              {/* User Profile Dropdown */}
               {user && (
-                <div className="text-sm text-muted-foreground hidden md:block px-3 py-1 rounded-full bg-muted/50">
-                  {user.name}
+                <div className="relative" ref={profileMenuRef}>
+                  <button
+                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200",
+                      "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20",
+                      "hover:from-green-500/20 hover:to-emerald-500/20 hover:border-green-500/30",
+                      profileMenuOpen && "ring-2 ring-green-500/30"
+                    )}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white text-sm font-medium">
+                        {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="hidden sm:block text-left">
+                      <div className="text-sm font-medium text-foreground">{user.name}</div>
+                      <div className="text-xs text-muted-foreground">{user.email}</div>
+                    </div>
+                    <ChevronDown className={cn(
+                      "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                      profileMenuOpen && "rotate-180"
+                    )} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {profileMenuOpen && (
+                    <div className={cn(
+                      "absolute top-full mt-2 w-72 rounded-xl border border-border bg-card shadow-xl z-50",
+                      "animate-in fade-in-0 zoom-in-95 duration-200",
+                      isRTL ? "right-0" : "left-0"
+                    )}>
+                      {/* User Info Header */}
+                      <div className="p-4 border-b border-border bg-gradient-to-r from-green-500/5 to-emerald-500/5 rounded-t-xl">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-12 w-12">
+                            <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white text-lg font-medium">
+                              {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-semibold text-foreground">{user.name}</div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {user.email}
+                            </div>
+                            <Badge 
+                              variant={user.plan === 'pro' ? 'default' : 'secondary'}
+                              className={cn(
+                                'mt-1 text-xs',
+                                user.plan === 'pro' && 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0'
+                              )}
+                            >
+                              {user.plan === 'pro' ? (
+                                <>
+                                  <Crown className="h-3 w-3 mr-1" />
+                                  Pro
+                                </>
+                              ) : 'Free'}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="p-2">
+                        {/* Profile */}
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false)
+                            toast({
+                              title: language === 'ar' ? 'قريباً' : 'Coming Soon',
+                              description: language === 'ar' ? 'صفحة البيانات الشخصية قيد التطوير' : 'Profile page is under development',
+                            })
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                        >
+                          <div className="p-2 rounded-lg bg-blue-500/10">
+                            <User className="h-4 w-4 text-blue-500" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">{language === 'ar' ? 'البيانات الشخصية' : 'Profile'}</div>
+                            <div className="text-xs text-muted-foreground">{language === 'ar' ? 'إدارة معلومات حسابك' : 'Manage your account info'}</div>
+                          </div>
+                        </button>
+
+                        {/* Settings */}
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false)
+                            toast({
+                              title: language === 'ar' ? 'قريباً' : 'Coming Soon',
+                              description: language === 'ar' ? 'صفحة الإعدادات قيد التطوير' : 'Settings page is under development',
+                            })
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                        >
+                          <div className="p-2 rounded-lg bg-purple-500/10">
+                            <Settings className="h-4 w-4 text-purple-500" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">{language === 'ar' ? 'الإعدادات' : 'Settings'}</div>
+                            <div className="text-xs text-muted-foreground">{language === 'ar' ? 'تخصيص التطبيق' : 'Customize the app'}</div>
+                          </div>
+                        </button>
+
+                        {/* Upgrade - Only for free users */}
+                        {user.plan === 'free' && (
+                          <button
+                            onClick={() => {
+                              setProfileMenuOpen(false)
+                              setActiveSection('pricing')
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-500/10 transition-colors text-left"
+                          >
+                            <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20">
+                              <Sparkles className="h-4 w-4 text-amber-500" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                                {language === 'ar' ? 'ترقية إلى Pro' : 'Upgrade to Pro'}
+                              </div>
+                              <div className="text-xs text-muted-foreground">{language === 'ar' ? 'احصل على مميزات إضافية' : 'Get premium features'}</div>
+                            </div>
+                          </button>
+                        )}
+
+                        {/* Login History */}
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false)
+                            setActiveSection('login-history')
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
+                        >
+                          <div className="p-2 rounded-lg bg-green-500/10">
+                            <Shield className="h-4 w-4 text-green-500" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">{language === 'ar' ? 'سجل الدخول' : 'Login History'}</div>
+                            <div className="text-xs text-muted-foreground">{language === 'ar' ? 'عرض نشاط الدخول' : 'View login activity'}</div>
+                          </div>
+                        </button>
+
+                        {/* Divider */}
+                        <div className="my-2 border-t border-border" />
+
+                        {/* Logout */}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-500/10 transition-colors text-left group"
+                        >
+                          <div className="p-2 rounded-lg bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
+                            <LogOut className="h-4 w-4 text-red-500" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-red-500">{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</div>
+                            <div className="text-xs text-muted-foreground">{language === 'ar' ? 'الخروج من حسابك' : 'Sign out of your account'}</div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -378,4 +556,3 @@ export default function Home() {
     </div>
   )
 }
-

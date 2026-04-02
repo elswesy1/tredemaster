@@ -22,10 +22,8 @@ import {
   Bot,
   Activity,
   Target,
-  PlusCircle,
   Moon,
   CreditCard,
-  LogOut,
   TrendingUp,
   Menu,
   X,
@@ -33,10 +31,6 @@ import {
   Brain,
   History,
 } from 'lucide-react'
-
-interface TradingSidebarProps {
-  onLogout?: () => void
-}
 
 // Menu items data - defined outside component
 const coreFeatures: { id: ActiveSection; labelKey: string; icon: React.ElementType }[] = [
@@ -64,7 +58,7 @@ const psychologyFeatures: { id: ActiveSection; labelKey: string; icon: React.Ele
   { id: 'zen-mode', labelKey: 'sidebar.zenMode', icon: Moon },
 ]
 
-export function TradingSidebar({ onLogout }: TradingSidebarProps) {
+export function TradingSidebar() {
   const { activeSection, setActiveSection, sidebarCollapsed, toggleSidebar } = useTradingStore()
   const { t, direction } = useI18n()
   const isRTL = direction === 'rtl'
@@ -205,7 +199,7 @@ export function TradingSidebar({ onLogout }: TradingSidebarProps) {
             </nav>
           </ScrollArea>
 
-          {/* Footer */}
+          {/* Footer - Only Login History and Pricing */}
           <div className="border-t border-sidebar-border p-3 space-y-1 bg-muted/30">
             <Button
               variant="ghost"
@@ -231,19 +225,6 @@ export function TradingSidebar({ onLogout }: TradingSidebarProps) {
               <CreditCard className="h-5 w-5 shrink-0" />
               {!sidebarCollapsed && <span>{t('sidebar.pricing')}</span>}
             </Button>
-            {onLogout && (
-              <Button
-                variant="ghost"
-                onClick={onLogout}
-                className={cn(
-                  'w-full text-red-400 hover:bg-red-500/10 hover:text-red-300',
-                  sidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-3'
-                )}
-              >
-                <LogOut className="h-5 w-5 shrink-0" />
-                {!sidebarCollapsed && <span>{t('common.logout')}</span>}
-              </Button>
-            )}
           </div>
         </div>
       </aside>
@@ -316,7 +297,7 @@ export function TradingSidebar({ onLogout }: TradingSidebarProps) {
             </nav>
           </ScrollArea>
 
-          {/* Footer */}
+          {/* Footer - Mobile */}
           <div className="border-t border-sidebar-border p-3 space-y-1 bg-muted/30">
             <Button
               variant="ghost"
@@ -338,18 +319,8 @@ export function TradingSidebar({ onLogout }: TradingSidebarProps) {
               )}
             >
               <CreditCard className="h-5 w-5 shrink-0" />
-              <span>{t('sidebar.pricing')}</span>
+              <span>{t('sidebar.pricing')}</span>}
             </Button>
-            {onLogout && (
-              <Button
-                variant="ghost"
-                onClick={onLogout}
-                className="w-full justify-start gap-3 text-red-400 hover:bg-red-500/10 hover:text-red-300"
-              >
-                <LogOut className="h-5 w-5 shrink-0" />
-                <span>{t('common.logout')}</span>
-              </Button>
-            )}
           </div>
         </div>
       </aside>
