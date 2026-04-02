@@ -1,5 +1,8 @@
 'use client'
 
+// TradeMaster v6.0 - Force Update: Unified Trading Management + Login History + Logout Button
+// Last Update: 2026-04-02 - All features verified and ready
+
 import { useState, useEffect, useRef } from 'react'
 import { useTradingStore } from '@/lib/store'
 import { useI18n } from '@/lib/i18n'
