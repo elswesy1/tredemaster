@@ -1,0 +1,395 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "portfolio": "Portfolio",
+    "risk": "Risk Management",
+    "trading": "Trading",
+    "journal": "Trading Journal",
+    "audits": "Audits & Reviews",
+    "psychology": "Psychology",
+    "accounts": "Connected Accounts",
+    "sessions": "Session Recording",
+    "statistics": "Statistics",
+    "rules": "Trading Rules",
+    "aiAssistant": "AI Assistant",
+    "tradingHub": "Trading Hub",
+    "strategies": "Strategies",
+    "logTrade": "Log Trade",
+    "zenMode": "ZEN Mode",
+    "pricing": "Pricing"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalAssets": "Total Assets",
+    "profitLoss": "Profit/Loss",
+    "winRate": "Win Rate",
+    "openTrades": "Open Trades",
+    "portfolioPerformance": "Portfolio Performance",
+    "portfolioDistribution": "Portfolio Distribution",
+    "recentTrades": "Recent Trades",
+    "riskAlerts": "Risk Alerts",
+    "welcome": "Welcome to TradeMaster",
+    "overview": "Here's an overview of your trading performance today",
+    "lastUpdate": "Last updated: Now",
+    "dailyRisk": "Daily Risk",
+    "weeklyRisk": "Weekly Risk",
+    "leverage": "Leverage",
+    "safe": "Safe",
+    "moderate": "Moderate",
+    "portfolioSummary": "Portfolio Summary",
+    "hideBalances": "Hide Balances",
+    "showBalances": "Show Balances",
+    "loginActivity": "Recent Login Activity",
+    "noLoginHistory": "No login history yet"
+  },
+  "portfolio": {
+    "title": "Portfolio Management",
+    "subtitle": "Manage and track your investment portfolios",
+    "newPortfolio": "New Portfolio",
+    "createPortfolio": "Create New Portfolio",
+    "portfolioName": "Portfolio Name",
+    "initialBalance": "Initial Balance",
+    "currency": "Currency",
+    "description": "Description",
+    "create": "Create",
+    "noPortfolios": "No portfolios yet",
+    "startCreating": "Start by creating your first portfolio to track your investments and analyze performance",
+    "createFirstPortfolio": "Create Portfolio"
+  },
+  "risk": {
+    "title": "Risk Management",
+    "subtitle": "Define and monitor risk parameters for each account and asset",
+    "newProfile": "New Risk Profile",
+    "createProfile": "Create New Risk Profile",
+    "editProfile": "Edit Risk Profile",
+    "profileName": "Profile Name",
+    "profileDescription": "Profile Description",
+    "selectAccount": "Select Account/Asset",
+    "selectAccountPlaceholder": "Choose an account or asset to link with this risk profile",
+    "accountOrAsset": "Account/Asset",
+    "accountType": "Account Type",
+    "account": "Account",
+    "asset": "Asset",
+    "noAccountSelected": "Not linked to an account",
+    "riskTolerance": "Risk Tolerance",
+    "conservative": "Conservative",
+    "moderate": "Moderate",
+    "aggressive": "Aggressive",
+    "riskDegree": "Risk Degree (1-10)",
+    "maxDailyLoss": "Max Daily Loss ($)",
+    "maxWeeklyLoss": "Max Weekly Loss ($)",
+    "maxMonthlyLoss": "Max Monthly Loss ($)",
+    "maxDrawdown": "Max Drawdown (%)",
+    "maxPositionSize": "Max Position Size (lots)",
+    "maxRiskPerTrade": "Max Risk Per Trade (%)",
+    "maxCorrelatedTrades": "Max Correlated Trades",
+    "maxLeverage": "Max Leverage",
+    "stopLossRequired": "Stop Loss Required",
+    "takeProfitRequired": "Take Profit Required",
+    "riskRewardMin": "Min Risk/Reward Ratio",
+    "create": "Create",
+    "update": "Update",
+    "dailyRisk": "Daily Risk",
+    "weeklyRisk": "Weekly Risk",
+    "currentDrawdown": "Current Drawdown",
+    "maxLimit": "Max",
+    "noProfiles": "No risk profiles yet",
+    "startCreating": "Start by creating a risk profile for each account or asset to define your risk management parameters",
+    "linkedTo": "Linked to",
+    "unlinkedProfile": "Unlinked Profile",
+    "profileSettings": "Risk Profile Settings",
+    "basicSettings": "Basic Settings",
+    "lossLimits": "Loss Limits",
+    "positionSettings": "Position Settings",
+    "requirements": "Mandatory Requirements",
+    "configure": "Configure",
+    "configured": "Configured",
+    "notConfigured": "Not Configured",
+    "active": "Active",
+    "inactive": "Inactive",
+    "viewDetails": "View Details",
+    "editProfileBtn": "Edit",
+    "deleteProfile": "Delete",
+    "confirmDelete": "Confirm Delete",
+    "deleteConfirmMessage": "Are you sure you want to delete this profile? This action cannot be undone.",
+    "riskUsage": "Risk Usage",
+    "todayUsage": "Today's Usage",
+    "weekUsage": "Week Usage",
+    "monthUsage": "Month Usage",
+    "available": "Available",
+    "used": "Used"
+  },
+  "trading": {
+    "title": "Trading Management",
+    "subtitle": "Track and manage your trades",
+    "newTrade": "New Trade",
+    "open": "Open",
+    "closed": "Closed",
+    "winning": "Winning",
+    "losing": "Losing",
+    "noTrades": "No trades yet",
+    "startLogging": "Start by logging your first trade to track your performance"
+  },
+  "journal": {
+    "title": "Trading Journal",
+    "subtitle": "Track trading sessions and analyze performance",
+    "newEntry": "New Entry",
+    "entryTitle": "Title",
+    "notes": "Notes",
+    "save": "Save",
+    "noEntries": "No entries yet",
+    "startWriting": "Start writing your trading journal to improve your performance",
+    "selectDate": "Select Date",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "viewEntries": "View Entries",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "editEntry": "Edit Entry",
+    "deleteEntry": "Delete Entry",
+    "confirmDelete": "Are you sure you want to delete this entry?",
+    "saved": "Saved successfully",
+    "saveError": "Error saving",
+    "loading": "Loading...",
+    "noData": "No data",
+    
+    "sections": {
+      "preMarket": "Pre-Market",
+      "marketIn": "Market-In",
+      "marketPost": "Market-Post"
+    },
+    
+    "preMarket": {
+      "title": "Pre-Market",
+      "subtitle": "Market analysis and planning before session opens",
+      "nextToMarketIn": "Next: Market-In",
+      
+      "analysis": {
+        "title": "Market Analysis",
+        "marketAnalysis": "Overall Market Analysis",
+        "marketAnalysisPlaceholder": "Write your comprehensive market analysis for today...",
+        "supportLevels": "Support Levels",
+        "resistanceLevels": "Resistance Levels",
+        "trendDirection": "Trend Direction",
+        "selectTrend": "Select trend direction",
+        "trends": {
+          "bullish": "Bullish",
+          "bearish": "Bearish",
+          "ranging": "Ranging"
+        },
+        "expectedVolatility": "Expected Volatility",
+        "selectVolatility": "Select volatility level",
+        "volatility": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High"
+        },
+        "economicEvents": "Economic Events",
+        "economicEventsPlaceholder": "Important news and economic reports today..."
+      },
+      
+      "plan": {
+        "title": "Trading Plan",
+        "tradingPlan": "Trading Plan",
+        "tradingPlanPlaceholder": "Define your plan for today: goals, strategies...",
+        "strategiesToUse": "Strategies to Use",
+        "strategiesToUsePlaceholder": "Strategies and setups you will use...",
+        "dailyGoal": "Daily Goal",
+        "dailyGoalPlaceholder": "e.g., 2% or $200",
+        "maxTrades": "Max Trades"
+      },
+      
+      "risk": {
+        "title": "Risk Plan",
+        "riskPlan": "Risk Management Plan",
+        "riskPlanPlaceholder": "Define risk limits, stop loss, take profit..."
+      }
+    },
+    
+    "marketIn": {
+      "title": "Market-In",
+      "subtitle": "Track trade execution and live observations",
+      "backToPreMarket": "Previous: Pre-Market",
+      "nextToMarketPost": "Next: Market-Post",
+      
+      "session": {
+        "title": "Session Info",
+        "sessionType": "Session Type",
+        "selectSession": "Select session",
+        "sessions": {
+          "london": "London Session",
+          "newYork": "New York Session",
+          "tokyo": "Tokyo Session",
+          "sydney": "Sydney Session",
+          "overlap": "Session Overlap"
+        },
+        "sessionStart": "Session Start",
+        "sessionEnd": "Session End",
+        "tradesPlanned": "Trades Planned",
+        "tradesExecuted": "Trades Executed"
+      },
+      
+      "execution": {
+        "title": "Trade Execution",
+        "entrySetups": "Entry Setups",
+        "entrySetupsPlaceholder": "Record entry setups that appeared to you...",
+        "priceActionObs": "Price Action Observations",
+        "priceActionObsPlaceholder": "Describe price action and market behavior...",
+        "marketBehavior": "Market Behavior",
+        "selectBehavior": "Select market behavior",
+        "behaviors": {
+          "trending": "Trending",
+          "ranging": "Ranging",
+          "volatile": "Volatile",
+          "choppy": "Choppy",
+          "quiet": "Quiet"
+        }
+      },
+      
+      "notes": {
+        "title": "Notes",
+        "executionNotes": "Execution Notes",
+        "executionNotesPlaceholder": "Notes about trade execution...",
+        "realTimeObservations": "Real-time Observations",
+        "realTimeObservationsPlaceholder": "Live observations during the session..."
+      }
+    },
+    
+    "marketPost": {
+      "title": "Market-Post",
+      "subtitle": "Review performance and extract lessons",
+      "backToMarketIn": "Previous: Market-In",
+      
+      "results": {
+        "title": "Session Results",
+        "totalTrades": "Total Trades",
+        "winningTrades": "Winning Trades",
+        "losingTrades": "Losing Trades",
+        "totalProfitLoss": "Total P/L",
+        "sessionResult": "Session Result",
+        "selectResult": "Select session result",
+        "profit": "Profit",
+        "loss": "Loss",
+        "breakeven": "Breakeven"
+      },
+      
+      "ratings": {
+        "title": "Performance Ratings",
+        "executionQuality": "Execution Quality",
+        "planAdherence": "Plan Adherence",
+        "riskAdherence": "Risk Adherence"
+      },
+      
+      "emotions": {
+        "title": "Emotions & Psychology",
+        "emotionsBefore": "Emotions Before Session",
+        "emotionsBeforePlaceholder": "How did you feel before starting the session?",
+        "emotionsDuring": "Emotions During Session",
+        "emotionsDuringPlaceholder": "How did you handle emotions while trading?",
+        "emotionsAfter": "Emotions After Session",
+        "emotionsAfterPlaceholder": "How do you feel now after the session ended?"
+      },
+      
+      "review": {
+        "title": "Review & Improvement",
+        "whatWentWell": "What Went Well?",
+        "whatWentWellPlaceholder": "Positives and strong points in your session...",
+        "whatNeedsImprovement": "What Needs Improvement?",
+        "whatNeedsImprovementPlaceholder": "Weak points that need work...",
+        "lessonsLearned": "Lessons Learned",
+        "lessonsLearnedPlaceholder": "Most important things you learned...",
+        "tomorrowPlan": "Tomorrow's Plan",
+        "tomorrowPlanPlaceholder": "What will you do differently in the next session?"
+      }
+    },
+    
+    "rating": {
+      "poor": "Poor",
+      "fair": "Fair",
+      "good": "Good",
+      "veryGood": "Very Good",
+      "excellent": "Excellent"
+    },
+    
+    "history": {
+      "title": "Entry History",
+      "noEntriesForDate": "No entries for this date",
+      "viewAll": "View All",
+      "collapseAll": "Collapse All"
+    }
+  },
+  "accounts": {
+    "title": "Connected Accounts",
+    "subtitle": "Connect your MT4/MT5 and TradingView accounts",
+    "connectAccount": "Connect Account",
+    "connectNew": "Connect New Account",
+    "platform": "Platform",
+    "server": "Server",
+    "accountNumber": "Account Number",
+    "password": "Password",
+    "connect": "Connect",
+    "noAccounts": "No connected accounts",
+    "connectYourAccount": "Connect your trading account for automatic synchronization",
+    "riskProfile": "Risk Profile",
+    "noRiskProfile": "No Risk Profile",
+    "createRiskProfile": "Create Risk Profile",
+    "balance": "Balance",
+    "equity": "Equity",
+    "lastSync": "Last Sync",
+    "manual": "Manual",
+    "autoSync": "Auto Sync"
+  },
+  "auth": {
+    "createAccount": "Create Account",
+    "enterDetails": "Enter your details to create a new account",
+    "name": "Name",
+    "enterName": "Enter your name",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "create": "Create Account",
+    "haveAccount": "Already have an account?",
+    "login": "Login",
+    "back": "Back",
+    "loginTitle": "Login",
+    "loginSubtitle": "Enter your account details to login",
+    "noAccount": "Don't have an account?",
+    "signup": "Sign up"
+  },
+  "landing": {
+    "heroTitle1": "Comprehensive Trading Platform",
+    "heroTitle2": "for Your Investments",
+    "heroSubtitle": "Track your trades, portfolio performance, and psychological state in one place. Develop your trading skills with advanced tools.",
+    "startFree": "Start Free",
+    "haveAccount": "Have an account? Login",
+    "features": "Key Features",
+    "pricing": "Pricing Plans",
+    "mostPopular": "Most Popular",
+    "getStarted": "Get Started",
+    "free": "Free",
+    "unlimitedPortfolios": "Unlimited Portfolios",
+    "unlimitedTrades": "Unlimited Trades",
+    "mtIntegration": "MT4/MT5 Integration",
+    "psychologyAnalysis": "Psychology Analysis",
+    "advancedReports": "Advanced Reports",
+    "aiAssistant": "AI Assistant",
+    "onePortfolio": "1 Portfolio",
+    "tradesPerMonth": "Track 50 trades/month",
+    "tradingJournal": "Trading Journal",
+    "basicStats": "Basic Statistics"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "upgrade": "Upgrade",
+    "logout": "Logout",
+    "confirm": "Confirm",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No"
+  }
+}

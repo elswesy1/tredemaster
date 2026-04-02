@@ -1,0 +1,40 @@
+{
+  "sidebar": {
+    "dashboard": "لوحة التحكم",
+    "portfolio": "إدارة المحفظة",
+    "risk": "إدارة المخاطر",
+    "trading": "إدارة التداول",
+    "journal": "يومية التداول",
+    "audits": "التدقيق والمراجعات",
+    "psychology": "علم النفس",
+    "accounts": "الحسابات المرتبطة",
+    "sessions": "تسجيل الجلسات",
+    "statistics": "الإحصائيات",
+    "rules": "قواعد التداول",
+    "aiAssistant": "المساعد الذكي",
+    "tradingHub": "مركز التداول",
+    "strategies": "الاستراتيجيات",
+    "logTrade": "تسجيل صفقة",
+    "zenMode": "وضع ZEN",
+    "pricing": "الأسعار"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "totalAssets": "إجمالي الأصول",
+    "profitLoss": "الربح/الخسارة",
+    "winRate": "نسبة الفوز",
+    "openTrades": "الصفقات المفتوحة",
+    "portfolioPerformance": "أداء المحفظة",
+    "portfolioDistribution": "توزيع المحفظة",
+    "recentTrades": "أحدث الصفقات",
+    "riskAlerts": "تنبيهات المخاطر"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة"
+  }
+}

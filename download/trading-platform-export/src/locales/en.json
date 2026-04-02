@@ -1,0 +1,40 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "portfolio": "Portfolio Management",
+    "risk": "Risk Management",
+    "trading": "Trading Management",
+    "journal": "Trading Journal",
+    "audits": "Audits & Reviews",
+    "psychology": "Psychology",
+    "accounts": "Connected Accounts",
+    "sessions": "Session Recording",
+    "statistics": "Statistics",
+    "rules": "Trading Rules",
+    "aiAssistant": "AI Assistant",
+    "tradingHub": "Trading Hub",
+    "strategies": "Strategies",
+    "logTrade": "Log Trade",
+    "zenMode": "ZEN Mode",
+    "pricing": "Pricing"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalAssets": "Total Assets",
+    "profitLoss": "Profit/Loss",
+    "winRate": "Win Rate",
+    "openTrades": "Open Trades",
+    "portfolioPerformance": "Portfolio Performance",
+    "portfolioDistribution": "Portfolio Distribution",
+    "recentTrades": "Recent Trades",
+    "riskAlerts": "Risk Alerts"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add"
+  }
+}

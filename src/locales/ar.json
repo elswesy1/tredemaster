@@ -1,0 +1,395 @@
+{
+  "sidebar": {
+    "dashboard": "لوحة التحكم",
+    "portfolio": "إدارة المحفظة",
+    "risk": "إدارة المخاطر",
+    "trading": "إدارة التداول",
+    "journal": "يومية التداول",
+    "audits": "التدقيق والمراجعات",
+    "psychology": "علم النفس",
+    "accounts": "الحسابات المرتبطة",
+    "sessions": "تسجيل الجلسات",
+    "statistics": "الإحصائيات",
+    "rules": "قواعد التداول",
+    "aiAssistant": "المساعد الذكي",
+    "tradingHub": "مركز التداول",
+    "strategies": "الاستراتيجيات",
+    "logTrade": "تسجيل صفقة",
+    "zenMode": "وضع ZEN",
+    "pricing": "الأسعار"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "totalAssets": "إجمالي الأصول",
+    "profitLoss": "الربح/الخسارة",
+    "winRate": "نسبة الفوز",
+    "openTrades": "الصفقات المفتوحة",
+    "portfolioPerformance": "أداء المحفظة",
+    "portfolioDistribution": "توزيع المحفظة",
+    "recentTrades": "أحدث الصفقات",
+    "riskAlerts": "تنبيهات المخاطر",
+    "welcome": "مرحباً بك في TradeMaster",
+    "overview": "إليك نظرة عامة على أداء تداولك اليوم",
+    "lastUpdate": "آخر تحديث: الآن",
+    "dailyRisk": "المخاطر اليومية",
+    "weeklyRisk": "المخاطر الأسبوعية",
+    "leverage": "الرافعة المالية",
+    "safe": "آمن",
+    "moderate": "متوسط",
+    "portfolioSummary": "ملخص المحفظة",
+    "hideBalances": "إخفاء الأرصدة",
+    "showBalances": "إظهار الأرصدة",
+    "loginActivity": "آخر نشاط للدخول",
+    "noLoginHistory": "لا يوجد سجل دخول بعد"
+  },
+  "portfolio": {
+    "title": "إدارة المحفظة",
+    "subtitle": "إدارة وتتبع محافظك الاستثمارية",
+    "newPortfolio": "محفظة جديدة",
+    "createPortfolio": "إنشاء محفظة جديدة",
+    "portfolioName": "اسم المحفظة",
+    "initialBalance": "الرصيد الأولي",
+    "currency": "العملة",
+    "description": "الوصف",
+    "create": "إنشاء",
+    "noPortfolios": "لا توجد محافظ بعد",
+    "startCreating": "ابدأ بإنشاء محفظتك الأولى لتتبع استثماراتك وتحليل أدائها",
+    "createFirstPortfolio": "إنشاء محفظة"
+  },
+  "risk": {
+    "title": "إدارة المخاطر",
+    "subtitle": "تحديد ومراقبة معايير المخاطر لكل حساب وأصل",
+    "newProfile": "ملف مخاطر جديد",
+    "createProfile": "إنشاء ملف مخاطر جديد",
+    "editProfile": "تعديل ملف المخاطر",
+    "profileName": "اسم الملف",
+    "profileDescription": "وصف الملف",
+    "selectAccount": "اختر الحساب/الأصل",
+    "selectAccountPlaceholder": "اختر حساب أو أصل لربطه بملف المخاطر",
+    "accountOrAsset": "الحساب/الأصل",
+    "accountType": "نوع الحساب",
+    "account": "حساب",
+    "asset": "أصل",
+    "noAccountSelected": "بدون ربط بحساب",
+    "riskTolerance": "تحمل المخاطر",
+    "conservative": "محافظ",
+    "moderate": "متوسط",
+    "aggressive": "عدواني",
+    "riskDegree": "درجة المخاطرة (1-10)",
+    "maxDailyLoss": "الخسارة اليومية القصوى ($)",
+    "maxWeeklyLoss": "الخسارة الأسبوعية القصوى ($)",
+    "maxMonthlyLoss": "الخسارة الشهرية القصوى ($)",
+    "maxDrawdown": "أقصى سحب (%)",
+    "maxPositionSize": "حجم المركز الأقصى (لوت)",
+    "maxRiskPerTrade": "المخاطرة القصوى للصفقة (%)",
+    "maxCorrelatedTrades": "الحد الأقصى للصفقات المترابطة",
+    "maxLeverage": "الرافعة المالية القصوى",
+    "stopLossRequired": "إلزامي وضع وقف الخسارة",
+    "takeProfitRequired": "إلزامي وضع جني الأرباح",
+    "riskRewardMin": "الحد الأدنى لنسبة المخاطرة/العائد",
+    "create": "إنشاء",
+    "update": "تحديث",
+    "dailyRisk": "المخاطر اليومية",
+    "weeklyRisk": "المخاطر الأسبوعية",
+    "currentDrawdown": "السحب الحالي",
+    "maxLimit": "الحد الأقصى",
+    "noProfiles": "لا توجد ملفات مخاطر بعد",
+    "startCreating": "ابدأ بإنشاء ملف مخاطر لكل حساب أو أصل لتحديد معايير إدارة المخاطر",
+    "linkedTo": "مرتبط بـ",
+    "unlinkedProfile": "ملف غير مرتبط",
+    "profileSettings": "إعدادات ملف المخاطر",
+    "basicSettings": "الإعدادات الأساسية",
+    "lossLimits": "حدود الخسائر",
+    "positionSettings": "إعدادات المراكز",
+    "requirements": "المتطلبات الإلزامية",
+    "configure": "تكوين",
+    "configured": "تم التكوين",
+    "notConfigured": "لم يتم التكوين",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "viewDetails": "عرض التفاصيل",
+    "editProfileBtn": "تعديل",
+    "deleteProfile": "حذف",
+    "confirmDelete": "تأكيد الحذف",
+    "deleteConfirmMessage": "هل أنت متأكد من حذف هذا الملف؟ لا يمكن التراجع عن هذا الإجراء.",
+    "riskUsage": "استخدام المخاطر",
+    "todayUsage": "استخدام اليوم",
+    "weekUsage": "استخدام الأسبوع",
+    "monthUsage": "استخدام الشهر",
+    "available": "متاح",
+    "used": "مستخدم"
+  },
+  "trading": {
+    "title": "إدارة التداول",
+    "subtitle": "تتبع وإدارة صفقاتك",
+    "newTrade": "صفقة جديدة",
+    "open": "مفتوحة",
+    "closed": "مغلقة",
+    "winning": "رابحة",
+    "losing": "خاسرة",
+    "noTrades": "لا توجد صفقات بعد",
+    "startLogging": "ابدأ بتسجيل صفقتك الأولى لتتبع أدائك"
+  },
+  "journal": {
+    "title": "يومية التداول",
+    "subtitle": "تتبع جلسات التداول وتحليل الأداء",
+    "newEntry": "مدخل جديد",
+    "entryTitle": "العنوان",
+    "notes": "الملاحظات",
+    "save": "حفظ",
+    "noEntries": "لا توجد مدخلات بعد",
+    "startWriting": "ابدأ بكتابة يومية تداولك لتحسين أدائك",
+    "selectDate": "اختر التاريخ",
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "viewEntries": "عرض المدخلات",
+    "collapse": "طي",
+    "expand": "توسيع",
+    "editEntry": "تعديل المدخل",
+    "deleteEntry": "حذف المدخل",
+    "confirmDelete": "هل أنت متأكد من حذف هذا المدخل؟",
+    "saved": "تم الحفظ بنجاح",
+    "saveError": "حدث خطأ أثناء الحفظ",
+    "loading": "جاري التحميل...",
+    "noData": "لا توجد بيانات",
+    
+    "sections": {
+      "preMarket": "ما قبل الجلسة",
+      "marketIn": "أثناء الجلسة",
+      "marketPost": "ما بعد الجلسة"
+    },
+    
+    "preMarket": {
+      "title": "ما قبل الجلسة",
+      "subtitle": "تحليل السوق والتخطيط قبل افتتاح الجلسة",
+      "nextToMarketIn": "التالي: أثناء الجلسة",
+      
+      "analysis": {
+        "title": "تحليل السوق",
+        "marketAnalysis": "تحليل السوق العام",
+        "marketAnalysisPlaceholder": "اكتب تحليلك الشامل للسوق اليوم...",
+        "supportLevels": "مستويات الدعم",
+        "resistanceLevels": "مستويات المقاومة",
+        "trendDirection": "اتجاه الترند",
+        "selectTrend": "اختر اتجاه الترند",
+        "trends": {
+          "bullish": "صاعد",
+          "bearish": "هابط",
+          "ranging": "عرضي"
+        },
+        "expectedVolatility": "التقلب المتوقع",
+        "selectVolatility": "اختر مستوى التقلب",
+        "volatility": {
+          "low": "منخفض",
+          "medium": "متوسط",
+          "high": "مرتفع"
+        },
+        "economicEvents": "الأحداث الاقتصادية",
+        "economicEventsPlaceholder": "أخبار وتقارير اقتصادية مؤثرة اليوم..."
+      },
+      
+      "plan": {
+        "title": "خطة التداول",
+        "tradingPlan": "خطة التداول",
+        "tradingPlanPlaceholder": "حدد خطتك لليوم: الأهداف، الاستراتيجيات...",
+        "strategiesToUse": "الاستراتيجيات المستخدمة",
+        "strategiesToUsePlaceholder": "الاستراتيجيات والنماذج التي ستستخدمها...",
+        "dailyGoal": "الهدف اليومي",
+        "dailyGoalPlaceholder": "مثال: 2% أو $200",
+        "maxTrades": "الحد الأقصى للصفقات"
+      },
+      
+      "risk": {
+        "title": "خطة المخاطر",
+        "riskPlan": "خطة إدارة المخاطر",
+        "riskPlanPlaceholder": "حدد حدود المخاطر، وقف الخسارة، جني الأرباح..."
+      }
+    },
+    
+    "marketIn": {
+      "title": "أثناء الجلسة",
+      "subtitle": "تتبع تنفيذ الصفقات والملاحظات المباشرة",
+      "backToPreMarket": "السابق: ما قبل الجلسة",
+      "nextToMarketPost": "التالي: ما بعد الجلسة",
+      
+      "session": {
+        "title": "معلومات الجلسة",
+        "sessionType": "نوع الجلسة",
+        "selectSession": "اختر الجلسة",
+        "sessions": {
+          "london": "جلسة لندن",
+          "newYork": "جلسة نيويورك",
+          "tokyo": "جلسة طوكيو",
+          "sydney": "جلسة سيدني",
+          "overlap": "تداخل الجلسات"
+        },
+        "sessionStart": "بداية الجلسة",
+        "sessionEnd": "نهاية الجلسة",
+        "tradesPlanned": "الصفقات المخططة",
+        "tradesExecuted": "الصفقات المنفذة"
+      },
+      
+      "execution": {
+        "title": "تنفيذ الصفقات",
+        "entrySetups": "نماذج الدخول",
+        "entrySetupsPlaceholder": "سجل نماذج الدخول التي ظهرت لك...",
+        "priceActionObs": "ملاحظات حركة السعر",
+        "priceActionObsPlaceholder": "صف حركة السعر وسلوك السوق...",
+        "marketBehavior": "سلوك السوق",
+        "selectBehavior": "اختر سلوك السوق",
+        "behaviors": {
+          "trending": "ترند",
+          "ranging": "عرضي",
+          "volatile": "متقلب",
+          "choppy": "فوضوي",
+          "quiet": "هادئ"
+        }
+      },
+      
+      "notes": {
+        "title": "الملاحظات",
+        "executionNotes": "ملاحظات التنفيذ",
+        "executionNotesPlaceholder": "ملاحظات حول تنفيذ الصفقات...",
+        "realTimeObservations": "ملاحظات آنية",
+        "realTimeObservationsPlaceholder": "ملاحظات مباشرة أثناء الجلسة..."
+      }
+    },
+    
+    "marketPost": {
+      "title": "ما بعد الجلسة",
+      "subtitle": "مراجعة الأداء واستخلاص الدروس",
+      "backToMarketIn": "السابق: أثناء الجلسة",
+      
+      "results": {
+        "title": "نتائج الجلسة",
+        "totalTrades": "إجمالي الصفقات",
+        "winningTrades": "صفقات رابحة",
+        "losingTrades": "صفقات خاسرة",
+        "totalProfitLoss": "إجمالي الربح/الخسارة",
+        "sessionResult": "نتيجة الجلسة",
+        "selectResult": "اختر نتيجة الجلسة",
+        "profit": "ربح",
+        "loss": "خسارة",
+        "breakeven": "تعادل"
+      },
+      
+      "ratings": {
+        "title": "تقييم الأداء",
+        "executionQuality": "جودة التنفيذ",
+        "planAdherence": "الالتزام بالخطة",
+        "riskAdherence": "الالتزام بالمخاطر"
+      },
+      
+      "emotions": {
+        "title": "المشاعر والحالة النفسية",
+        "emotionsBefore": "المشاعر قبل الجلسة",
+        "emotionsBeforePlaceholder": "كيف كان شعورك قبل بدء الجلسة؟",
+        "emotionsDuring": "المشاعر أثناء الجلسة",
+        "emotionsDuringPlaceholder": "كيف تعاملت عاطفياً أثناء التداول؟",
+        "emotionsAfter": "المشاعر بعد الجلسة",
+        "emotionsAfterPlaceholder": "كيف تشعر الآن بعد انتهاء الجلسة؟"
+      },
+      
+      "review": {
+        "title": "المراجعة والتحسين",
+        "whatWentWell": "ما الذي سار بشكل جيد؟",
+        "whatWentWellPlaceholder": "الإيجابيات والنقاط القوية في جلستك...",
+        "whatNeedsImprovement": "ما الذي يحتاج تحسين؟",
+        "whatNeedsImprovementPlaceholder": "النقاط الضعيفة التي تحتاج العمل عليها...",
+        "lessonsLearned": "الدروس المستفادة",
+        "lessonsLearnedPlaceholder": "أهم ما تعلمته من هذه الجلسة...",
+        "tomorrowPlan": "خطة الغد",
+        "tomorrowPlanPlaceholder": "ماذا ستفعل بشكل مختلف في الجلسة القادمة؟"
+      }
+    },
+    
+    "rating": {
+      "poor": "ضعيف",
+      "fair": "مقبول",
+      "good": "جيد",
+      "veryGood": "جيد جداً",
+      "excellent": "ممتاز"
+    },
+    
+    "history": {
+      "title": "سجل المدخلات",
+      "noEntriesForDate": "لا توجد مدخلات لهذا التاريخ",
+      "viewAll": "عرض الكل",
+      "collapseAll": "طي الكل"
+    }
+  },
+  "accounts": {
+    "title": "الحسابات المرتبطة",
+    "subtitle": "ربط حسابات MT4/MT5 و TradingView",
+    "connectAccount": "ربط حساب",
+    "connectNew": "ربط حساب جديد",
+    "platform": "المنصة",
+    "server": "الخادم",
+    "accountNumber": "رقم الحساب",
+    "password": "كلمة المرور",
+    "connect": "ربط",
+    "noAccounts": "لا توجد حسابات مرتبطة",
+    "connectYourAccount": "اربط حساب التداول الخاص بك للمزامنة التلقائية",
+    "riskProfile": "ملف المخاطر",
+    "noRiskProfile": "لا يوجد ملف مخاطر",
+    "createRiskProfile": "إنشاء ملف مخاطر",
+    "balance": "الرصيد",
+    "equity": "صافي القيمة",
+    "lastSync": "آخر مزامنة",
+    "manual": "يدوي",
+    "autoSync": "مزامنة تلقائية"
+  },
+  "auth": {
+    "createAccount": "إنشاء حساب جديد",
+    "enterDetails": "أدخل بياناتك لإنشاء حساب جديد",
+    "name": "الاسم",
+    "enterName": "أدخل اسمك",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "create": "إنشاء الحساب",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "login": "تسجيل الدخول",
+    "back": "العودة",
+    "loginTitle": "تسجيل الدخول",
+    "loginSubtitle": "أدخل بيانات حسابك للدخول",
+    "noAccount": "ليس لديك حساب؟",
+    "signup": "إنشاء حساب"
+  },
+  "landing": {
+    "heroTitle1": "منصة تداول شاملة",
+    "heroTitle2": "لإدارة استثماراتك",
+    "heroSubtitle": "تتبع صفقاتك، أداء محفظتك، وحالتك النفسية في مكان واحد. طور مهاراتك التداولية مع أدوات متقدمة.",
+    "startFree": "ابدأ مجاناً",
+    "haveAccount": "لديك حساب؟ سجل دخول",
+    "features": "المميزات الرئيسية",
+    "pricing": "خطط الأسعار",
+    "mostPopular": "الأكثر شعبية",
+    "getStarted": "ابدأ الآن",
+    "free": "مجاني",
+    "unlimitedPortfolios": "محافظ غير محدودة",
+    "unlimitedTrades": "صفقات غير محدودة",
+    "mtIntegration": "ربط حسابات MT4/MT5",
+    "psychologyAnalysis": "تحليل سيكولوجي",
+    "advancedReports": "تقارير متقدمة",
+    "aiAssistant": "مساعد ذكي",
+    "onePortfolio": "محفظة واحدة",
+    "tradesPerMonth": "تتبع 50 صفقة/شهر",
+    "tradingJournal": "يومية التداول",
+    "basicStats": "إحصائيات أساسية"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "upgrade": "ترقية",
+    "logout": "تسجيل الخروج",
+    "confirm": "تأكيد",
+    "close": "إغلاق",
+    "yes": "نعم",
+    "no": "لا"
+  }
+}
