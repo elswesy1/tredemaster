@@ -375,6 +375,4 @@ export default function Home() {
     </div>
   )
 }
-// Build: 1775129063
 
-// Version: 3.0 - 20260402115558
