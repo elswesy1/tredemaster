@@ -31,6 +31,7 @@ import {
   X,
   ClipboardCheck,
   Brain,
+  History,
 } from 'lucide-react'
 
 interface TradingSidebarProps {
@@ -208,6 +209,18 @@ export function TradingSidebar({ onLogout }: TradingSidebarProps) {
           <div className="border-t border-sidebar-border p-3 space-y-1 bg-muted/30">
             <Button
               variant="ghost"
+              onClick={() => setActiveSection('login-history')}
+              className={cn(
+                'w-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                activeSection === 'login-history' && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
+                sidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-3'
+              )}
+            >
+              <History className="h-5 w-5 shrink-0" />
+              {!sidebarCollapsed && <span>{isRTL ? 'سجل الدخول' : 'Login History'}</span>}
+            </Button>
+            <Button
+              variant="ghost"
               onClick={() => setActiveSection('pricing')}
               className={cn(
                 'w-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
@@ -305,6 +318,17 @@ export function TradingSidebar({ onLogout }: TradingSidebarProps) {
 
           {/* Footer */}
           <div className="border-t border-sidebar-border p-3 space-y-1 bg-muted/30">
+            <Button
+              variant="ghost"
+              onClick={() => handleSectionChange('login-history')}
+              className={cn(
+                'w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                activeSection === 'login-history' && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+              )}
+            >
+              <History className="h-5 w-5 shrink-0" />
+              <span>{isRTL ? 'سجل الدخول' : 'Login History'}</span>
+            </Button>
             <Button
               variant="ghost"
               onClick={() => handleSectionChange('pricing')}
