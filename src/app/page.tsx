@@ -13,6 +13,15 @@ import { AccountsView } from '@/components/trading/accounts-view'
 import { LandingPage } from '@/components/trading/landing-page'
 import { SignupPage } from '@/components/trading/signup-page'
 import { LoginPage } from '@/components/trading/login-page'
+import { PsychologyView } from '@/components/trading/psychology-view'
+import { StatisticsView } from '@/components/trading/statistics-view'
+import { ZenModeView } from '@/components/trading/zen-mode-view'
+import { SessionRecording } from '@/components/trading/session-recording'
+import { PricingView } from '@/components/trading/pricing-view'
+import { TradingHubView } from '@/components/trading/trading-hub-view'
+import { RulesView } from '@/components/trading/rules-view'
+import { AIChat } from '@/components/trading/ai-chat'
+import { AuditsView } from '@/components/trading/audits-view'
 import { ThemeToggle } from '@/components/trading/theme-toggle'
 import { LanguageToggle } from '@/components/trading/language-toggle'
 import { Toaster } from '@/components/ui/toaster'
@@ -172,6 +181,28 @@ export default function Home() {
         return <TradingView />
       case 'journal':
         return <JournalView />
+      case 'psychology':
+        return <PsychologyView />
+      case 'statistics':
+        return <StatisticsView />
+      case 'zen-mode':
+        return <ZenModeView />
+      case 'sessions':
+        return <SessionRecording />
+      case 'pricing':
+        return <PricingView />
+      case 'trading-hub':
+        return <TradingHubView />
+      case 'rules':
+        return <RulesView />
+      case 'ai-assistant':
+        return <AIChat />
+      case 'audits':
+        return <AuditsView />
+      // Redirect old sections to new unified trading view
+      case 'strategies':
+      case 'log-trade':
+        return <TradingView />
       default:
         return <DashboardView />
     }
