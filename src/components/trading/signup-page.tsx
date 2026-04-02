@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useI18n } from '@/lib/i18n'
-import { TrendingUp, ArrowLeft, Loader2, Check, X, Eye, EyeOff } from 'lucide-react'
+import { TrendingUp, ArrowLeft, Loader2, Check, X, Eye, EyeOff, Mail, Shield, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SignupPageProps {
@@ -49,6 +49,9 @@ export function SignupPage({ onSignup, onLogin, onBack }: SignupPageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [verificationSent, setVerificationSent] = useState(false)
+  const [verifyUrl, setVerifyUrl] = useState<string | null>(null)
+  const [userEmail, setUserEmail] = useState<string>('')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -79,7 +82,7 @@ export function SignupPage({ onSignup, onLogin, onBack }: SignupPageProps) {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -97,13 +100,106 @@ export function SignupPage({ onSignup, onLogin, onBack }: SignupPageProps) {
         return
       }
 
-      // نجاح التسجيل - استدعاء callback
-      await onSignup(formData)
+      // تم إنشاء الحساب - يتطلب تأكيد البريد
+      setUserEmail(formData.email)
+      
+      if (data.verifyUrl) {
+        // وضع التطوير - عرض الرابط مباشرة
+        setVerifyUrl(data.verifyUrl)
+      }
+      
+      setVerificationSent(true)
+
     } catch (err) {
       setError(language === 'ar' ? 'حدث خطأ في الاتصال' : 'Connection error')
     }
 
     setIsLoading(false)
+  }
+
+  // صفحة تأكيد البريد
+  if (verificationSent) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-4 shadow-lg shadow-green-500/20">
+              <Mail className="h-8 w-8 text-white" />
+            </div>
+            <CardTitle className="text-2xl">
+              {language === 'ar' ? 'تحقق من بريدك الإلكتروني' : 'Check Your Email'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'ar' 
+                ? 'تم إرسال رابط التأكيد إلى بريدك الإلكتروني' 
+                : 'A verification link has been sent to your email'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-muted/50 rounded-lg p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Shield className="h-5 w-5 text-green-500" />
+                <span className="font-medium">{userEmail}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {language === 'ar' 
+                  ? 'اضغط على الرابط في البريد لتأكيد حسابك' 
+                  : 'Click the link in the email to verify your account'}
+              </p>
+            </div>
+
+            {/* عرض رابط التحقق في وضع التطوير */}
+            {verifyUrl && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+                <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">
+                  {language === 'ar' ? '🔗 رابط التأكيد (للتطوير):' : '🔗 Verification Link (Development):'}
+                </p>
+                <a 
+                  href={verifyUrl}
+                  className="text-xs text-blue-500 hover:underline break-all flex items-center gap-1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {verifyUrl}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            )}
+
+            <div className="bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground">
+              <p>
+                {language === 'ar' 
+                  ? '📌 لم تستلم البريد؟ تحقق من مجلد البريد المزعج (Spam)' 
+                  : '📌 Didn\'t receive the email? Check your spam folder'}
+              </p>
+              <p className="mt-1">
+                {language === 'ar' 
+                  ? '⏰ الرابط صالح لمدة 24 ساعة' 
+                  : '⏰ Link is valid for 24 hours'}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={onBack}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {language === 'ar' ? 'العودة' : 'Back'}
+              </Button>
+              <Button 
+                variant="outline"
+                className="flex-1"
+                onClick={onLogin}
+              >
+                {language === 'ar' ? 'تسجيل الدخول' : 'Login'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   const requirements = [
@@ -173,6 +269,11 @@ export function SignupPage({ onSignup, onLogin, onBack }: SignupPageProps) {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                {language === 'ar' 
+                  ? '📧 سيتم إرسال رابط تأكيد إلى هذا البريد' 
+                  : '📧 A verification link will be sent to this email'}
+              </p>
             </div>
 
             <div className="space-y-2">

@@ -26,6 +26,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
+  // حقول تأكيد البريد الإلكتروني
+  verifyToken      String?
+  verifyTokenExpiry DateTime?
+  
   // Relations
   portfolios      Portfolio[]
   accounts        Account[]

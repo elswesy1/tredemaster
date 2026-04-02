@@ -69,6 +69,11 @@ export async function loginUser(
     return { error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' }
   }
 
+  // التحقق من تأكيد البريد الإلكتروني
+  if (!user.emailVerified) {
+    return { error: 'يرجى تأكيد بريدك الإلكتروني أولاً', requiresVerification: true, email: user.email }
+  }
+
   // التحقق من كلمة المرور
   const isValid = await bcrypt.compare(password, user.password)
   if (!isValid) {
