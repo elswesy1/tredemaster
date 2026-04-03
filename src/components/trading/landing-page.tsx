@@ -26,10 +26,87 @@ interface LandingPageProps {
   onGetStarted: () => void
   onLogin: () => void
 }
+// === NEW COMPONENTS - ADD HERE ===
+function TrustBadges({ lng }: { lng: string }) {
+  const items = [
+    { icon: Shield, title: lng === 'ar' ? 'تشفير AES-256' : 'AES-256 Encryption', sub: lng === 'ar' ? 'حماية بياناتك' : 'Your Data Protected' },
+    { icon: CheckCircle, title: lng === 'ar' ? 'خوادم آمنة' : 'Secure Servers', sub: '24/7' },
+    { icon: Star, title: lng === 'ar' ? 'تقييم 4.9' : '4.9 Rating', sub: '2000+' },
+    { icon: Award, title: lng === 'ar' ? 'معتمد' : 'Certified', sub: 'SOC2' }
+  ]
+  return (
+    <section className="py-12 bg-gradient-to-r from-emerald-900/20 to-cyan-900/20">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {items.map((item, i) => (
+            <div key={i} className="flex flex-col items-center text-center p-4 rounded-xl bg-black/20 border border-emerald-500/20">
+              <item.icon className="w-8 h-8 text-emerald-400 mb-3" />
+              <h3 className="font-semibold text-white text-sm">{item.title}</h3>
+              <p className="text-xs text-gray-400 mt-1">{item.sub}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SocialProof({ lng }: { lng: string }) {
+  const data = [
+    { num: '10,000+', txt: lng === 'ar' ? 'متداول' : 'Traders', ico: Users },
+    { num: '98%', txt: lng === 'ar' ? 'رضا' : 'Satisfaction', ico: Star },
+    { num: '150+', txt: lng === 'ar' ? 'دولة' : 'Countries', ico: Award },
+    { num: '$50M+', txt: lng === 'ar' ? 'محافظ' : 'Assets', ico: DollarSign }
+  ]
+  return (
+    <section className="py-16">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {data.map((d, i) => (
+            <div key={i} className="text-center p-6 rounded-2xl bg-gradient-to-b from-emerald-900/30 border border-emerald-500/10">
+              <d.ico className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
+              <div className="text-3xl font-bold text-white">{d.num}</div>
+              <div className="text-sm text-gray-400">{d.txt}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function LiveDemo({ lng }: { lng: string }) {
+  const [play, setPlay] = useState(false)
+  return (
+    <section className="py-16 bg-gradient-to-b from-black to-gray-900">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-3xl font-bold text-white mb-4">{lng === 'ar' ? 'شاهد كيف يعمل' : 'See How It Works'}</h2>
+        <div className="rounded-2xl bg-gradient-to-br from-emerald-900/50 to-cyan-900/50 border border-emerald-500/30 aspect-video flex items-center justify-center max-w-2xl mx-auto">
+          <button onClick={() => setPlay(!play)} className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center">
+            {play ? <Pause className="w-8 h-8 text-white" /> : <Play className="w-8 h-8 text-white ml-1" />}
+          </button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function BlogSEO({ lng }: { lng: string }) {
+  return (
+    <section className="py-16">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-3xl font-bold text-white mb-4">{lng === 'ar' ? 'المدونة' : 'Blog'}</h2>
+        <p className="text-gray-400 mb-8">{lng === 'ar' ? 'قريباً...' : 'Coming soon...'}</p>
+      </div>
+    </section>
+  )
+}
+
 
 export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
   const { t, language } = useI18n()
   const [playing, setPlaying] = useState(false)
+
 
   const features = [
     { icon: Wallet, title: t('sidebar.portfolio'), description: language === 'ar' ? 'تتبع وإدارة محافظك الاستثمارية بسهولة' : 'Track and manage your investment portfolios easily' },
@@ -77,6 +154,10 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
           </div>
         </div>
       </section>
+      <TrustBadges lng={language} />
+<SocialProof lng={language} />
+<LiveDemo lng={language} />
+<BlogSEO lng={language} />
 
       {/* Features Section */}
       <section className="py-20 px-4 bg-gray-900/50">
