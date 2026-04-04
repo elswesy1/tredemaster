@@ -1,56 +1,63 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { registerUser, setAuthCookie, getClientIP, getUserAgent } from '@/lib/auth-simple'
-import { z } from 'zod'
+// ⚠️ هذا الكود للتطوير فقط
 
-// مخطط التحقق من البيانات
-const registerSchema = z.object({
-  name: z.string().min(2, 'الاسم يجب أن يكون حرفين على الأقل'),
-  email: z.string().email('البريد الإلكتروني غير صحيح'),
-  password: z.string()
-    .min(8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل')
-    .regex(/[A-Z]/, 'كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل')
-    .regex(/[a-z]/, 'كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل')
-    .regex(/[0-9]/, 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل')
-    .regex(/[^A-Za-z0-9]/, 'كلمة المرور يجب أن تحتوي على رمز خاص واحد على الأقل'),
-})
+import { NextRequest, NextResponse } from 'next/server'
+import { hash } from 'bcryptjs'
+import { prisma } from '@/lib/prisma'
+import { SignJWT } from 'jose'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    const { name, email, password } = body
 
-    // التحقق من البيانات
-    const result = registerSchema.safeParse(body)
-    if (!result.success) {
+    if (!email || !password || !name) {
       return NextResponse.json(
-        { error: 'بيانات غير صحيحة', details: result.error.errors },
+        { error: 'جميع الحقول مطلوبة' },
         { status: 400 }
       )
     }
 
-    const { name, email, password } = result.data
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    })
 
-    // الحصول على معلومات الجهاز
-    const ipAddress = getClientIP(request)
-    const userAgent = getUserAgent(request)
-
-    // تسجيل المستخدم
-    const registerResult = await registerUser(name, email, password, ipAddress, userAgent)
-
-    if (registerResult.error) {
+    if (existingUser) {
       return NextResponse.json(
-        { error: registerResult.error },
+        { error: 'البريد الإلكتروني مستخدم بالفعل' },
         { status: 400 }
       )
     }
 
-    // تعيين cookie للمصادقة
-    await setAuthCookie(registerResult.token!)
+    const hashedPassword = await hash(password, 12)
+
+    const verificationToken = await new SignJWT({ email })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime('24h')
+      .sign(new TextEncoder().encode(process.env.NEXTAUTH_SECRET))
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        verificationToken,
+        emailVerified: null
+      }
+    })
+
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://trademaster-omega.vercel.app'}/verify-email?token=${verificationToken}`
 
     return NextResponse.json({
       success: true,
-      message: 'تم إنشاء الحساب بنجاح',
-      user: registerResult.user
+      message: 'تم إنشاء الحساب بنجاح!',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      },
+      verificationUrl: verificationUrl
     })
+
   } catch (error) {
     console.error('Registration error:', error)
     return NextResponse.json(
