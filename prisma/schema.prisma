@@ -13,48 +13,52 @@ datasource db {
 
 // المستخدمين
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  name          String?
-  password      String?
-  avatar        String?
-  phone         String?
-  role          String    @default("trader")
-  isActive      Boolean   @default(true)
-  lastLoginAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  email            String    @unique
+  emailVerified    DateTime?
+  name             String?
+  password         String?
+  avatar           String?
+  phone            String?
+  role             String    @default("trader")
+  isActive         Boolean   @default(true)
+  lastLoginAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  // حقول استعادة الباسوورد
+  resetToken       String?
+  resetTokenExpiry DateTime?
   
   // حقول تأكيد البريد الإلكتروني
   verifyToken      String?
   verifyTokenExpiry DateTime?
   
   // Relations
-  portfolios      Portfolio[]
-  accounts        Account[]
-  assets          Asset[]
-  trades          Trade[]
-  tradingPlans    TradingPlan[]
-  setups          Setup[]
-  riskProfiles    RiskProfile[]
-  journals        TradingJournal[]
-  sessions        SessionReview[]
-  psychologyLogs  PsychologyLog[]
-  audits          Audit[]
-  subscription    Subscription?
-  strategies      Strategy[]
-  zenStates       ZenState[]
-  tradingRules    TradingRule[]
-  riskUsages      RiskUsage[]
-  riskAlerts      RiskAlert[]
-  riskChecks      RiskCheck[]
+  portfolios       Portfolio[]
+  accounts         Account[]
+  assets           Asset[]
+  trades           Trade[]
+  tradingPlans     TradingPlan[]
+  setups           Setup[]
+  riskProfiles     RiskProfile[]
+  journals         TradingJournal[]
+  sessions         SessionReview[]
+  psychologyLogs   PsychologyLog[]
+  audits           Audit[]
+  subscription     Subscription?
+  strategies       Strategy[]
+  zenStates        ZenState[]
+  tradingRules     TradingRule[]
+  riskUsages       RiskUsage[]
+  riskAlerts       RiskAlert[]
+  riskChecks       RiskCheck[]
   
   // Auth Relations
-  authAccounts    AuthAccount[]
-  authSessions    AuthSession[]
-  twoFactorAuth   TwoFactorAuth?
-  loginHistory    LoginHistory[]
+  authAccounts     AuthAccount[]
+  authSessions     AuthSession[]
+  twoFactorAuth    TwoFactorAuth?
+  loginHistory     LoginHistory[]
 
   @@index([email])
   @@map("users")
@@ -62,102 +66,90 @@ model User {
 
 // المحافظ الاستثمارية
 model Portfolio {
-  id              String   @id @default(cuid())
-  userId          String
-  name            String
-  description     String?
-  totalValue      Float    @default(0)
-  cashBalance     Float    @default(0)
-  investedAmount  Float    @default(0)
-  profitLoss      Float    @default(0)
-  profitLossPercent Float  @default(0)
-  currency        String   @default("USD")
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String   @id @default(cuid())
+  userId            String
+  name              String
+  description       String?
+  totalValue        Float    @default(0)
+  cashBalance       Float    @default(0)
+  investedAmount    Float    @default(0)
+  profitLoss        Float    @default(0)
+  profitLossPercent Float    @default(0)
+  currency          String   @default("USD")
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accounts        Account[]
-  assets          Asset[]
-  trades          Trade[]
-  
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accounts Account[]
+  assets   Asset[]
+  trades   Trade[]
+
   @@index([userId])
 }
 
 // الحسابات المرتبطة
 model Account {
-  id              String   @id @default(cuid())
-  userId          String
-  portfolioId     String?
-  name            String
-  broker          String?
-  accountNumber   String?
-  type            String   @default("live") // live, demo
-  currency        String   @default("USD")
-  balance         Float    @default(0)
-  equity          Float    @default(0)
-  margin          Float    @default(0)
-  freeMargin      Float    @default(0)
-  marginLevel     Float    @default(0)
-  leverage        Float    @default(100)
-  isActive        Boolean  @default(true)
-  lastSync        DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String    @id @default(cuid())
+  userId         String
+  portfolioId    String?
+  name           String
+  broker         String?
+  accountNumber  String?
+  type           String    @default("live")
+  currency       String    @default("USD")
+  balance        Float     @default(0)
+  equity         Float     @default(0)
+  margin         Float     @default(0)
+  freeMargin     Float     @default(0)
+  marginLevel    Float     @default(0)
+  leverage       Float     @default(100)
+  isActive       Boolean   @default(true)
+  lastSync       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  portfolio       Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
-  trades          Trade[]
-  
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolio Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
+  trades    Trade[]
+
   @@index([userId])
   @@index([portfolioId])
 }
 
-// الأصول (متعددة الأنواع: فوركس، أسهم، عملات رقمية، سلع، مؤشرات)
+// الأصول
 model Asset {
-  id              String   @id @default(cuid())
-  userId          String
-  portfolioId     String?
+  id               String   @id @default(cuid())
+  userId           String
+  portfolioId      String?
+  name             String
+  assetType        String
+  symbol           String?
+  quantity         Float    @default(0)
+  entryPrice       Float    @default(0)
+  currentPrice     Float    @default(0)
+  currency         String   @default("USD")
+  connectionMethod String   @default("manual")
+  platform         String?
+  broker           String?
+  server           String?
+  accountNumber    String?
+  apiKey           String?
+  apiSecret        String?
+  status           String   @default("active")
+  lastSync         DateTime?
+  autoSync         Boolean  @default(false)
+  currentValue     Float    @default(0)
+  profitLoss       Float    @default(0)
+  profitLossPercent Float   @default(0)
+  notes            String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   
-  // معلومات أساسية
-  name            String   // اسم الأصل
-  assetType       String   // forex, stocks, crypto, commodities, indices
-  symbol          String?  // الرمز (مثل EUR/USD, BTC, AAPL)
-  quantity        Float    @default(0) // الكمية/الوحدات
-  entryPrice      Float    @default(0) // سعر الدخول
-  currentPrice    Float    @default(0) // السعر الحالي
-  currency        String   @default("USD") // العملة
-  
-  // طريقة الاتصال
-  connectionMethod String  @default("manual") // manual, mt4, mt5, tradingview, other
-  platform         String? // المنصة (MT4, MT5, TradingView, etc.)
-  broker           String? // الوسيط
-  
-  // بيانات الاتصال (للربط الآلي)
-  server          String?  // الخادم
-  accountNumber   String?  // رقم الحساب
-  apiKey          String?  // API Key (مشفرة)
-  apiSecret       String?  // API Secret (مشفرة)
-  
-  // الحالة والمتابعة
-  status          String   @default("active") // active, inactive, connected, disconnected, syncing, error
-  lastSync        DateTime? // آخر مزامنة
-  autoSync        Boolean  @default(false) // مزامنة تلقائية
-  
-  // الأرباح والقيمة
-  currentValue    Float    @default(0) // القيمة الحالية
-  profitLoss      Float    @default(0) // الربح/الخسارة
-  profitLossPercent Float  @default(0) // نسبة الربح/الخسارة
-  
-  // معلومات إضافية
-  notes           String?  // ملاحظات
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  portfolio       Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
-  
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolio Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
+
   @@index([userId])
   @@index([portfolioId])
   @@index([assetType])
@@ -167,39 +159,39 @@ model Asset {
 
 // الصفقات
 model Trade {
-  id              String   @id @default(cuid())
-  userId          String
-  portfolioId     String?
-  accountId       String?
-  symbol          String
-  type            String   // buy, sell
-  status          String   @default("open") // open, closed, cancelled
-  entryPrice      Float
-  exitPrice       Float?
-  quantity        Float
-  lotSize         Float    @default(1)
-  stopLoss        Float?
-  takeProfit      Float?
-  commission      Float    @default(0)
-  swap            Float    @default(0)
-  profitLoss      Float    @default(0)
+  id               String    @id @default(cuid())
+  userId           String
+  portfolioId      String?
+  accountId        String?
+  symbol           String
+  type             String
+  status           String    @default("open")
+  entryPrice       Float
+  exitPrice        Float?
+  quantity         Float
+  lotSize          Float     @default(1)
+  stopLoss         Float?
+  takeProfit       Float?
+  commission       Float     @default(0)
+  swap             Float     @default(0)
+  profitLoss       Float     @default(0)
   profitLossPoints Float?
-  pipValue        Float?
-  notes           String?
-  strategy        String?
-  entryReason     String?
-  exitReason      String?
-  emotions        String?
-  confidence      Int?
-  openedAt        DateTime @default(now())
-  closedAt        DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  pipValue         Float?
+  notes            String?
+  strategy         String?
+  entryReason      String?
+  exitReason       String?
+  emotions         String?
+  confidence       Int?
+  openedAt         DateTime  @default(now())
+  closedAt         DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  portfolio       Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
-  account         Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolio Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
+  account   Account?   @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
   @@index([userId])
   @@index([symbol])
   @@index([status])
@@ -208,185 +200,160 @@ model Trade {
 
 // خطط التداول
 model TradingPlan {
-  id              String   @id @default(cuid())
-  userId          String
-  title           String
-  description     String?
-  type            String   @default("daily") // daily, weekly, monthly
-  goals           String?
-  rules           String?
-  strategies      String?
-  riskRules       String?
-  maxTrades       Int?
-  maxRisk         Float?
-  status          String   @default("active")
-  startDate       DateTime?
-  endDate         DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  type        String    @default("daily")
+  goals       String?
+  rules       String?
+  strategies  String?
+  riskRules   String?
+  maxTrades   Int?
+  maxRisk     Float?
+  status      String    @default("active")
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([type])
 }
 
 // الإعدادات والأنماط
 model Setup {
-  id              String   @id @default(cuid())
-  userId          String
-  name            String
-  description     String?
-  category        String?  // pattern, indicator, strategy
-  timeframe       String?
-  conditions      String?  // JSON string for entry conditions
-  entryRules      String?
-  exitRules       String?
-  stopLossRules   String?
-  takeProfitRules String?
-  riskReward      Float?
-  successRate     Float?
-  isActive        Boolean  @default(true)
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String    @id @default(cuid())
+  userId           String
+  name             String
+  description      String?
+  category         String?
+  timeframe        String?
+  conditions       String?
+  entryRules       String?
+  exitRules        String?
+  stopLossRules    String?
+  takeProfitRules  String?
+  riskReward       Float?
+  successRate      Float?
+  isActive         Boolean   @default(true)
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([category])
 }
 
 // ملف المخاطر
 model RiskProfile {
-  id                    String   @id @default(cuid())
-  userId                String
-  accountId             String?  // ربط بالحساب/الأصل (اختياري)
-  accountName           String?  // اسم الحساب/الأصل
-  accountType           String?  // account أو asset
-  name                  String
-  description           String?
-  riskTolerance         String   @default("moderate") // conservative, moderate, aggressive
-  riskDegree            Int      @default(5) // 1-10 scale
-  maxDailyLoss          Float?
-  maxWeeklyLoss         Float?
-  maxMonthlyLoss        Float?
-  maxDrawdown           Float?
-  maxPositionSize       Float?
-  maxRiskPerTrade       Float?
-  maxCorrelatedTrades   Int?
-  maxLeverage           Float?
-  stopLossRequired      Boolean  @default(false)
-  takeProfitRequired    Boolean  @default(false)
-  riskRewardMin         Float?
-  isConfigured          Boolean  @default(false) // هل تم تحديد المعايير
-  isActive              Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                   String    @id @default(cuid())
+  userId               String
+  accountId            String?
+  accountName          String?
+  accountType          String?
+  name                 String
+  description          String?
+  riskTolerance        String    @default("moderate")
+  riskDegree           Int       @default(5)
+  maxDailyLoss         Float?
+  maxWeeklyLoss        Float?
+  maxMonthlyLoss       Float?
+  maxDrawdown          Float?
+  maxPositionSize      Float?
+  maxRiskPerTrade      Float?
+  maxCorrelatedTrades  Int?
+  maxLeverage          Float?
+  stopLossRequired     Boolean   @default(false)
+  takeProfitRequired   Boolean   @default(false)
+  riskRewardMin        Float?
+  isConfigured         Boolean   @default(false)
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
   
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([accountId])
 }
 
 // يومية التداول
 model TradingJournal {
-  id              String   @id @default(cuid())
-  userId          String
-  date            DateTime @default(now())
-  type            String   @default("daily") // pre-market, market-in, market-post, daily
+  id                   String    @id @default(cuid())
+  userId               String
+  date                 DateTime  @default(now())
+  type                 String    @default("daily")
+  marketAnalysis       String?
+  keyLevels            String?
+  supportLevels        String?
+  resistanceLevels     String?
+  trendDirection       String?
+  expectedVolatility   String?
+  economicEvents       String?
+  tradingPlan          String?
+  strategiesToUse      String?
+  dailyGoal            String?
+  maxTrades            Int?      @default(3)
+  riskPlan             String?
+  sessionType          String?
+  sessionStart         String?
+  sessionEnd           String?
+  tradesPlanned        Int?      @default(0)
+  tradesExecuted       Int?      @default(0)
+  entrySetups          String?
+  priceActionObs       String?
+  executionNotes       String?
+  marketBehavior       String?
+  realTimeObservations String?
+  totalTrades          Int?      @default(0)
+  winningTrades        Int?      @default(0)
+  losingTrades         Int?      @default(0)
+  totalProfitLoss      Float?    @default(0)
+  sessionResult        String?
+  executionQuality     Int?      @default(5)
+  planAdherence        Int?      @default(5)
+  riskAdherence        Int?      @default(5)
+  emotionsBefore       String?
+  emotionsDuring       String?
+  emotionsAfter        String?
+  whatWentWell         String?
+  whatNeedsImprovement String?
+  lessonsLearned       String?
+  tomorrowPlan         String?
+  title                String?
+  sentiment            String?
+  pointsOfInterest     String?
+  expectedScenario     String?
+  technicalStrategy    String?
+  keyLevelsPre         String?
+  marketCondition      String?
+  entryModels          String?
+  priceAction          String?
+  tradeExecution       String?
+  observations         String?
+  result               String?
+  improvementsPost     String?
+  plannedTrades        String?
+  actualTrades         String?
+  lessons              String?
+  mistakes             String?
+  improvements         String?
+  mood                 Int?
+  energy               Int?
+  focus                Int?
+  confidence           Int?
+  notes                String?
+  attachments          String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
   
-  // === ما قبل الجلسة (Pre-market) ===
-  // تحليل السوق
-  marketAnalysis      String?  // تحليل السوق العام
-  keyLevels           String?  // المستويات الرئيسية
-  supportLevels       String?  // مستويات الدعم
-  resistanceLevels    String?  // مستويات المقاومة
-  trendDirection      String?  // اتجاه الترند (bullish, bearish, ranging)
-  expectedVolatility  String?  // التقلب المتوقع (low, medium, high)
-  economicEvents      String?  // الأحداث الاقتصادية
-  
-  // خطة التداول
-  tradingPlan         String?  // خطة التداول
-  strategiesToUse     String?  // الاستراتيجيات المستخدمة
-  dailyGoal           String?  // الهدف اليومي
-  maxTrades           Int?     @default(3) // الحد الأقصى للصفقات
-  
-  // خطة المخاطر
-  riskPlan            String?  // خطة إدارة المخاطر
-  
-  // === أثناء الجلسة (Market-in) ===
-  // معلومات الجلسة
-  sessionType         String?  // نوع الجلسة (london, newYork, tokyo, sydney, overlap)
-  sessionStart        String?  // بداية الجلسة
-  sessionEnd          String?  // نهاية الجلسة
-  tradesPlanned       Int?     @default(0) // الصفقات المخططة
-  tradesExecuted      Int?     @default(0) // الصفقات المنفذة
-  
-  // تنفيذ الصفقات
-  entrySetups         String?  // نماذج الدخول
-  priceActionObs      String?  // ملاحظات حركة السعر
-  executionNotes      String?  // ملاحظات التنفيذ
-  marketBehavior      String?  // سلوك السوق (trending, ranging, volatile, choppy, quiet)
-  
-  // الملاحظات
-  realTimeObservations String? // ملاحظات آنية
-  
-  // === ما بعد الجلسة (Market-post) ===
-  // نتائج الجلسة
-  totalTrades         Int?     @default(0) // إجمالي الصفقات
-  winningTrades       Int?     @default(0) // صفقات رابحة
-  losingTrades        Int?     @default(0) // صفقات خاسرة
-  totalProfitLoss     Float?   @default(0) // إجمالي الربح/الخسارة
-  sessionResult       String?  // نتيجة الجلسة (profit, loss, breakeven)
-  
-  // تقييم الأداء
-  executionQuality    Int?     @default(5) // جودة التنفيذ (1-10)
-  planAdherence       Int?     @default(5) // الالتزام بالخطة (1-10)
-  riskAdherence       Int?     @default(5) // الالتزام بالمخاطر (1-10)
-  
-  // المشاعر والحالة النفسية
-  emotionsBefore      String?  // المشاعر قبل الجلسة
-  emotionsDuring      String?  // المشاعر أثناء الجلسة
-  emotionsAfter       String?  // المشاعر بعد الجلسة
-  
-  // المراجعة والتحسين
-  whatWentWell        String?  // ما الذي سار بشكل جيد
-  whatNeedsImprovement String? // ما الذي يحتاج تحسين
-  lessonsLearned      String?  // الدروس المستفادة
-  tomorrowPlan        String?  // خطة الغد
-  
-  // Legacy fields (for backward compatibility)
-  title           String?
-  sentiment       String?  // bullish, bearish, neutral
-  pointsOfInterest String? // نقاط الاهتمام (legacy)
-  expectedScenario String? // السيناريو المتوقع (legacy)
-  technicalStrategy String? // الاستراتيجية الفنية (legacy)
-  keyLevelsPre    String?  // المستويات الرئيسية (legacy)
-  marketCondition String?  // حالة السوق (legacy)
-  entryModels     String?  // نماذج الدخول (legacy)
-  priceAction     String?  // حركة السعر (legacy)
-  tradeExecution  String?  // تنفيذ الصفقات (legacy)
-  observations    String?  // ملاحظات (legacy)
-  result          String?  // النتيجة (legacy)
-  improvementsPost String? // نقاط التحسين (legacy)
-  plannedTrades   String?
-  actualTrades    String?
-  lessons         String?
-  mistakes        String?
-  improvements    String?
-  mood            Int?     // 1-10 scale
-  energy          Int?     // 1-10 scale
-  focus           Int?     // 1-10 scale
-  confidence      Int?     // 1-10 scale
-  notes           String?
-  attachments     String?  // JSON array of file paths
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([date])
   @@index([type])
@@ -395,30 +362,30 @@ model TradingJournal {
 
 // مراجعات الجلسات
 model SessionReview {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   userId          String
-  date            DateTime @default(now())
-  session         String   @default("london") // london, new_york, tokyo, asian
-  marketOpen      Boolean  @default(true)
+  date            DateTime  @default(now())
+  session         String    @default("london")
+  marketOpen      Boolean   @default(true)
   marketCondition String?
-  volatility      String?  // low, medium, high
-  volume          String?  // low, medium, high
-  tradesPlanned   Int      @default(0)
-  tradesTaken     Int      @default(0)
-  tradesWon       Int      @default(0)
-  tradesLost      Int      @default(0)
-  profitLoss      Float    @default(0)
+  volatility      String?
+  volume          String?
+  tradesPlanned   Int       @default(0)
+  tradesTaken     Int       @default(0)
+  tradesWon       Int       @default(0)
+  tradesLost      Int       @default(0)
+  profitLoss      Float     @default(0)
   rulesFollowed   Boolean?
   emotions        String?
   mistakes        String?
   improvements    String?
   notes           String?
-  rating          Int?     // 1-5 scale
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  rating          Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([date])
   @@index([session])
@@ -426,29 +393,29 @@ model SessionReview {
 
 // سجل علم النفس
 model PsychologyLog {
-  id              String   @id @default(cuid())
-  userId          String
-  date            DateTime @default(now())
-  type            String   @default("check-in") // check-in, post-trade, end-day
-  tradeId         String?
-  emotion         String?  // happy, sad, angry, fearful, greedy, confident, anxious
-  emotionIntensity Int?    // 1-10 scale
-  trigger         String?
-  reaction        String?
-  outcome         String?
-  copingStrategy  String?
-  lessons         String?
-  recommendations String?
-  stress          Int?     // 1-10 scale
-  discipline      Int?     // 1-10 scale
-  patience        Int?     // 1-10 scale
-  confidence      Int?     // 1-10 scale
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String    @id @default(cuid())
+  userId           String
+  date             DateTime  @default(now())
+  type             String    @default("check-in")
+  tradeId          String?
+  emotion          String?
+  emotionIntensity Int?
+  trigger          String?
+  reaction         String?
+  outcome          String?
+  copingStrategy   String?
+  lessons          String?
+  recommendations  String?
+  stress           Int?
+  discipline       Int?
+  patience         Int?
+  confidence       Int?
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([date])
   @@index([type])
@@ -456,25 +423,25 @@ model PsychologyLog {
 
 // التدقيق
 model Audit {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   userId          String
-  type            String   // portfolio, trading, risk, behaviour
+  type            String
   title           String
   description     String?
-  period          String?  // daily, weekly, monthly
+  period          String?
   startDate       DateTime?
   endDate         DateTime?
-  findings        String?  // JSON string for structured findings
+  findings        String?
   recommendations String?
   improvements    String?
-  status          String   @default("pending") // pending, in-progress, completed
-  score           Int?     // 1-100 scale
+  status          String    @default("pending")
+  score           Int?
   completedAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([type])
   @@index([status])
@@ -482,21 +449,21 @@ model Audit {
 
 // الاشتراكات
 model Subscription {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  plan            String   @default("free") // free, pro
-  status          String   @default("active") // active, cancelled, expired
-  startDate       DateTime @default(now())
-  endDate         DateTime?
-  stripeCustomerId String?
-  stripeSubscriptionId String?
-  cancelAtPeriodEnd Boolean @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  plan                  String    @default("free")
+  status                String    @default("active")
+  startDate             DateTime  @default(now())
+  endDate               DateTime?
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  cancelAtPeriodEnd     Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  usage           Usage[]
-  
+  user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usage Usage[]
+
   @@index([userId])
   @@index([plan])
   @@index([status])
@@ -504,19 +471,19 @@ model Subscription {
 
 // الاستخدام
 model Usage {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   subscriptionId  String
   userId          String
-  type            String   // trades, sessions, ai_chats, exports
-  count           Int      @default(0)
+  type            String
+  count           Int       @default(0)
   limit           Int?
-  period          String   @default("monthly") // daily, weekly, monthly
+  period          String    @default("monthly")
   resetAt         DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   
-  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
   @@index([subscriptionId])
   @@index([userId])
   @@index([type])
@@ -524,108 +491,97 @@ model Usage {
 
 // الاستراتيجيات
 model Strategy {
-  id              String   @id @default(cuid())
-  userId          String
-  name            String
-  description     String?
-  category        String?  // technical, fundamental, hybrid
-  timeframe       String?
-  entryRules      String?
-  exitRules       String?
-  riskRules       String?
-  totalTrades     Int      @default(0)
-  winningTrades   Int      @default(0)
-  losingTrades    Int      @default(0)
-  profitLoss      Float    @default(0)
-  winRate         Float?
-  avgRRR          Float?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String    @id @default(cuid())
+  userId        String
+  name          String
+  description   String?
+  category      String?
+  timeframe     String?
+  entryRules    String?
+  exitRules     String?
+  riskRules     String?
+  totalTrades   Int       @default(0)
+  winningTrades Int       @default(0)
+  losingTrades  Int       @default(0)
+  profitLoss    Float     @default(0)
+  winRate       Float?
+  avgRRR        Float?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([category])
 }
 
 // حالات ZEN
 model ZenState {
-  id              String   @id @default(cuid())
-  userId          String
-  type            String   // breathing, meditation, mood_check
-  duration        Int?     // seconds
-  moodBefore      Int?     // 1-10
-  moodAfter       Int?     // 1-10
-  stressBefore    Int?     // 1-10
-  stressAfter     Int?     // 1-10
-  focusBefore     Int?     // 1-10
-  focusAfter      Int?     // 1-10
-  notes           String?
-  completedAt     DateTime @default(now())
-  createdAt       DateTime @default(now())
+  id           String    @id @default(cuid())
+  userId       String
+  type         String
+  duration     Int?
+  moodBefore   Int?
+  moodAfter    Int?
+  stressBefore Int?
+  stressAfter  Int?
+  focusBefore  Int?
+  focusAfter   Int?
+  notes        String?
+  completedAt  DateTime  @default(now())
+  createdAt    DateTime  @default(now())
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([type])
 }
 
 // قواعد التداول
 model TradingRule {
-  id              String   @id @default(cuid())
-  userId          String
-  name            String
-  description     String?
-  category        String   @default("entry") // entry, exit, risk, psychology
-  compliance      Int      @default(100)
-  violations      Int      @default(0)
-  violationCost   Float    @default(0)
-  active          Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String    @id @default(cuid())
+  userId         String
+  name           String
+  description    String?
+  category       String    @default("entry")
+  compliance     Int       @default(100)
+  violations     Int       @default(0)
+  violationCost  Float     @default(0)
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([category])
 }
 
-// استخدام المخاطر (تتبع يومي/أسبوعي/شهري)
+// استخدام المخاطر
 model RiskUsage {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   userId          String
   riskProfileId   String
-  date            DateTime @default(now())
+  date            DateTime  @default(now())
+  dailyLoss       Float     @default(0)
+  dailyTrades     Int       @default(0)
+  dailyRiskUsed   Float     @default(0)
+  weeklyLoss      Float     @default(0)
+  weeklyTrades    Int       @default(0)
+  weeklyRiskUsed  Float     @default(0)
+  monthlyLoss     Float     @default(0)
+  monthlyTrades   Int       @default(0)
+  monthlyRiskUsed Float     @default(0)
+  riskBySymbol    String?
+  openTrades      Int       @default(0)
+  totalExposure   Float     @default(0)
+  marginUsed      Float     @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   
-  // استخدام اليوم
-  dailyLoss       Float    @default(0)
-  dailyTrades     Int      @default(0)
-  dailyRiskUsed   Float    @default(0) // نسبة المخاطرة المستخدمة
-  
-  // استخدام الأسبوع
-  weeklyLoss      Float    @default(0)
-  weeklyTrades    Int      @default(0)
-  weeklyRiskUsed  Float    @default(0)
-  
-  // استخدام الشهر
-  monthlyLoss     Float    @default(0)
-  monthlyTrades   Int      @default(0)
-  monthlyRiskUsed Float    @default(0)
-  
-  // توزيع المخاطر على الأصول
-  riskBySymbol    String?  // JSON: {"EUR/USD": 2.5, "GBP/JPY": 1.8}
-  
-  // معلومات إضافية
-  openTrades      Int      @default(0)
-  totalExposure   Float    @default(0)
-  marginUsed      Float    @default(0)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([riskProfileId])
   @@index([date])
@@ -633,30 +589,25 @@ model RiskUsage {
 
 // تنبيهات المخاطر
 model RiskAlert {
-  id              String   @id @default(cuid())
-  userId          String
-  riskProfileId   String
+  id             String    @id @default(cuid())
+  userId         String
+  riskProfileId  String
+  type           String
+  severity       String    @default("warning")
+  title          String
+  message        String
+  currentValue   Float?
+  limitValue     Float?
+  percentage     Float?
+  isRead         Boolean   @default(false)
+  isResolved     Boolean   @default(false)
+  resolvedAt     DateTime?
+  tradeId        String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   
-  type            String   // daily_limit, weekly_limit, monthly_limit, position_size, risk_per_trade, drawdown, leverage
-  severity        String   @default("warning") // info, warning, critical
-  title           String
-  message         String
-  
-  currentValue    Float?
-  limitValue      Float?
-  percentage      Float?   // نسبة الاستخدام من الحد
-  
-  isRead          Boolean  @default(false)
-  isResolved      Boolean  @default(false)
-  resolvedAt      DateTime?
-  
-  tradeId         String?  // الصفقة المرتبطة
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([riskProfileId])
   @@index([type])
@@ -664,52 +615,39 @@ model RiskAlert {
   @@index([createdAt])
 }
 
-// سجل فحص المخاطر للصفقات
+// سجل فحص المخاطر
 model RiskCheck {
-  id              String   @id @default(cuid())
-  userId          String
-  riskProfileId   String
-  tradeId         String?
+  id               String    @id @default(cuid())
+  userId           String
+  riskProfileId    String
+  tradeId          String?
+  symbol           String
+  tradeType        String
+  entryPrice       Float
+  stopLoss         Float?
+  takeProfit       Float?
+  quantity         Float
+  lotSize          Float     @default(1)
+  riskAmount       Float     @default(0)
+  riskPercent      Float     @default(0)
+  rewardAmount     Float     @default(0)
+  riskRewardRatio  Float?
+  passed           Boolean   @default(false)
+  violations       String?
+  warnings         String?
+  userDecision     String?
+  modifiedValues   String?
+  createdAt        DateTime  @default(now())
   
-  // بيانات الصفقة المدخلة
-  symbol          String
-  tradeType       String   // buy, sell
-  entryPrice      Float
-  stopLoss        Float?
-  takeProfit      Float?
-  quantity        Float
-  lotSize         Float    @default(1)
-  
-  // حسابات المخاطر
-  riskAmount      Float    @default(0) // مبلغ المخاطرة بالدولار
-  riskPercent     Float    @default(0) // نسبة المخاطرة من رأس المال
-  rewardAmount    Float    @default(0)
-  riskRewardRatio Float?
-  
-  // نتائج الفحص
-  passed          Boolean  @default(false)
-  violations      String?  // JSON array of violations
-  warnings        String?  // JSON array of warnings
-  
-  // قرار المستخدم
-  userDecision    String?  // approved, rejected, modified
-  modifiedValues  String?  // JSON of modified values
-  
-  createdAt       DateTime @default(now())
-  
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([riskProfileId])
   @@index([passed])
   @@index([createdAt])
 }
 
-// ============================================
 // NextAuth.js Models
-// ============================================
-
-// حسابات OAuth (Google, GitHub, etc.)
 model AuthAccount {
   id                String  @id @default(cuid())
   userId            String
@@ -723,7 +661,6 @@ model AuthAccount {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
@@ -731,20 +668,17 @@ model AuthAccount {
   @@map("auth_accounts")
 }
 
-// جلسات المستخدمين
 model AuthSession {
   id           String   @id @default(cuid())
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("auth_sessions")
 }
 
-// رموز التحقق (Magic Links, Email Verification)
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -754,7 +688,6 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// المصادقة الثنائية (2FA)
 model TwoFactorAuth {
   id          String   @id @default(cuid())
   userId      String   @unique
@@ -764,24 +697,21 @@ model TwoFactorAuth {
   lastUsedAt  DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("two_factor_auth")
 }
 
-// سجل تسجيلات الدخول
 model LoginHistory {
-  id           String   @id @default(cuid())
-  userId       String
-  ipAddress    String?
-  userAgent    String?
-  location     String?
-  successful   Boolean  @default(true)
-  method       String   // password, oauth, magic_link, 2fa
-  createdAt    DateTime @default(now())
-
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  userId     String
+  ipAddress  String?
+  userAgent  String?
+  location   String?
+  successful Boolean  @default(true)
+  method     String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])

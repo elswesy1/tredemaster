@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useI18n } from '@/lib/i18n'
 import { TrendingUp, ArrowLeft, Loader2, Eye, EyeOff, Mail } from 'lucide-react'
+import Link from 'next/link'
 
 interface LoginPageProps {
   onLogin: (data: { email: string; password: string }) => void
@@ -193,7 +194,34 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
                 language === 'ar' ? 'دخول' : 'Login'
               )}
             </Button>
+                        <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-600"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                language === 'ar' ? 'دخول' : 'Login'
+              )}
+            </Button>
+            
+            {/* أضف هذا الكود هنا */}
+            <div className="text-center mt-3">
+              <Link 
+                href="/auth/forgot-password" 
+                className="text-sm text-cyan-400 hover:text-cyan-300 transition"
+              >
+                {language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+              </Link>
+            </div>
           </form>
+          
+          <div className="text-center">
+  <Link href="/forgot-password" className="text-sm text-emerald-400 hover:text-emerald-300">
+    {language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+  </Link>
+</div>
 
           <div className="mt-4 text-center">
             <p className="text-sm text-muted-foreground">
