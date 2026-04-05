@@ -1,763 +1,577 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
+import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useI18n } from '@/lib/i18n'
-import { cn } from '@/lib/utils'
-import { useToast } from '@/hooks/use-toast'
 import { 
-  Plus, 
-  Wallet, 
-  TrendingUp, 
-  TrendingDown,
-  DollarSign,
-  PieChart,
-  Link2,
+  Wallet,
   Building2,
-  Server,
-  RefreshCw,
+  Briefcase,
+  TrendingUp,
+  LineChart,
+  Plus,
+  ArrowUpRight,
+  ArrowDownRight,
+  Link2,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Eye,
-  EyeOff,
-  Trash2,
-  Edit,
-  CreditCard,
-  BarChart3,
-  LineChart,
-  Coins,
-  Landmark,
-  ChartLine,
-  Loader2,
-  ArrowUpRight,
-  ArrowDownRight
+  Shield,
+  AlertTriangle,
+  Target
 } from 'lucide-react'
-import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 
-// Types
-interface Asset {
-  id: string
-  name: string
-  assetType: 'forex' | 'stocks' | 'crypto' | 'commodities' | 'indices'
-  symbol: string | null
-  quantity: number
-  entryPrice: number
-  currentPrice: number
-  currency: string
-  connectionMethod: 'manual' | 'mt4' | 'mt5' | 'tradingview' | 'other'
-  platform: string | null
-  broker: string | null
-  server: string | null
-  accountNumber: string | null
-  status: 'active' | 'inactive' | 'connected' | 'disconnected' | 'syncing' | 'error'
-  lastSync: Date | null
-  autoSync: boolean
-  currentValue: number
-  profitLoss: number
-  profitLossPercent: number
-  notes: string | null
-  createdAt: Date
-  updatedAt: Date
+// Account Types Configuration
+const ACCOUNT_TYPES = {
+  broker: {
+    icon: Building2,
+    gradient: 'from-blue-500 to-cyan-500',
+    badgeColor: 'bg-blue-500',
+    borderColor: 'border-blue-500/30',
+    label: { ar: 'وسيط', en: 'Broker' }
+  },
+  propfirm: {
+    icon: Briefcase,
+    gradient: 'from-purple-500 to-pink-500',
+    badgeColor: 'bg-purple-500',
+    borderColor: 'border-purple-500/30',
+    label: { ar: 'شركة تمويل', en: 'Prop Firm' }
+  },
+  indices: {
+    icon: TrendingUp,
+    gradient: 'from-green-500 to-emerald-500',
+    badgeColor: 'bg-green-500',
+    borderColor: 'border-green-500/30',
+    label: { ar: 'مؤشرات', en: 'Indices' }
+  },
+  stocks: {
+    icon: LineChart,
+    gradient: 'from-amber-500 to-orange-500',
+    badgeColor: 'bg-amber-500',
+    borderColor: 'border-amber-500/30',
+    label: { ar: 'أسهم', en: 'Stocks' }
+  }
 }
 
-interface FormData {
-  name: string
-  assetType: 'forex' | 'stocks' | 'crypto' | 'commodities' | 'indices'
-  symbol: string
-  quantity: string
-  entryPrice: string
-  currentPrice: string
-  currency: string
-  connectionMethod: 'manual' | 'mt4' | 'mt5' | 'tradingview' | 'other'
-  platform: string
-  broker: string
-  server: string
-  accountNumber: string
-  password: string
-  apiKey: string
-  apiSecret: string
-  autoSync: boolean
-  notes: string
+// Prop Firm Templates
+const PROP_FIRM_TEMPLATES = [
+  { 
+    name: 'FTMO', 
+    phases: [
+      { phase: 'Phase 1', target: 10, maxDailyLoss: 5, maxOverallLoss: 10, minDays: 30 },
+      { phase: 'Phase 2', target: 5, maxDailyLoss: 5, maxOverallLoss: 10, minDays: 30 },
+      { phase: 'Funded', target: null, maxDailyLoss: 5, maxOverallLoss: 10, minDays: null }
+    ]
+  },
+  { 
+    name: 'MFF', 
+    phases: [
+      { phase: 'Phase 1', target: 8, maxDailyLoss: 5, maxOverallLoss: 12, minDays: 30 },
+      { phase: 'Funded', target: null, maxDailyLoss: 5, maxOverallLoss: 12, minDays: null }
+    ]
+  },
+  { 
+    name: 'The Funded Trader', 
+    phases: [
+      { phase: 'Phase 1', target: 10, maxDailyLoss: 5, maxOverallLoss: 10, minDays: 30 },
+      { phase: 'Phase 2', target: 5, maxDailyLoss: 5, maxOverallLoss: 10, minDays: 30 }
+    ]
+  }
+]
+
+// Sample sparkline data (7 days equity curve)
+const generateSparkline = (trend: 'up' | 'down' | 'flat') => {
+  const base = 50
+  if (trend === 'up') return [45, 48, 52, 55, 58, 62, 65]
+  if (trend === 'down') return [65, 62, 58, 55, 52, 48, 45]
+  return [50, 52, 48, 50, 52, 48, 50]
 }
 
-const initialFormData: FormData = {
-  name: '',
-  assetType: 'forex',
-  symbol: '',
-  quantity: '',
-  entryPrice: '',
-  currentPrice: '',
-  currency: 'USD',
-  connectionMethod: 'manual',
-  platform: '',
-  broker: '',
-  server: '',
-  accountNumber: '',
-  password: '',
-  apiKey: '',
-  apiSecret: '',
-  autoSync: false,
-  notes: ''
+// Sample accounts with enhanced data
+const sampleAccounts = {
+  broker: [
+    { 
+      id: '1', 
+      name: 'IC Markets USD', 
+      broker: 'IC Markets', 
+      balance: 5000, 
+      equity: 5200, 
+      status: 'connected', 
+      platform: 'MT5',
+      sparkline: generateSparkline('up'),
+      maxDrawdown: 10,
+      currentDrawdown: 2.3
+    },
+    { 
+      id: '2', 
+      name: 'Exness EUR', 
+      broker: 'Exness', 
+      balance: 3000, 
+      equity: 2850, 
+      status: 'connected', 
+      platform: 'MT4',
+      sparkline: generateSparkline('down'),
+      maxDrawdown: 10,
+      currentDrawdown: 5.2
+    },
+  ],
+  propfirm: [
+    { 
+      id: '3', 
+      name: 'FTMO Challenge', 
+      company: 'FTMO', 
+      phase: 'Phase 1', 
+      balance: 10000, 
+      target: 10, 
+      current: 4.5, 
+      profitTarget: 1000,
+      currentProfit: 450,
+      dailyLossLimit: 500,
+      currentDailyLoss: 120,
+      overallLossLimit: 1000,
+      currentOverallLoss: 250,
+      status: 'active',
+      sparkline: generateSparkline('up'),
+      maxDrawdown: 5,
+      currentDrawdown: 1.2,
+      daysLeft: 22
+    },
+    { 
+      id: '4', 
+      name: 'MFF Funded', 
+      company: 'MyForexFunds', 
+      phase: 'Funded', 
+      balance: 50000, 
+      profitTarget: null,
+      currentProfit: 1250,
+      dailyLossLimit: 2500,
+      currentDailyLoss: 380,
+      overallLossLimit: 5000,
+      currentOverallLoss: 1200,
+      status: 'funded',
+      sparkline: generateSparkline('flat'),
+      maxDrawdown: 5,
+      currentDrawdown: 3.8
+    },
+  ],
+  indices: [
+    { 
+      id: '5', 
+      name: 'DAX Scalping', 
+      index: 'DAX 40', 
+      balance: 8000, 
+      equity: 8450, 
+      status: 'active',
+      sparkline: generateSparkline('up'),
+      maxDrawdown: 8,
+      currentDrawdown: 2.5
+    },
+    { 
+      id: '6', 
+      name: 'NAS100 Swing', 
+      index: 'NASDAQ 100', 
+      balance: 10000, 
+      equity: 9800, 
+      status: 'active',
+      sparkline: generateSparkline('down'),
+      maxDrawdown: 8,
+      currentDrawdown: 6.5
+    },
+  ],
+  stocks: [
+    { 
+      id: '7', 
+      name: 'Tech Stocks', 
+      exchange: 'NASDAQ', 
+      balance: 15000, 
+      stocks: ['AAPL', 'GOOGL', 'MSFT'], 
+      status: 'active',
+      sparkline: generateSparkline('up'),
+      maxDrawdown: 15,
+      currentDrawdown: 4.2
+    },
+    { 
+      id: '8', 
+      name: 'Saudi Stocks', 
+      exchange: 'Tadawul', 
+      balance: 50000, 
+      stocks: ['2222.SR', '1120.SR'], 
+      status: 'active',
+      sparkline: generateSparkline('flat'),
+      maxDrawdown: 15,
+      currentDrawdown: 8.5
+    },
+  ]
 }
 
-// Colors for pie chart
-const COLORS = ['#22C55E', '#3B82F6', '#A855F7', '#F59E0B', '#EF4444']
+// Asset Allocation Data for Tree Map
+const assetAllocationData = [
+  { name: 'FTMO Challenge', value: 10000, type: 'propfirm', color: '#a855f7' },
+  { name: 'MFF Funded', value: 50000, type: 'propfirm', color: '#a855f7' },
+  { name: 'DAX Scalping', value: 8000, type: 'indices', color: '#22c55e' },
+  { name: 'NAS100 Swing', value: 10000, type: 'indices', color: '#22c55e' },
+  { name: 'Tech Stocks', value: 15000, type: 'stocks', color: '#f59e0b' },
+  { name: 'Saudi Stocks', value: 50000, type: 'stocks', color: '#f59e0b' },
+  { name: 'IC Markets', value: 5000, type: 'broker', color: '#3b82f6' },
+  { name: 'Exness', value: 3000, type: 'broker', color: '#3b82f6' },
+]
 
-export function PortfolioView() {
-  const { t, language } = useI18n()
-  const { toast } = useToast()
-  const isRTL = language === 'ar'
+// Sparkline SVG Component
+function Sparkline({ data, width = 80, height = 30, color = '#10b981' }: { data: number[]; width?: number; height?: number; color?: string }) {
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const range = max - min || 1
   
-  // State
-  const [assets, setAssets] = useState<Asset[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showAddDialog, setShowAddDialog] = useState(false)
-  const [showEditDialog, setShowEditDialog] = useState(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
-  const [formData, setFormData] = useState<FormData>(initialFormData)
-  const [showPassword, setShowPassword] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [connectionTab, setConnectionTab] = useState<'manual' | 'mt4' | 'mt5' | 'tradingview' | 'other'>('manual')
+  const points = data.map((value, index) => {
+    const x = (index / (data.length - 1)) * width
+    const y = height - ((value - min) / range) * height
+    return `${x},${y}`
+  }).join(' ')
+
+  return (
+    <svg width={width} height={height} className="opacity-60">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        points={points}
+      />
+    </svg>
+  )
+}
+
+// Health Status Indicator
+function HealthIndicator({ current, max }: { current: number; max: number }) {
+  const percentage = (current / max) * 100
   
-  // Fetch assets
-  const fetchAssets = useCallback(async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/assets')
-      if (response.ok) {
-        const data = await response.json()
-        setAssets(data)
-      }
-    } catch (error) {
-      console.error('Error fetching assets:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchAssets()
-  }, [fetchAssets])
-
-  // Calculate portfolio stats
-  const stats = {
-    totalValue: assets.reduce((sum, a) => sum + a.currentValue, 0),
-    totalProfitLoss: assets.reduce((sum, a) => sum + a.profitLoss, 0),
-    totalInvested: assets.reduce((sum, a) => sum + (a.quantity * a.entryPrice), 0),
-    connectedAccounts: assets.filter(a => a.status === 'connected' || a.status === 'active').length,
-    totalAccounts: assets.length
+  let color = 'bg-green-500'
+  let bgColor = 'bg-green-500/10'
+  let borderColor = 'border-green-500/30'
+  let Icon = CheckCircle
+  let label = { ar: 'آمن', en: 'Safe' }
+  
+  if (percentage > 50) {
+    color = 'bg-yellow-500'
+    bgColor = 'bg-yellow-500/10'
+    borderColor = 'border-yellow-500/30'
+    Icon = AlertTriangle
+    label = { ar: 'تحذير', en: 'Warning' }
   }
   
-  const totalProfitLossPercent = stats.totalInvested > 0 
-    ? (stats.totalProfitLoss / stats.totalInvested) * 100 
-    : 0
-
-  // Asset distribution data for pie chart
-  const distributionByType = assets.reduce((acc, asset) => {
-    const type = asset.assetType
-    const existing = acc.find(a => a.name === type)
-    if (existing) {
-      existing.value += asset.currentValue
-    } else {
-      acc.push({ 
-        name: type, 
-        value: asset.currentValue,
-        label: language === 'ar' 
-          ? t(`assets.types.${type}`) 
-          : type.charAt(0).toUpperCase() + type.slice(1)
-      })
-    }
-    return acc
-  }, [] as { name: string; value: number; label: string }[])
-
-  // Distribution by connection method
-  const distributionByConnection = assets.reduce((acc, asset) => {
-    const method = asset.connectionMethod
-    const existing = acc.find(a => a.name === method)
-    if (existing) {
-      existing.count += 1
-    } else {
-      acc.push({ 
-        name: method, 
-        count: 1,
-        label: t(`assets.connection.${method}`)
-      })
-    }
-    return acc
-  }, [] as { name: string; count: number; label: string }[])
-
-  // Handle add asset
-  const handleAddAsset = async () => {
-    if (!formData.name) {
-      toast({
-        title: t('assets.messages.requiredFields'),
-        variant: 'destructive'
-      })
-      return
-    }
-
-    try {
-      setSaving(true)
-      const response = await fetch('/api/assets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          quantity: parseFloat(formData.quantity) || 0,
-          entryPrice: parseFloat(formData.entryPrice) || 0,
-          currentPrice: parseFloat(formData.currentPrice) || 0,
-          connectionMethod: connectionTab,
-          userId: 'default-user'
-        })
-      })
-
-      if (response.ok) {
-        toast({
-          title: t('assets.messages.addedSuccess')
-        })
-        setShowAddDialog(false)
-        setFormData(initialFormData)
-        setConnectionTab('manual')
-        fetchAssets()
-      } else {
-        throw new Error('Failed to add asset')
-      }
-    } catch (error) {
-      console.error('Error adding asset:', error)
-      toast({
-        title: t('assets.messages.connectionError'),
-        variant: 'destructive'
-      })
-    } finally {
-      setSaving(false)
-    }
+  if (percentage > 75) {
+    color = 'bg-red-500'
+    bgColor = 'bg-red-500/10'
+    borderColor = 'border-red-500/30'
+    Icon = AlertCircle
+    label = { ar: 'خطر', en: 'Danger' }
   }
 
-  // Handle edit asset
-  const handleEditAsset = async () => {
-    if (!selectedAsset || !formData.name) {
-      toast({
-        title: t('assets.messages.requiredFields'),
-        variant: 'destructive'
-      })
-      return
-    }
-
-    try {
-      setSaving(true)
-      const response = await fetch(`/api/assets/${selectedAsset.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          quantity: parseFloat(formData.quantity) || 0,
-          entryPrice: parseFloat(formData.entryPrice) || 0,
-          currentPrice: parseFloat(formData.currentPrice) || 0,
-        })
-      })
-
-      if (response.ok) {
-        toast({
-          title: t('assets.messages.updatedSuccess')
-        })
-        setShowEditDialog(false)
-        setSelectedAsset(null)
-        setFormData(initialFormData)
-        fetchAssets()
-      } else {
-        throw new Error('Failed to update asset')
-      }
-    } catch (error) {
-      console.error('Error updating asset:', error)
-      toast({
-        title: t('assets.messages.connectionError'),
-        variant: 'destructive'
-      })
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  // Handle delete asset
-  const handleDeleteAsset = async () => {
-    if (!selectedAsset) return
-
-    try {
-      const response = await fetch(`/api/assets/${selectedAsset.id}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        toast({
-          title: t('assets.messages.deletedSuccess')
-        })
-        setShowDeleteDialog(false)
-        setSelectedAsset(null)
-        fetchAssets()
-      } else {
-        throw new Error('Failed to delete asset')
-      }
-    } catch (error) {
-      console.error('Error deleting asset:', error)
-      toast({
-        title: t('assets.messages.connectionError'),
-        variant: 'destructive'
-      })
-    }
-  }
-
-  // Handle sync
-  const handleSync = async (asset: Asset) => {
-    // Update to syncing status
-    setAssets(assets.map(a => 
-      a.id === asset.id ? { ...a, status: 'syncing' as const } : a
-    ))
-    
-    try {
-      // Simulate sync delay
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      const response = await fetch(`/api/assets/${asset.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'connected',
-          lastSync: new Date()
-        })
-      })
-
-      if (response.ok) {
-        toast({
-          title: t('assets.messages.syncSuccess')
-        })
-        fetchAssets()
-      }
-    } catch (error) {
-      console.error('Error syncing:', error)
-      setAssets(assets.map(a => 
-        a.id === asset.id ? { ...a, status: 'error' as const } : a
-      ))
-    }
-  }
-
-  // Open edit dialog
-  const openEditDialog = (asset: Asset) => {
-    setSelectedAsset(asset)
-    setFormData({
-      name: asset.name,
-      assetType: asset.assetType,
-      symbol: asset.symbol || '',
-      quantity: asset.quantity.toString(),
-      entryPrice: asset.entryPrice.toString(),
-      currentPrice: asset.currentPrice.toString(),
-      currency: asset.currency,
-      connectionMethod: asset.connectionMethod,
-      platform: asset.platform || '',
-      broker: asset.broker || '',
-      server: asset.server || '',
-      accountNumber: asset.accountNumber || '',
-      password: '',
-      apiKey: '',
-      apiSecret: '',
-      autoSync: asset.autoSync,
-      notes: asset.notes || ''
-    })
-    setConnectionTab(asset.connectionMethod)
-    setShowEditDialog(true)
-  }
-
-  // Get status icon
-  const getStatusIcon = (status: Asset['status']) => {
-    switch (status) {
-      case 'connected':
-      case 'active':
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'disconnected':
-      case 'inactive':
-        return <XCircle className="h-4 w-4 text-red-500" />
-      case 'syncing':
-        return <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />
-      case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />
-    }
-  }
-
-  // Get status badge
-  const getStatusBadge = (status: Asset['status']) => {
-    const variants: Record<Asset['status'], { color: string; text: string }> = {
-      active: { color: 'bg-green-500/20 text-green-500 border-green-500/30', text: t('assets.status.active') },
-      inactive: { color: 'bg-gray-500/20 text-gray-500 border-gray-500/30', text: t('assets.status.inactive') },
-      connected: { color: 'bg-green-500/20 text-green-500 border-green-500/30', text: t('assets.status.connected') },
-      disconnected: { color: 'bg-red-500/20 text-red-500 border-red-500/30', text: t('assets.status.disconnected') },
-      syncing: { color: 'bg-blue-500/20 text-blue-500 border-blue-500/30', text: t('assets.status.syncing') },
-      error: { color: 'bg-red-500/20 text-red-500 border-red-500/30', text: t('assets.status.error') }
-    }
-    return variants[status]
-  }
-
-  // Get asset type icon
-  const getAssetTypeIcon = (type: Asset['assetType']) => {
-    switch (type) {
-      case 'forex':
-        return <DollarSign className="h-5 w-5" />
-      case 'stocks':
-        return <LineChart className="h-5 w-5" />
-      case 'crypto':
-        return <Coins className="h-5 w-5" />
-      case 'commodities':
-        return <Landmark className="h-5 w-5" />
-      case 'indices':
-        return <ChartLine className="h-5 w-5" />
-    }
-  }
-
-  // Get connection method icon
-  const getConnectionIcon = (method: Asset['connectionMethod']) => {
-    switch (method) {
-      case 'manual':
-        return <Edit className="h-4 w-4" />
-      case 'mt4':
-      case 'mt5':
-        return <Building2 className="h-4 w-4" />
-      case 'tradingview':
-        return <LineChart className="h-4 w-4" />
-      case 'other':
-        return <Link2 className="h-4 w-4" />
-    }
-  }
-
-  // Render add/edit form content
-  const renderFormContent = (isEdit: boolean = false) => (
-    <div className="space-y-6">
-      {/* Connection Method Tabs */}
-      <div className="space-y-2">
-        <Label>{t('assets.connection.title')}</Label>
-        <Tabs value={connectionTab} onValueChange={(v) => setConnectionTab(v as typeof connectionTab)} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="manual">{t('assets.connection.manual')}</TabsTrigger>
-            <TabsTrigger value="mt4">MT4</TabsTrigger>
-            <TabsTrigger value="mt5">MT5</TabsTrigger>
-            <TabsTrigger value="tradingview">TV</TabsTrigger>
-            <TabsTrigger value="other">{t('assets.connection.other')}</TabsTrigger>
-          </TabsList>
-
-          {/* Manual Entry Tab */}
-          <TabsContent value="manual" className="space-y-4 mt-4">
-            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4">
-              <p className="text-sm text-green-400">{t('assets.connection.manualDesc')}</p>
-            </div>
-          </TabsContent>
-
-          {/* MT4 Tab */}
-          <TabsContent value="mt4" className="space-y-4 mt-4">
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
-              <p className="text-sm text-blue-400">{t('assets.connection.mt4Desc')}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.broker')}</Label>
-                <Input 
-                  placeholder={t('assets.connectionFields.brokerPlaceholder')}
-                  value={formData.broker}
-                  onChange={(e) => setFormData({ ...formData, broker: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.server')}</Label>
-                <Input 
-                  placeholder={t('assets.connectionFields.serverPlaceholder')}
-                  value={formData.server}
-                  onChange={(e) => setFormData({ ...formData, server: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.accountNumber')}</Label>
-                <Input 
-                  placeholder={t('assets.connectionFields.accountNumberPlaceholder')}
-                  value={formData.accountNumber}
-                  onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.password')}</Label>
-                <div className="relative">
-                  <Input 
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="********"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className={cn("absolute top-1/2 -translate-y-1/2", isRTL ? "left-2" : "right-2")}
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* MT5 Tab */}
-          <TabsContent value="mt5" className="space-y-4 mt-4">
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
-              <p className="text-sm text-blue-400">{t('assets.connection.mt5Desc')}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.broker')}</Label>
-                <Input 
-                  placeholder={t('assets.connectionFields.brokerPlaceholder')}
-                  value={formData.broker}
-                  onChange={(e) => setFormData({ ...formData, broker: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.server')}</Label>
-                <Input 
-                  placeholder={t('assets.connectionFields.serverPlaceholder')}
-                  value={formData.server}
-                  onChange={(e) => setFormData({ ...formData, server: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.accountNumber')}</Label>
-                <Input 
-                  placeholder={t('assets.connectionFields.accountNumberPlaceholder')}
-                  value={formData.accountNumber}
-                  onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.password')}</Label>
-                <div className="relative">
-                  <Input 
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="********"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className={cn("absolute top-1/2 -translate-y-1/2", isRTL ? "left-2" : "right-2")}
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* TradingView Tab */}
-          <TabsContent value="tradingview" className="space-y-4 mt-4">
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 mb-4">
-              <p className="text-sm text-purple-400">{t('assets.connection.tradingviewDesc')}</p>
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.apiKey')}</Label>
-                <Input 
-                  placeholder={t('assets.connectionFields.apiKeyPlaceholder')}
-                  value={formData.apiKey}
-                  onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.apiSecret')}</Label>
-                <Input 
-                  type="password"
-                  placeholder={t('assets.connectionFields.apiSecretPlaceholder')}
-                  value={formData.apiSecret}
-                  onChange={(e) => setFormData({ ...formData, apiSecret: e.target.value })}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Other Tab */}
-          <TabsContent value="other" className="space-y-4 mt-4">
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4">
-              <p className="text-sm text-amber-400">{t('assets.connection.otherDesc')}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.platform')}</Label>
-                <Input 
-                  placeholder={t('assets.connectionFields.selectPlatform')}
-                  value={formData.platform}
-                  onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('assets.connectionFields.apiKey')}</Label>
-                <Input 
-                  placeholder={t('assets.connectionFields.apiKeyPlaceholder')}
-                  value={formData.apiKey}
-                  onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-                />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Asset Details */}
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>{t('assets.assetName')} *</Label>
-            <Input 
-              placeholder={t('assets.assetNamePlaceholder')}
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>{t('assets.assetType')} *</Label>
-            <Select value={formData.assetType} onValueChange={(v) => setFormData({ ...formData, assetType: v as FormData['assetType'] })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="forex">{t('assets.types.forex')}</SelectItem>
-                <SelectItem value="stocks">{t('assets.types.stocks')}</SelectItem>
-                <SelectItem value="crypto">{t('assets.types.crypto')}</SelectItem>
-                <SelectItem value="commodities">{t('assets.types.commodities')}</SelectItem>
-                <SelectItem value="indices">{t('assets.types.indices')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>{t('assets.symbol')}</Label>
-            <Input 
-              placeholder={t('assets.symbolPlaceholder')}
-              value={formData.symbol}
-              onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>{t('assets.quantity')} *</Label>
-            <Input 
-              type="number"
-              placeholder={t('assets.quantityPlaceholder')}
-              value={formData.quantity}
-              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>{t('assets.currency')}</Label>
-            <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="EUR">EUR</SelectItem>
-                <SelectItem value="GBP">GBP</SelectItem>
-                <SelectItem value="SAR">SAR</SelectItem>
-                <SelectItem value="AED">AED</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>{t('assets.entryPrice')} *</Label>
-            <Input 
-              type="number"
-              step="0.00001"
-              placeholder={t('assets.entryPricePlaceholder')}
-              value={formData.entryPrice}
-              onChange={(e) => setFormData({ ...formData, entryPrice: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>{t('assets.currentPrice')}</Label>
-            <Input 
-              type="number"
-              step="0.00001"
-              placeholder={t('assets.currentPricePlaceholder')}
-              value={formData.currentPrice}
-              onChange={(e) => setFormData({ ...formData, currentPrice: e.target.value })}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>{t('assets.notes')}</Label>
-          <Textarea 
-            placeholder={t('assets.notesPlaceholder')}
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            rows={2}
-          />
-        </div>
-
-        {connectionTab !== 'manual' && (
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>{t('assets.autoSync')}</Label>
-              <p className="text-xs text-muted-foreground">{t('assets.enableAutoSync')}</p>
-            </div>
-            <Switch 
-              checked={formData.autoSync}
-              onCheckedChange={(checked) => setFormData({ ...formData, autoSync: checked })}
-            />
-          </div>
-        )}
+  return (
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${bgColor} border ${borderColor}`}>
+      <Icon className={`h-4 w-4 ${color.replace('bg-', 'text-')}`} />
+      <div className="flex flex-col">
+        <span className="text-xs font-medium">{label.ar}</span>
+        <span className="text-[10px] text-gray-400">{current.toFixed(1)}% / {max}%</span>
       </div>
     </div>
   )
+}
+
+// Type Badge Component
+function TypeBadge({ type }: { type: keyof typeof ACCOUNT_TYPES }) {
+  const config = ACCOUNT_TYPES[type]
+  
+  return (
+    <div className={`absolute top-0 left-0 right-0 h-1 ${config.badgeColor}`} />
+  )
+}
+
+// Prop Firm Distance Bars Component
+function PropFirmDistanceBars({ 
+  profitTarget, 
+  currentProfit, 
+  dailyLossLimit, 
+  currentDailyLoss,
+  overallLossLimit,
+  currentOverallLoss,
+  language 
+}: { 
+  profitTarget: number | null
+  currentProfit: number
+  dailyLossLimit: number
+  currentDailyLoss: number
+  overallLossLimit: number
+  currentOverallLoss: number
+  language: string
+}) {
+  const profitPercentage = profitTarget ? (currentProfit / profitTarget) * 100 : 0
+  const dailyLossPercentage = (currentDailyLoss / dailyLossLimit) * 100
+  const overallLossPercentage = (currentOverallLoss / overallLossLimit) * 100
+
+  return (
+    <div className="space-y-3 mt-4 p-4 rounded-lg bg-purple-500/5 border border-purple-500/20">
+      {/* Profit Target Distance */}
+      {profitTarget && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-green-400" />
+              {language === 'ar' ? 'المسافة للهدف' : 'Distance to Target'}
+            </span>
+            <span className="text-green-400 font-bold">
+              ${currentProfit.toFixed(0)} / ${profitTarget}
+            </span>
+          </div>
+          <div className="relative">
+            <Progress value={profitPercentage} className="h-2 bg-gray-800" />
+            <span className="absolute right-0 top-0 text-[10px] text-gray-400 -mt-4">
+              {profitPercentage.toFixed(1)}%
+            </span>
+          </div>
+          <p className="text-xs text-gray-400">
+            {language === 'ar' 
+              ? `متبقي: $${(profitTarget - currentProfit).toFixed(0)} (${(100 - profitPercentage).toFixed(1)}%)`
+              : `Remaining: $${(profitTarget - currentProfit).toFixed(0)} (${(100 - profitPercentage).toFixed(1)}%)`}
+          </p>
+        </div>
+      )}
+
+      {/* Daily Drawdown Distance */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-yellow-400" />
+            {language === 'ar' ? 'الحد اليومي للتراجع' : 'Daily Drawdown Limit'}
+          </span>
+          <span className={`font-bold ${dailyLossPercentage > 80 ? 'text-red-400' : 'text-yellow-400'}`}>
+            ${currentDailyLoss.toFixed(0)} / ${dailyLossLimit}
+          </span>
+        </div>
+        <div className="relative">
+          <Progress 
+            value={dailyLossPercentage} 
+            className={`h-2 ${dailyLossPercentage > 80 ? 'bg-red-900' : 'bg-gray-800'}`} 
+          />
+          <span className="absolute right-0 top-0 text-[10px] text-gray-400 -mt-4">
+            {dailyLossPercentage.toFixed(1)}%
+          </span>
+        </div>
+        <p className={`text-xs ${dailyLossPercentage > 80 ? 'text-red-400' : 'text-gray-400'}`}>
+          {language === 'ar' 
+            ? `متبقي: $${(dailyLossLimit - currentDailyLoss).toFixed(0)} للحد اليومي`
+            : `Remaining: $${(dailyLossLimit - currentDailyLoss).toFixed(0)} daily limit`}
+        </p>
+      </div>
+
+      {/* Overall Drawdown Distance */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="flex items-center gap-2">
+            <Shield className="h-4 w-4 text-red-400" />
+            {language === 'ar' ? 'الحد الإجمالي للتراجع' : 'Overall Drawdown Limit'}
+          </span>
+          <span className={`font-bold ${overallLossPercentage > 80 ? 'text-red-400' : 'text-orange-400'}`}>
+            ${currentOverallLoss.toFixed(0)} / ${overallLossLimit}
+          </span>
+        </div>
+        <div className="relative">
+          <Progress 
+            value={overallLossPercentage} 
+            className={`h-2 ${overallLossPercentage > 80 ? 'bg-red-900' : 'bg-gray-800'}`} 
+          />
+          <span className="absolute right-0 top-0 text-[10px] text-gray-400 -mt-4">
+            {overallLossPercentage.toFixed(1)}%
+          </span>
+        </div>
+        <p className={`text-xs ${overallLossPercentage > 80 ? 'text-red-400' : 'text-gray-400'}`}>
+          {language === 'ar' 
+            ? `متبقي: $${(overallLossLimit - currentOverallLoss).toFixed(0)} للحد الإجمالي`
+            : `Remaining: $${(overallLossLimit - currentOverallLoss).toFixed(0)} overall limit`}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// Tree Map Component for Asset Allocation
+function TreeMap({ data, language }: { data: typeof assetAllocationData; language: string }) {
+  const totalValue = data.reduce((sum, item) => sum + item.value, 0)
+  
+  // Calculate grid layout (simplified tree map)
+  const sortedData = [...data].sort((a, b) => b.value - a.value)
+  
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 auto-rows-fr">
+      {sortedData.map((item, index) => {
+        const percentage = ((item.value / totalValue) * 100)
+        const isLarge = percentage > 20
+        
+        return (
+          <div
+            key={index}
+            className={`
+              relative rounded-lg border-2 overflow-hidden
+              ${isLarge ? 'md:col-span-2 md:row-span-2' : ''}
+            `}
+            style={{ 
+              borderColor: item.color,
+              backgroundColor: `${item.color}15`
+            }}
+          >
+            {/* Content */}
+            <div className="p-3 h-full flex flex-col justify-between">
+              <div>
+                <p className="font-bold text-white text-sm">{item.name}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  ${item.value.toLocaleString()}
+                </p>
+              </div>
+              <div className="flex items-end justify-between mt-2">
+                <Badge 
+                  variant="outline" 
+                  className="text-[10px]"
+                  style={{ borderColor: item.color, color: item.color }}
+                >
+                  {percentage.toFixed(1)}%
+                </Badge>
+                {percentage > 30 && (
+                  <div className="flex items-center gap-1 text-yellow-500 text-[10px]">
+                    <AlertTriangle className="h-3 w-3" />
+                    {language === 'ar' ? 'تركيز عالي' : 'High Exposure'}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Size indicator bar */}
+            <div 
+              className="absolute bottom-0 left-0 right-0 h-1"
+              style={{ 
+                backgroundColor: item.color,
+                opacity: 0.5
+              }}
+            />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Prop Firm Account Card
+function PropFirmCard({ account, language }: { account: typeof sampleAccounts.propfirm[0]; language: string }) {
+  const config = ACCOUNT_TYPES.propfirm
+  
+  return (
+    <Card className={`relative overflow-hidden ${config.borderColor} hover:border-purple-500/50 transition-all`}>
+      <TypeBadge type="propfirm" />
+      
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-lg">{account.name}</CardTitle>
+            <CardDescription className="flex items-center gap-2 mt-1">
+              <Badge variant="outline" className="border-purple-500/30 text-purple-400">
+                {account.company}
+              </Badge>
+              <Badge variant="outline" className="border-purple-500/30 text-purple-400">
+                {account.phase}
+              </Badge>
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Sparkline data={account.sparkline} color="#a855f7" />
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        {/* Balance */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-400">
+            {language === 'ar' ? 'الرصيد' : 'Balance'}
+          </span>
+          <span className="text-xl font-bold">
+            ${account.balance.toLocaleString()}
+          </span>
+        </div>
+
+        {/* Days Left (if applicable) */}
+        {account.daysLeft && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-400">
+              {language === 'ar' ? 'الأيام المتبقية' : 'Days Left'}
+            </span>
+            <Badge variant="outline" className="border-purple-500/30">
+              {account.daysLeft} {language === 'ar' ? 'يوم' : 'days'}
+            </Badge>
+          </div>
+        )}
+
+        {/* Prop Firm Distance Bars */}
+        <PropFirmDistanceBars
+          profitTarget={account.profitTarget}
+          currentProfit={account.currentProfit}
+          dailyLossLimit={account.dailyLossLimit}
+          currentDailyLoss={account.currentDailyLoss}
+          overallLossLimit={account.overallLossLimit}
+          currentOverallLoss={account.currentOverallLoss}
+          language={language}
+        />
+
+        {/* Health Indicator */}
+        <HealthIndicator current={account.currentDrawdown} max={account.maxDrawdown} />
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-2">
+          <Button variant="outline" size="sm" className="flex-1">
+            {language === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+          </Button>
+          <Button variant="outline" size="sm">
+            <Link2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function PortfolioView() {
+  const { t, language } = useI18n()
+  const isRTL = language === 'ar'
+  const [activeTab, setActiveTab] = useState('broker')
+
+  // Calculate totals
+  const totals = {
+    broker: {
+      accounts: sampleAccounts.broker.length,
+      balance: sampleAccounts.broker.reduce((sum, a) => sum + a.balance, 0),
+      equity: sampleAccounts.broker.reduce((sum, a) => sum + a.equity, 0),
+      connected: sampleAccounts.broker.filter(a => a.status === 'connected').length
+    },
+    propfirm: {
+      accounts: sampleAccounts.propfirm.length,
+      balance: sampleAccounts.propfirm.reduce((sum, a) => sum + a.balance, 0),
+      funded: sampleAccounts.propfirm.filter(a => a.status === 'funded').length,
+      active: sampleAccounts.propfirm.filter(a => a.status === 'active').length
+    },
+    indices: {
+      accounts: sampleAccounts.indices.length,
+      balance: sampleAccounts.indices.reduce((sum, a) => sum + a.balance, 0),
+      equity: sampleAccounts.indices.reduce((sum, a) => sum + a.equity, 0)
+    },
+    stocks: {
+      accounts: sampleAccounts.stocks.length,
+      balance: sampleAccounts.stocks.reduce((sum, a) => sum + a.balance, 0)
+    }
+  }
+
+  const grandTotal = totals.broker.balance + totals.propfirm.balance + totals.indices.balance + totals.stocks.balance
+  const totalAccounts = totals.broker.accounts + totals.propfirm.accounts + totals.indices.accounts + totals.stocks.accounts
 
   return (
     <div className="space-y-6">
@@ -766,43 +580,34 @@ export function PortfolioView() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Wallet className="h-6 w-6 text-green-500" />
-            {t('portfolio.title')}
+            {language === 'ar' ? 'إدارة الحسابات' : 'Account Management'}
           </h2>
           <p className="text-muted-foreground mt-1">
             {language === 'ar' 
-              ? 'إدارة جميع حساباتك وأصولك في مكان واحد' 
+              ? 'إدارة جميع حساباتك وأصولك في مكان واحد'
               : 'Manage all your accounts and assets in one place'}
           </p>
         </div>
-        <Button 
-          className="bg-gradient-to-r from-green-500 to-emerald-600"
-          onClick={() => {
-            setFormData(initialFormData)
-            setConnectionTab('manual')
-            setShowAddDialog(true)
-          }}
-        >
+        <Button className="bg-gradient-to-r from-green-500 to-emerald-600">
           <Plus className="h-4 w-4 mr-2" />
-          {t('portfolio.addAccountAsset')}
+          {language === 'ar' ? 'إضافة حساب' : 'Add Account'}
         </Button>
       </div>
 
-      {/* Portfolio Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Overview Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 border-green-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t('portfolio.totalBalance')}
+                <p className="text-sm text-gray-400">
+                  {language === 'ar' ? 'إجمالي الرصيد' : 'Total Balance'}
                 </p>
-                <p className="text-2xl font-bold">
-                  ${stats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <p className="text-2xl font-bold mt-1">
+                  ${grandTotal.toLocaleString()}
                 </p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-green-500" />
-              </div>
+              <Wallet className="h-8 w-8 text-green-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -811,506 +616,266 @@ export function PortfolioView() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t('portfolio.totalEquity')}
+                <p className="text-sm text-gray-400">
+                  {language === 'ar' ? 'عدد الحسابات' : 'Total Accounts'}
                 </p>
-                <p className="text-2xl font-bold">
-                  ${(stats.totalValue + stats.totalProfitLoss).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </p>
+                <p className="text-2xl font-bold mt-1">{totalAccounts}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <BarChart3 className="h-6 w-6 text-blue-500" />
-              </div>
+              <Building2 className="h-8 w-8 text-blue-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className={cn(
-          "bg-gradient-to-br border",
-          stats.totalProfitLoss >= 0 
-            ? "from-emerald-500/10 to-green-500/5 border-emerald-500/20"
-            : "from-red-500/10 to-rose-500/5 border-red-500/20"
-        )}>
+        <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/5 border-purple-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t('portfolio.profitLoss')}
+                <p className="text-sm text-gray-400">
+                  {language === 'ar' ? 'حسابات التمويل' : 'Prop Firms'}
                 </p>
-                <p className={cn(
-                  "text-2xl font-bold flex items-center gap-1",
-                  stats.totalProfitLoss >= 0 ? "text-green-500" : "text-red-500"
-                )}>
-                  {stats.totalProfitLoss >= 0 
-                    ? <ArrowUpRight className="h-5 w-5" />
-                    : <ArrowDownRight className="h-5 w-5" />
-                  }
-                  {stats.totalProfitLoss >= 0 ? '+' : ''}
-                  ${stats.totalProfitLoss.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </p>
-                <p className={cn(
-                  "text-sm",
-                  stats.totalProfitLoss >= 0 ? "text-green-500" : "text-red-500"
-                )}>
-                  ({totalProfitLossPercent >= 0 ? '+' : ''}{totalProfitLossPercent.toFixed(2)}%)
-                </p>
+                <p className="text-2xl font-bold mt-1">{totals.propfirm.accounts}</p>
               </div>
-              <div className={cn(
-                "h-12 w-12 rounded-full flex items-center justify-center",
-                stats.totalProfitLoss >= 0 ? "bg-green-500/20" : "bg-red-500/20"
-              )}>
-                {stats.totalProfitLoss >= 0 
-                  ? <TrendingUp className="h-6 w-6 text-green-500" />
-                  : <TrendingDown className="h-6 w-6 text-red-500" />
-                }
-              </div>
+              <Briefcase className="h-8 w-8 text-purple-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-violet-500/5 border-purple-500/20">
+        <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border-amber-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t('portfolio.connectedAccounts')}
+                <p className="text-sm text-gray-400">
+                  {language === 'ar' ? 'الحسابات المتصلة' : 'Connected'}
                 </p>
-                <p className="text-2xl font-bold">
-                  {stats.connectedAccounts} / {stats.totalAccounts}
-                </p>
+                <p className="text-2xl font-bold mt-1">{totals.broker.connected}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                <Link2 className="h-6 w-6 text-purple-500" />
-              </div>
+              <Link2 className="h-8 w-8 text-amber-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Assets List */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              {t('portfolio.accountsAssets')}
-            </CardTitle>
-            <CardDescription>
-              {t('portfolio.allConnectedAccounts')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : assets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <Wallet className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold">
-                  {t('portfolio.noAssetsYet')}
-                </h3>
-                <p className="text-muted-foreground text-center mt-2 max-w-md">
-                  {t('portfolio.addFirstAccount')}
-                </p>
-                <div className="flex flex-wrap gap-2 mt-6 justify-center">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setFormData(initialFormData)
-                      setConnectionTab('manual')
-                      setShowAddDialog(true)
-                    }}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    {t('portfolio.manualEntry')}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setFormData(initialFormData)
-                      setConnectionTab('mt4')
-                      setShowAddDialog(true)
-                    }}
-                    className="gap-2"
-                  >
-                    <Building2 className="h-4 w-4" />
-                    MT4/MT5
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setFormData(initialFormData)
-                      setConnectionTab('tradingview')
-                      setShowAddDialog(true)
-                    }}
-                    className="gap-2"
-                  >
-                    <LineChart className="h-4 w-4" />
-                    TradingView
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                {assets.map((asset) => (
-                  <div 
-                    key={asset.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "h-10 w-10 rounded-lg flex items-center justify-center",
-                        asset.profitLoss >= 0 
-                          ? "bg-green-500/20" 
-                          : "bg-red-500/20"
-                      )}>
-                        {getAssetTypeIcon(asset.assetType)}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium">{asset.name}</p>
-                          <Badge variant="outline" className={cn("text-xs", getStatusBadge(asset.status).color)}>
-                            {getStatusIcon(asset.status)}
-                            <span className={cn("mx-1", isRTL ? "mr-1" : "ml-1")}>{getStatusBadge(asset.status).text}</span>
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            {getConnectionIcon(asset.connectionMethod)}
-                            <span className={cn("mx-1", isRTL ? "mr-1" : "ml-1")}>{t(`assets.connection.${asset.connectionMethod}`)}</span>
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {t(`assets.types.${asset.assetType}`)}
-                          {asset.symbol && ` • ${asset.symbol}`}
-                          {asset.broker && ` • ${asset.broker}`}
-                          {asset.accountNumber && ` • #${asset.accountNumber}`}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <div className={cn("text-right", isRTL && "text-left")}>
-                        <p className="font-bold">
-                          ${asset.currentValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </p>
-                        <p className={cn(
-                          "text-sm flex items-center gap-1 justify-end",
-                          isRTL && "flex-row-reverse",
-                          asset.profitLoss >= 0 ? "text-green-500" : "text-red-500"
-                        )}>
-                          {asset.profitLoss >= 0 ? '+' : ''}
-                          ${asset.profitLoss.toFixed(2)} ({asset.profitLossPercent.toFixed(2)}%)
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center gap-1">
-                        {asset.connectionMethod !== 'manual' && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleSync(asset)}
-                            disabled={asset.status === 'syncing'}
-                            title={t('assets.syncNow')}
-                          >
-                            <RefreshCw className={cn("h-4 w-4", asset.status === 'syncing' && "animate-spin")} />
-                          </Button>
-                        )}
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => openEditDialog(asset)}
-                          title={t('common.edit')}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => {
-                            setSelectedAsset(asset)
-                            setShowDeleteDialog(true)
-                          }}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          title={t('common.delete')}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Asset Allocation Tree Map */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LineChart className="h-5 w-5 text-green-500" />
+            {language === 'ar' ? 'توزيع الأصول' : 'Asset Allocation'}
+          </CardTitle>
+          <CardDescription>
+            {language === 'ar' 
+              ? 'خريطة توضح توزيع محفظتك المالية'
+              : 'Visual map of your portfolio distribution'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TreeMap data={assetAllocationData} language={language} />
+        </CardContent>
+      </Card>
 
-        {/* Distribution Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChart className="h-5 w-5" />
-              {t('assets.distribution.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {assets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <PieChart className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">{t('assets.distribution.noData')}</p>
-              </div>
-            ) : (
-              <>
-                <Tabs defaultValue="byType" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
-                    <TabsTrigger value="byType">{t('assets.distribution.byType')}</TabsTrigger>
-                    <TabsTrigger value="byConnection">{t('assets.distribution.byConnection')}</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="byType">
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartsPieChart>
-                          <Pie
-                            data={distributionByType}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                          >
-                            {distributionByType.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            formatter={(value: number) => `$${value.toLocaleString()}`}
-                            contentStyle={{ 
-                              backgroundColor: 'hsl(var(--card))',
-                              border: '1px solid hsl(var(--border))',
-                              borderRadius: '8px'
-                            }}
-                          />
-                          <Legend 
-                            formatter={(value: string) => t(`assets.types.${value}`)}
-                          />
-                        </RechartsPieChart>
-                      </ResponsiveContainer>
+      {/* Account Types Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="broker" className="gap-2">
+            <Building2 className="h-4 w-4" />
+            {language === 'ar' ? 'وسطاء' : 'Brokers'}
+          </TabsTrigger>
+          <TabsTrigger value="propfirm" className="gap-2">
+            <Briefcase className="h-4 w-4" />
+            {language === 'ar' ? 'تمويل' : 'Prop Firms'}
+          </TabsTrigger>
+          <TabsTrigger value="indices" className="gap-2">
+            <TrendingUp className="h-4 w-4" />
+            {language === 'ar' ? 'مؤشرات' : 'Indices'}
+          </TabsTrigger>
+          <TabsTrigger value="stocks" className="gap-2">
+            <LineChart className="h-4 w-4" />
+            {language === 'ar' ? 'أسهم' : 'Stocks'}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Broker Tab */}
+        <TabsContent value="broker" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sampleAccounts.broker.map((account) => (
+              <Card key={account.id} className="relative overflow-hidden border-blue-500/30">
+                <TypeBadge type="broker" />
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold">{account.name}</h3>
+                      <p className="text-sm text-gray-400">{account.broker}</p>
                     </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="byConnection">
-                    <div className="space-y-3">
-                      {distributionByConnection.map((item, index) => (
-                        <div key={item.name} className="flex items-center justify-between p-3 rounded-lg border">
-                          <div className="flex items-center gap-3">
-                            <div 
-                              className="h-3 w-3 rounded-full" 
-                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                            />
-                            <span className="text-sm font-medium">{item.label}</span>
-                          </div>
-                          <Badge variant="secondary">{item.count}</Badge>
-                        </div>
+                    <Sparkline data={account.sparkline} color="#3b82f6" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-400">
+                        {language === 'ar' ? 'الرصيد' : 'Balance'}
+                      </span>
+                      <span className="font-bold">${account.balance.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-400">
+                        {language === 'ar' ? 'الأسهم' : 'Equity'}
+                      </span>
+                      <span className="font-bold">${account.equity.toLocaleString()}</span>
+                    </div>
+                    <HealthIndicator current={account.currentDrawdown} max={account.maxDrawdown} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Prop Firm Tab */}
+        <TabsContent value="propfirm" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sampleAccounts.propfirm.map((account) => (
+              <PropFirmCard key={account.id} account={account} language={language} />
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Indices Tab */}
+        <TabsContent value="indices" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sampleAccounts.indices.map((account) => (
+              <Card key={account.id} className="relative overflow-hidden border-green-500/30">
+                <TypeBadge type="indices" />
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold">{account.name}</h3>
+                      <Badge variant="outline" className="border-green-500/30 text-green-400">
+                        {account.index}
+                      </Badge>
+                    </div>
+                    <Sparkline data={account.sparkline} color="#22c55e" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-400">
+                        {language === 'ar' ? 'الرصيد' : 'Balance'}
+                      </span>
+                      <span className="font-bold">${account.balance.toLocaleString()}</span>
+                    </div>
+                    <HealthIndicator current={account.currentDrawdown} max={account.maxDrawdown} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Stocks Tab */}
+        <TabsContent value="stocks" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sampleAccounts.stocks.map((account) => (
+              <Card key={account.id} className="relative overflow-hidden border-amber-500/30">
+                <TypeBadge type="stocks" />
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold">{account.name}</h3>
+                      <p className="text-sm text-gray-400">{account.exchange}</p>
+                    </div>
+                    <Sparkline data={account.sparkline} color="#f59e0b" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-400">
+                        {language === 'ar' ? 'الرصيد' : 'Balance'}
+                      </span>
+                      <span className="font-bold">${account.balance.toLocaleString()}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {account.stocks.map((stock) => (
+                        <Badge key={stock} variant="outline" className="border-amber-500/30 text-amber-400 text-xs">
+                          {stock}
+                        </Badge>
                       ))}
                     </div>
-                  </TabsContent>
-                </Tabs>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                    <HealthIndicator current={account.currentDrawdown} max={account.maxDrawdown} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card 
-          className="hover:border-blue-500/50 transition-colors cursor-pointer" 
-          onClick={() => {
-            setFormData(initialFormData)
-            setConnectionTab('mt4')
-            setShowAddDialog(true)
-          }}
-        >
+        <Card className="hover:border-blue-500/50 transition-colors cursor-pointer">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
                 <Building2 className="h-6 w-6 text-blue-500" />
               </div>
               <div>
-                <p className="font-medium">{t('portfolio.connectMetaTrader')}</p>
-                <p className="text-sm text-muted-foreground">MT4 / MT5</p>
+                <p className="font-medium">
+                  {language === 'ar' ? 'ربط وسيط' : 'Connect Broker'}
+                </p>
+                <p className="text-sm text-gray-400">MT4 / MT5</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card 
-          className="hover:border-purple-500/50 transition-colors cursor-pointer"
-          onClick={() => {
-            setFormData(initialFormData)
-            setConnectionTab('tradingview')
-            setShowAddDialog(true)
-          }}
-        >
+        <Card className="hover:border-purple-500/50 transition-colors cursor-pointer">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                <LineChart className="h-6 w-6 text-purple-500" />
+                <Briefcase className="h-6 w-6 text-purple-500" />
               </div>
               <div>
-                <p className="font-medium">{t('portfolio.connectTradingView')}</p>
-                <p className="text-sm text-muted-foreground">{t('portfolio.syncPortfolio')}</p>
+                <p className="font-medium">
+                  {language === 'ar' ? 'حساب تمويل' : 'Prop Firm'}
+                </p>
+                <p className="text-sm text-gray-400">
+                  {language === 'ar' ? 'قوالب جاهزة' : 'Ready Templates'}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card 
-          className="hover:border-green-500/50 transition-colors cursor-pointer"
-          onClick={() => {
-            setFormData(initialFormData)
-            setConnectionTab('manual')
-            setShowAddDialog(true)
-          }}
-        >
+        <Card className="hover:border-green-500/50 transition-colors cursor-pointer">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-lg bg-green-500/20 flex items-center justify-center">
-                <Plus className="h-6 w-6 text-green-500" />
+                <TrendingUp className="h-6 w-6 text-green-500" />
               </div>
               <div>
-                <p className="font-medium">{t('portfolio.manualEntry')}</p>
-                <p className="text-sm text-muted-foreground">{t('portfolio.accountOrAsset')}</p>
+                <p className="font-medium">
+                  {language === 'ar' ? 'تداول مؤشرات' : 'Indices Trading'}
+                </p>
+                <p className="text-sm text-gray-400">DAX / NASDAQ</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card 
-          className="hover:border-amber-500/50 transition-colors cursor-pointer"
-          onClick={() => {
-            setFormData(initialFormData)
-            setConnectionTab('other')
-            setShowAddDialog(true)
-          }}
-        >
+        <Card className="hover:border-amber-500/50 transition-colors cursor-pointer">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                <Link2 className="h-6 w-6 text-amber-500" />
+                <LineChart className="h-6 w-6 text-amber-500" />
               </div>
               <div>
-                <p className="font-medium">{t('assets.connection.other')}</p>
-                <p className="text-sm text-muted-foreground">{language === 'ar' ? 'وسيط آخر' : 'Other broker'}</p>
+                <p className="font-medium">
+                  {language === 'ar' ? 'محفظة أسهم' : 'Stocks Portfolio'}
+                </p>
+                <p className="text-sm text-gray-400">
+                  {language === 'ar' ? 'إدارة محلية' : 'Local Management'}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Add Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t('assets.addNew')}</DialogTitle>
-            <DialogDescription>
-              {language === 'ar' 
-                ? 'أدخل بيانات حسابك يدوياً أو اتصل تلقائياً عبر MetaQuotes أو TradingView'
-                : 'Enter your account details manually or connect automatically via MetaQuotes or TradingView'}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {renderFormContent()}
-
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button 
-              className="bg-gradient-to-r from-green-500 to-emerald-600"
-              onClick={handleAddAsset}
-              disabled={saving}
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t('assets.connecting')}
-                </>
-              ) : (
-                <>
-                  <Link2 className="h-4 w-4 mr-2" />
-                  {connectionTab === 'manual' ? t('assets.add') : t('assets.connect')}
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t('assets.editAsset')}</DialogTitle>
-            <DialogDescription>
-              {language === 'ar' 
-                ? 'تعديل بيانات الأصل أو الحساب'
-                : 'Edit asset or account details'}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {renderFormContent(true)}
-
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button 
-              className="bg-gradient-to-r from-green-500 to-emerald-600"
-              onClick={handleEditAsset}
-              disabled={saving}
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t('common.loading')}
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  {t('assets.save')}
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('assets.deleteAsset')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('assets.confirmDelete')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteAsset}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              {t('common.delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }
