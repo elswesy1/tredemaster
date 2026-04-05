@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await hash(password, 12)
 
-    const verificationToken = await new SignJWT({ email })
+    const verifyToken = await new SignJWT({ email })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('24h')
       .sign(new TextEncoder().encode(process.env.NEXTAUTH_SECRET))
@@ -40,12 +40,12 @@ export async function POST(request: NextRequest) {
         name,
         email,
         password: hashedPassword,
-        verificationToken,
+        verifyToken,
         emailVerified: null
       }
     })
 
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://trademaster-omega.vercel.app'}/verify-email?token=${verificationToken}`
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://trademaster-omega.vercel.app'}/verify-email?token=${verifyToken}`
 
     return NextResponse.json({
       success: true,

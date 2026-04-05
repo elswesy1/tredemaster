@@ -53,11 +53,8 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
         return
       }
       
-      // إعادة تعيين حالة التحقق عند النجاح
       setRequiresVerification(false)
       setVerifyEmail(null)
-
-      // نجاح الدخول - استدعاء callback
       await onLogin(formData)
     } catch (err) {
       setError(language === 'ar' ? 'حدث خطأ في الاتصال' : 'Connection error')
@@ -125,8 +122,8 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
                     </p>
                     <p className="mb-3">
                       {language === 'ar' 
-                        ? 'تم إرسال رابط التأكيد إلى بريدك الإلكتروني. إذا لم تستلمه، يمكنك إعادة الإرسال.'
-                        : 'A verification link was sent to your email. If you didn\'t receive it, you can resend.'}
+                        ? 'تم إرسال رابط التأكيد إلى بريدك الإلكتروني.'
+                        : 'A verification link was sent to your email.'}
                     </p>
                     <Button
                       type="button"
@@ -137,7 +134,7 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
                     >
                       {resendingEmail ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : language === 'ar' ? 'إعادة إرسال رابط التأكيد' : 'Resend verification link'}
+                      ) : language === 'ar' ? 'إعادة إرسال' : 'Resend'}
                     </Button>
                   </div>
                 </div>
@@ -147,8 +144,8 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
             {emailSent && (
               <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 text-sm">
                 {language === 'ar' 
-                  ? 'تم إرسال رابط التأكيد إلى بريدك الإلكتروني بنجاح!'
-                  : 'Verification link sent to your email successfully!'}
+                  ? 'تم إرسال رابط التأكيد بنجاح!'
+                  : 'Verification link sent successfully!'}
               </div>
             )}
 
@@ -194,34 +191,16 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
                 language === 'ar' ? 'دخول' : 'Login'
               )}
             </Button>
-                        <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-600"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                language === 'ar' ? 'دخول' : 'Login'
-              )}
-            </Button>
             
-            {/* أضف هذا الكود هنا */}
-            <div className="text-center mt-3">
+            <div className="text-center">
               <Link 
-                href="/auth/forgot-password" 
+                href="/forgot-password" 
                 className="text-sm text-cyan-400 hover:text-cyan-300 transition"
               >
                 {language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
               </Link>
             </div>
           </form>
-          
-          <div className="text-center">
-  <Link href="/forgot-password" className="text-sm text-emerald-400 hover:text-emerald-300">
-    {language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
-  </Link>
-</div>
 
           <div className="mt-4 text-center">
             <p className="text-sm text-muted-foreground">
