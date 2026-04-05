@@ -1,242 +1,69 @@
-import { SignJWT, jwtVerify } from 'jose'
-import { cookies } from 'next/headers'
-import { prisma } from './prisma'
-import bcrypt from 'bcryptjs'
+import NextAuth from "next-auth"
+import Credentials from "next-auth/providers/credentials"
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import { prisma } from "@/lib/prisma"
+import bcrypt from "bcryptjs"
 
-const secretKey = process.env.NEXTAUTH_SECRET || 'trademaster-super-secret-key-2024'
-const key = new TextEncoder().encode(secretKey)
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" },
+  providers: [
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
 
-// إنشاء JWT Token
-export async function createToken(payload: { userId: string; email: string }) {
-  return await new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('7d')
-    .sign(key)
-}
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string }
+        })
 
-// التحقق من JWT Token
-export async function verifyToken(token: string) {
-  try {
-    const { payload } = await jwtVerify(token, key)
-    return payload as { userId: string; email: string }
-  } catch {
-    return null
-  }
-}
+        if (!user || !user.password) {
+          return null
+        }
 
-// تسجيل نشاط الدخول
-export async function logLoginActivity(
-  userId: string,
-  ipAddress: string | null,
-  userAgent: string | null,
-  successful: boolean,
-  method: string = 'password'
-) {
-  try {
-    await prisma.loginHistory.create({
-      data: {
-        userId,
-        ipAddress,
-        userAgent,
-        successful,
-        method,
+        // ✅ تخطي التحقق من البريد
+        // if (!user.emailVerified) {
+        //   return null
+        // }
+
+        const isValid = await bcrypt.compare(
+          credentials.password as string,
+          user.password
+        )
+
+        if (!isValid) {
+          return null
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name
+        }
       }
     })
-  } catch (error) {
-    console.error('Error logging login activity:', error)
-  }
-}
-
-// تسجيل الدخول
-export async function loginUser(
-  email: string,
-  password: string,
-  ipAddress?: string | null,
-  userAgent?: string | null
-) {
-  // البحث عن المستخدم
-  const user = await prisma.user.findUnique({
-    where: { email },
-    include: { subscription: true }
-  })
-
-  if (!user || !user.password) {
-    if (user) {
-      await logLoginActivity(user.id, ipAddress || null, userAgent || null, false, 'password')
-    }
-    return { error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' }
-  }
-
-  // ⚠️ تعطيل التحقق مؤقتاً للتطوير
-  // تحقق من البريد الإلكتروني فقط في الإنتاج
-  const isProduction = process.env.NODE_ENV === 'production'
-  const smtpConfigured = process.env.SMTP_USER && process.env.SMTP_PASS
-  
-  if (!user.emailVerified && isProduction && smtpConfigured) {
-    return { 
-      error: 'يرجى تأكيد بريدك الإلكتروني أولاً', 
-      requiresVerification: true, 
-      email: user.email 
-    }
-  }
-  
-  // ✅ تخطي التحقق تلقائياً في التطوير
-  if (!user.emailVerified) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { emailVerified: new Date() }
-    })
-  }
-
-  // التحقق من كلمة المرور
-  const isValid = await bcrypt.compare(password, user.password)
-  if (!isValid) {
-    await logLoginActivity(user.id, ipAddress || null, userAgent || null, false, 'password')
-    return { error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' }
-  }
-
-  // تحديث آخر تسجيل دخول
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { lastLoginAt: new Date() }
-  })
-
-  // تسجيل نجاح الدخول
-  await logLoginActivity(user.id, ipAddress || null, userAgent || null, true, 'password')
-
-  // إنشاء Token
-  const token = await createToken({ userId: user.id, email: user.email })
-
-  return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      plan: user.subscription?.plan || 'free'
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+      }
+      return token
     },
-    token
-  }
-}
-
-// تسجيل مستخدم جديد
-export async function registerUser(
-  name: string,
-  email: string,
-  password: string,
-  ipAddress?: string | null,
-  userAgent?: string | null
-) {
-  const existingUser = await prisma.user.findUnique({
-    where: { email }
-  })
-
-  if (existingUser) {
-    return { error: 'البريد الإلكتروني مستخدم بالفعل' }
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 12)
-
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      password: hashedPassword,
-      role: 'trader',
-      isActive: true,
-      // ✅ تأكيد البريد تلقائياً في التطوير
-      emailVerified: new Date()
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string
+      }
+      return session
     }
-  })
-
-  const trialEnd = new Date()
-  trialEnd.setDate(trialEnd.getDate() + 14)
-
-  await prisma.subscription.create({
-    data: {
-      userId: user.id,
-      plan: 'pro',
-      status: 'active',
-      endDate: trialEnd
-    }
-  })
-
-  await prisma.portfolio.create({
-    data: {
-      userId: user.id,
-      name: 'المحفظة الرئيسية',
-      description: 'محفظة التداول الافتراضية',
-      totalValue: 0,
-      cashBalance: 0,
-      investedAmount: 0,
-      profitLoss: 0,
-      profitLossPercent: 0,
-    }
-  })
-
-  await logLoginActivity(user.id, ipAddress || null, userAgent || null, true, 'register')
-
-  const token = await createToken({ userId: user.id, email: user.email })
-
-  return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      plan: 'pro'
-    },
-    token
+  },
+  pages: {
+    signIn: "/login"
   }
-}
-
-// باقي الدوال...
-export async function getCurrentUser() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('auth-token')?.value
-
-  if (!token) return null
-
-  const payload = await verifyToken(token)
-  if (!payload) return null
-
-  const user = await prisma.user.findUnique({
-    where: { id: payload.userId },
-    include: { subscription: true }
-  })
-
-  if (!user) return null
-
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    plan: user.subscription?.plan || 'free'
-  }
-}
-
-export async function logoutUser() {
-  const cookieStore = await cookies()
-  cookieStore.delete('auth-token')
-}
-
-export async function setAuthCookie(token: string) {
-  const cookieStore = await cookies()
-  cookieStore.set('auth-token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7
-  })
-}
-
-export function getClientIP(request: Request): string | null {
-  const forwarded = request.headers.get('x-forwarded-for')
-  if (forwarded) {
-    return forwarded.split(',')[0].trim()
-  }
-  return request.headers.get('x-real-ip') || null
-}
-
-export function getUserAgent(request: Request): string | null {
-  return request.headers.get('user-agent')
-}
+})

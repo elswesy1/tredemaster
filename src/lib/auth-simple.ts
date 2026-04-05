@@ -69,20 +69,14 @@ export async function loginUser(
     return { error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' }
   }
 
-  // التحقق من تأكيد البريد الإلكتروني
-  // نتجاوز التحقق إذا لم يتم إعداد إعدادات SMTP
-  const smtpConfigured = process.env.SMTP_USER && process.env.SMTP_PASS
-  if (!user.emailVerified && smtpConfigured) {
-    return { error: 'يرجى تأكيد بريدك الإلكتروني أولاً', requiresVerification: true, email: user.email }
-  }
-  
-  // إذا لم يتم تأكيد الإيميل ولم يتم إعداد SMTP، نعتبر الإيميل مؤكد تلقائياً
-  if (!user.emailVerified && !smtpConfigured) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { emailVerified: new Date() }
-    })
-  }
+  // ✅ تخطي التحقق من البريد الإلكتروني - للتطوير
+// إذا لم يكن البريد مؤكد، نؤكده تلقائياً
+if (!user.emailVerified) {
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { emailVerified: new Date() }
+  })
+}
 
   // التحقق من كلمة المرور
   const isValid = await bcrypt.compare(password, user.password)
