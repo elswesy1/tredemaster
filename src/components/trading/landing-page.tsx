@@ -26,7 +26,8 @@ import {
   Target,
   AlertTriangle,
   ChevronRight,
-  Activity
+  Activity,
+  TrendingDown
 } from 'lucide-react'
 
 interface LandingPageProps {
@@ -371,10 +372,18 @@ function PainPointSection({ language }: { language: string }) {
 }
 
 // ============================================
-// 6️⃣ DASHBOARD PREVIEW - مع تصميم Mac-like
+// 6️⃣ DASHBOARD PREVIEW - مع تصميم Mac-like و Charts تفاعلية
 // ============================================
 function DashboardPreview({ language }: { language: string }) {
   const [activeTab, setActiveTab] = useState('overview')
+  const [chartData] = useState([
+    { month: 'Jan', value: 2500 },
+    { month: 'Feb', value: 3200 },
+    { month: 'Mar', value: 2800 },
+    { month: 'Apr', value: 4100 },
+    { month: 'May', value: 3800 },
+    { month: 'Jun', value: 4300 },
+  ])
   
   const tabs = [
     { id: 'overview', label: language === 'ar' ? 'نظرة عامة' : 'Overview' },
@@ -383,11 +392,14 @@ function DashboardPreview({ language }: { language: string }) {
   ]
 
   const stats = [
-    { label: language === 'ar' ? 'صافي الربح' : 'Net P&L', value: '+$4,300', positive: true },
-    { label: language === 'ar' ? 'نسبة الفوز' : 'Win Rate', value: '68%', positive: true },
-    { label: language === 'ar' ? 'الصفقات' : 'Trades', value: '156', positive: null },
-    { label: language === 'ar' ? 'أفضل صفقة' : 'Best Trade', value: '+$850', positive: true }
+    { label: language === 'ar' ? 'صافي الربح' : 'Net P&L', value: '+$4,300', positive: true, change: '+12.5%' },
+    { label: language === 'ar' ? 'نسبة الفوز' : 'Win Rate', value: '68%', positive: true, change: '+5.2%' },
+    { label: language === 'ar' ? 'الصفقات' : 'Trades', value: '156', positive: null, change: '+23' },
+    { label: language === 'ar' ? 'أفضل صفقة' : 'Best Trade', value: '+$850', positive: true, change: 'DAX' }
   ]
+
+  // حساب أعلى قيمة للـ chart
+  const maxValue = Math.max(...chartData.map(d => d.value))
 
   return (
     <section className="py-24 bg-gradient-to-b from-black to-gray-900">
@@ -432,13 +444,13 @@ function DashboardPreview({ language }: { language: string }) {
             </div>
 
             {/* Content */}
-            <div className="p-6 bg-gray-800/30 min-h-[400px]">
+            <div className="p-6 bg-gray-800/30 min-h-[500px]">
               {activeTab === 'overview' && (
                 <>
                   {/* Stats */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     {stats.map((stat, i) => (
-                      <div key={i} className="p-4 rounded-xl bg-gray-900/50 border border-gray-700">
+                      <div key={i} className="p-4 rounded-xl bg-gray-900/50 border border-gray-700 hover:border-cyan-500/30 transition-all">
                         <p className="text-sm text-gray-400 mb-1">{stat.label}</p>
                         <p className={`text-2xl font-bold ${
                           stat.positive === true ? 'text-emerald-400' : 
@@ -446,43 +458,160 @@ function DashboardPreview({ language }: { language: string }) {
                         }`}>
                           {stat.value}
                         </p>
+                        <p className={`text-xs mt-1 ${
+                          stat.positive === true ? 'text-emerald-400/70' : 
+                          stat.positive === false ? 'text-red-400/70' : 'text-gray-500'
+                        }`}>
+                          {stat.change}
+                        </p>
                       </div>
                     ))}
                   </div>
 
-                  {/* Chart Placeholder */}
-                  <div className="h-48 rounded-xl bg-gradient-to-br from-cyan-900/20 to-emerald-900/20 border border-gray-700 flex items-center justify-center">
-                    <div className="text-center">
-                      <Activity className="w-12 h-12 text-cyan-400 mx-auto mb-2 opacity-50" />
-                      <p className="text-gray-500 text-sm">
-                        {language === 'ar' ? 'منحنى الأداء' : 'Performance Chart'}
-                      </p>
+                  {/* Interactive Chart */}
+                  <div className="rounded-xl bg-gradient-to-br from-cyan-900/10 to-emerald-900/10 border border-gray-700 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-white">
+                        {language === 'ar' ? 'منحنى الأداء' : 'Performance Curve'}
+                      </h3>
+                      <div className="flex gap-2">
+                        <button className="px-3 py-1 text-xs rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                          {language === 'ar' ? '6 أشهر' : '6 Months'}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Chart Area */}
+                    <div className="h-48 flex items-end gap-2">
+                      {chartData.map((data, i) => (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                          <div 
+                            className="w-full bg-gradient-to-t from-cyan-500 to-emerald-500 rounded-t-lg transition-all duration-500 hover:opacity-80"
+                            style={{ 
+                              height: `${(data.value / maxValue) * 100}%`,
+                              animationDelay: `${i * 100}ms`
+                            }}
+                          />
+                          <span className="text-xs text-gray-400">{data.month}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Chart Legend */}
+                    <div className="flex items-center justify-center gap-6 mt-4 text-xs text-gray-400">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-gradient-to-r from-cyan-500 to-emerald-500" />
+                        <span>{language === 'ar' ? 'صافي الربح' : 'Net P&L'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-3 h-3 text-emerald-400" />
+                        <span>{language === 'ar' ? 'نمو 12.5%' : '+12.5% Growth'}</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Date */}
                   <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
                     <span>{language === 'ar' ? 'آخر تحديث' : 'Last updated'}: اليوم 14:30</span>
-                    <span>{language === 'ar' ? 'يناير 2024' : 'January 2024'}</span>
+                    <span>{language === 'ar' ? 'يناير - يونيو 2024' : 'Jan - Jun 2024'}</span>
                   </div>
                 </>
               )}
 
               {activeTab === 'trades' && (
-                <div className="text-center py-12">
-                  <LineChart className="w-12 h-12 text-cyan-400 mx-auto mb-4 opacity-50" />
-                  <p className="text-gray-500">
-                    {language === 'ar' ? 'سجل الصفقات يظهر هنا' : 'Trade journal appears here'}
-                  </p>
+                <div className="space-y-4">
+                  {/* Recent Trades */}
+                  <div className="rounded-xl bg-gray-900/50 border border-gray-700 p-4">
+                    <h3 className="text-lg font-semibold text-white mb-4">
+                      {language === 'ar' ? 'آخر الصفقات' : 'Recent Trades'}
+                    </h3>
+                    <div className="space-y-2">
+                      {[
+                        { symbol: 'DAX', type: 'Long', pnl: '+$320', win: true },
+                        { symbol: 'NASDAQ', type: 'Short', pnl: '-$85', win: false },
+                        { symbol: 'DAX', type: 'Long', pnl: '+$180', win: true },
+                      ].map((trade, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800/70 transition-all">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              trade.win ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                            }`}>
+                              {trade.win ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                            </div>
+                            <div>
+                              <p className="font-medium text-white">{trade.symbol}</p>
+                              <p className="text-xs text-gray-400">{trade.type}</p>
+                            </div>
+                          </div>
+                          <p className={`font-semibold ${trade.win ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {trade.pnl}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3 rounded-lg bg-gray-900/50 border border-gray-700 text-center">
+                      <p className="text-2xl font-bold text-white">12</p>
+                      <p className="text-xs text-gray-400">{language === 'ar' ? 'صفقات اليوم' : 'Today\'s Trades'}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-gray-900/50 border border-gray-700 text-center">
+                      <p className="text-2xl font-bold text-emerald-400">9</p>
+                      <p className="text-xs text-gray-400">{language === 'ar' ? 'رابحة' : 'Winning'}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-gray-900/50 border border-gray-700 text-center">
+                      <p className="text-2xl font-bold text-red-400">3</p>
+                      <p className="text-xs text-gray-400">{language === 'ar' ? 'خاسرة' : 'Losing'}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {activeTab === 'psychology' && (
-                <div className="text-center py-12">
-                  <Brain className="w-12 h-12 text-emerald-400 mx-auto mb-4 opacity-50" />
-                  <p className="text-gray-500">
-                    {language === 'ar' ? 'تحليل السيكولوجي يظهر هنا' : 'Psychology analysis appears here'}
-                  </p>
+                <div className="space-y-4">
+                  {/* Emotion Tracking */}
+                  <div className="rounded-xl bg-gray-900/50 border border-gray-700 p-4">
+                    <h3 className="text-lg font-semibold text-white mb-4">
+                      {language === 'ar' ? 'تحليل المشاعر' : 'Emotion Analysis'}
+                    </h3>
+                    <div className="space-y-3">
+                      {[
+                        { emotion: language === 'ar' ? 'ثقة' : 'Confident', value: 85, color: 'bg-emerald-500' },
+                        { emotion: language === 'ar' ? 'تركيز' : 'Focus', value: 72, color: 'bg-cyan-500' },
+                        { emotion: language === 'ar' ? 'هدوء' : 'Calm', value: 90, color: 'bg-blue-500' },
+                      ].map((item, i) => (
+                        <div key={i} className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-300">{item.emotion}</span>
+                            <span className="text-white font-medium">{item.value}%</span>
+                          </div>
+                          <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${item.color} transition-all duration-1000`}
+                              style={{ width: `${item.value}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Daily Journal */}
+                  <div className="rounded-xl bg-gradient-to-br from-purple-900/20 to-pink-900/20 border border-purple-500/20 p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Brain className="w-5 h-5 text-purple-400" />
+                      <h4 className="font-medium text-white">
+                        {language === 'ar' ? 'ملاحظة اليوم' : 'Today\'s Note'}
+                      </h4>
+                    </div>
+                    <p className="text-sm text-gray-400 italic">
+                      {language === 'ar' 
+                        ? '"حافظت على الانضباط اليوم واتبعت الخطة بدقة. تجنبت الدخول في صفقات متهورة..."'
+                        : '"Maintained discipline today and followed the plan precisely. Avoided impulsive trades..."'}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

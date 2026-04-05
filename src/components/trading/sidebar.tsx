@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTradingStore, ActiveSection } from '@/lib/store'
 import { useI18n } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
@@ -64,6 +64,18 @@ export function TradingSidebar() {
   const isRTL = direction === 'rtl'
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  // Keyboard shortcut for toggling sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'b') {
+        e.preventDefault()
+        toggleSidebar()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [toggleSidebar])
+
   // Close mobile menu when section changes
   const handleSectionChange = (section: ActiveSection) => {
     setActiveSection(section)
@@ -72,22 +84,33 @@ export function TradingSidebar() {
 
   const renderMenuItems = (items: { id: ActiveSection; labelKey: string; icon: React.ElementType }[], isMobile = false) => {
     return items.map((item) => (
-      <Button
-        key={item.id}
-        variant="ghost"
-        onClick={() => handleSectionChange(item.id)}
-        className={cn(
-          'w-full gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200',
-          activeSection === item.id && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm',
-          (sidebarCollapsed && !isMobile) ? 'justify-center px-2' : 'justify-start'
+      <div key={item.id} className="relative group">
+        <Button
+          variant="ghost"
+          onClick={() => handleSectionChange(item.id)}
+          className={cn(
+            'w-full gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200',
+            activeSection === item.id && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm',
+            (sidebarCollapsed && !isMobile) ? 'justify-center px-2' : 'justify-start'
+          )}
+        >
+          <item.icon className={cn(
+            'h-5 w-5 shrink-0 transition-transform duration-200',
+            activeSection === item.id && 'scale-110'
+          )} />
+          {(isMobile || !sidebarCollapsed) && <span>{t(item.labelKey)}</span>}
+        </Button>
+        
+        {/* Tooltip when collapsed */}
+        {sidebarCollapsed && !isMobile && (
+          <div className={cn(
+            'absolute top-1/2 -translate-y-1/2 px-3 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50',
+            isRTL ? 'right-full mr-2' : 'left-full ml-2'
+          )}>
+            {t(item.labelKey)}
+          </div>
         )}
-      >
-        <item.icon className={cn(
-          'h-5 w-5 shrink-0 transition-transform duration-200',
-          activeSection === item.id && 'scale-110'
-        )} />
-        {(isMobile || !sidebarCollapsed) && <span>{t(item.labelKey)}</span>}
-      </Button>
+      </div>
     ))
   }
 
