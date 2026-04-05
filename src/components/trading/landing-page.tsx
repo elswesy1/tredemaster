@@ -635,13 +635,13 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       {/* Sections */}
       <div className="pt-16">
         <HeroSection language={language} onGetStarted={onGetStarted} onLogin={onLogin} />
-        <TrustBadges lng={language} />
-        <SocialProof lng={language} />
         <FeaturesSection language={language} />
         <PainPointSection language={language} />
         <DashboardPreview language={language} />
         <PricingSection language={language} onGetStarted={onGetStarted} />
         <LiveDemo lng={language} />
+        <TrustBadges lng={language} />
+        <SocialProof lng={language} />
       </div>
 
       {/* Footer */}
