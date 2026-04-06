@@ -61,6 +61,7 @@ model User {
   authSessions     AuthSession[]
   twoFactorAuth    TwoFactorAuth?
   loginHistory     LoginHistory[]
+  auditLogs        AuditLog[]
 
   @@index([email])
   @@map("users")
@@ -785,4 +786,21 @@ model LoginHistory {
   @@index([userId])
   @@index([createdAt])
   @@map("login_history")
+}
+
+// سجل التدقيق والمراجعة
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
