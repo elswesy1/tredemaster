@@ -35,24 +35,26 @@ model User {
   verifyTokenExpiry DateTime?
   
   // Relations
-  portfolios       Portfolio[]
-  accounts         Account[]
-  assets           Asset[]
-  trades           Trade[]
-  tradingPlans     TradingPlan[]
-  setups           Setup[]
-  riskProfiles     RiskProfile[]
-  journals         TradingJournal[]
-  sessions         SessionReview[]
-  psychologyLogs   PsychologyLog[]
-  audits           Audit[]
-  subscription     Subscription?
-  strategies       Strategy[]
-  zenStates        ZenState[]
-  tradingRules     TradingRule[]
-  riskUsages       RiskUsage[]
-  riskAlerts       RiskAlert[]
-  riskChecks       RiskCheck[]
+  portfolios        Portfolio[]
+  tradingAccounts   TradingAccount[]
+  trades            Trade[]
+  tradingPlans      TradingPlan[]
+  setups            Setup[]
+  riskProfiles      RiskProfile[]
+  journals          TradingJournal[]
+  sessions          SessionReview[]
+  psychologyLogs    PsychologyLog[]
+  audits            Audit[]
+  subscription      Subscription?
+  strategies        Strategy[]
+  zenStates         ZenState[]
+  tradingRules      TradingRule[]
+  riskUsages        RiskUsage[]
+  riskAlerts        RiskAlert[]
+  riskChecks        RiskCheck[]
+  webhooks          TradingViewWebhook[]
+  metaApiTokens     MetaApiToken[]
+  dailySyncLogs     DailySyncLog[]
   
   // Auth Relations
   authAccounts     AuthAccount[]
@@ -80,81 +82,148 @@ model Portfolio {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accounts Account[]
-  assets   Asset[]
-  trades   Trade[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tradingAccounts TradingAccount[]
+  trades          Trade[]
 
   @@index([userId])
 }
 
-// الحسابات المرتبطة
-model Account {
-  id             String    @id @default(cuid())
+// حسابات التداول الموحدة (Broker, Prop Firm, Indices, Stocks)
+model TradingAccount {
+  id             String   @id @default(cuid())
   userId         String
   portfolioId    String?
   name           String
-  broker         String?
-  accountNumber  String?
-  type           String    @default("live")
-  currency       String    @default("USD")
-  balance        Float     @default(0)
-  equity         Float     @default(0)
-  margin         Float     @default(0)
-  freeMargin     Float     @default(0)
-  marginLevel    Float     @default(0)
-  leverage       Float     @default(100)
-  isActive       Boolean   @default(true)
-  lastSync       DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  accountType    String   // "broker" | "propfirm" | "indices" | "stocks"
+  currency       String   @default("USD")
+  balance        Float    @default(0)
+  equity         Float    @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  portfolio Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
-  trades    Trade[]
+  // Broker Fields (MT4/MT5)
+  broker          String?
+  platform        String?  // "MT4" | "MT5"
+  accountNumber   String?
+  server          String?
+  connectionMethod String? // "manual" | "metaapi" | "webhook"
+  connectionStatus String? @default("disconnected") // "connected" | "disconnected" | "syncing" | "error"
+  lastSync        DateTime?
+  autoSync        Boolean  @default(false)
+  metaApiTokenId  String?
+  
+  // Prop Firm Fields
+  propFirmCompany String?
+  propFirmPhase   String?  // "Phase 1" | "Phase 2" | "Funded"
+  challengeType   String?  // "Challenge" | "Verification" | "Funded"
+  challengeTarget Float?  // الهدف المطلوب (%)
+  challengeStart  DateTime?
+  challengeEnd    DateTime?
+  daysRemaining   Int?
+  
+  // Prop Firm Drawdown Limits
+  dailyDrawdownLimit Float?
+  dailyDrawdownUsed  Float    @default(0)
+  maxDailyLoss       Float?   // بالدولار
+  
+  overallDrawdownLimit Float?
+  overallDrawdownUsed  Float    @default(0)
+  maxOverallLoss       Float?   // بالدولار
+  
+  // Prop Firm Progress
+  profitTarget    Float?   // الهدف بالدولار
+  currentProfit   Float    @default(0)
+  
+  // Indices Fields
+  indexSymbol     String?  // "DAX" | "NASDAQ" | "S&P500"
+  exchange        String?
+  lotSize         Float?
+  
+  // Stocks Fields
+  exchangeName    String?  // "NASDAQ" | "Tadawul" | "LSE"
+  stocksList      String?  // JSON array of stock symbols
+  stocksCount     Int?
+  
+  // Health Metrics
+  maxDrawdown     Float?
+  currentDrawdown Float    @default(0)
+  healthStatus    String   @default("safe") // "safe" | "warning" | "danger"
+  
+  // Sparkline Data (آخر 7 أيام)
+  sparklineData   String?  // JSON array of 7 equity values
+  
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolio       Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
+  trades          Trade[]
+  metaApiToken    MetaApiToken? @relation(fields: [metaApiTokenId], references: [id], onDelete: SetNull)
+  dailySyncLogs   DailySyncLog[]
+    webhooks        TradingViewWebhook[]
 
   @@index([userId])
   @@index([portfolioId])
+  @@index([accountType])
+  @@index([connectionStatus])
 }
 
-// الأصول
-model Asset {
-  id               String   @id @default(cuid())
-  userId           String
-  portfolioId      String?
-  name             String
-  assetType        String
-  symbol           String?
-  quantity         Float    @default(0)
-  entryPrice       Float    @default(0)
-  currentPrice     Float    @default(0)
-  currency         String   @default("USD")
-  connectionMethod String   @default("manual")
-  platform         String?
-  broker           String?
-  server           String?
-  accountNumber    String?
-  apiKey           String?
-  apiSecret        String?
-  status           String   @default("active")
-  lastSync         DateTime?
-  autoSync         Boolean  @default(false)
-  currentValue     Float    @default(0)
-  profitLoss       Float    @default(0)
-  profitLossPercent Float   @default(0)
-  notes            String?
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+// MetaAPI Token للربط مع MT4/MT5
+model MetaApiToken {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String
+  token         String   // مشفر
+  accountId     String   // MetaAPI account ID
+  isActive      Boolean  @default(true)
+  lastUsed      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  portfolio Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
-
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tradingAccounts  TradingAccount[]
+  
   @@index([userId])
-  @@index([portfolioId])
-  @@index([assetType])
-  @@index([connectionMethod])
-  @@index([status])
+}
+
+// TradingView Webhooks
+model TradingViewWebhook {
+  id           String   @id @default(cuid())
+  userId       String
+  accountId    String?
+  webhookToken String   @unique // token فريد للمستخدم
+  payload      String   // JSON payload من TradingView
+  processed    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([webhookToken])
+  @@index([processed])
+}
+
+// سجل المزامنة اليومية
+model DailySyncLog {
+  id              String   @id @default(cuid())
+  accountId       String
+  userId          String
+  syncDate        DateTime @default(now())
+  balanceBefore   Float
+  balanceAfter    Float
+  equityBefore    Float
+  equityAfter     Float
+  tradesSynced    Int      @default(0)
+  syncStatus      String   @default("pending") // "success" | "failed" | "pending"
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([accountId])
+  @@index([syncDate])
 }
 
 // الصفقات
@@ -188,9 +257,9 @@ model Trade {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  portfolio Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
-  account   Account?   @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolio Portfolio?       @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
+  account   TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([symbol])
