@@ -1,0 +1,14 @@
+# ملفات لا نحتاجها في البناء
+tests/
+upload/
+download/
+*.log
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+coverage/
+.nyc_output/
+*.md
+!README.md
