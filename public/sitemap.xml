@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  
+  <!-- Homepage -->
+  <url>
+    <loc>https://trademaster-omega.vercel.app/</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://trademaster-omega.vercel.app/?lang=ar"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://trademaster-omega.vercel.app/?lang=en"/>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Login Page -->
+  <url>
+    <loc>https://trademaster-omega.vercel.app/login</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://trademaster-omega.vercel.app/login?lang=ar"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://trademaster-omega.vercel.app/login?lang=en"/>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Signup Page -->
+  <url>
+    <loc>https://trademaster-omega.vercel.app/signup</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://trademaster-omega.vercel.app/signup?lang=ar"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://trademaster-omega.vercel.app/signup?lang=en"/>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Pricing Page -->
+  <url>
+    <loc>https://trademaster-omega.vercel.app/pricing</loc>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://trademaster-omega.vercel.app/pricing?lang=ar"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://trademaster-omega.vercel.app/pricing?lang=en"/>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Features Pages (if exist) -->
+  <url>
+    <loc>https://trademaster-omega.vercel.app/features/portfolio-management</loc>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://trademaster-omega.vercel.app/features/risk-management</loc>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://trademaster-omega.vercel.app/features/trading-journal</loc>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://trademaster-omega.vercel.app/features/psychology-tracking</loc>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Blog (if exists) -->
+  <url>
+    <loc>https://trademaster-omega.vercel.app/blog</loc>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- About Page -->
+  <url>
+    <loc>https://trademaster-omega.vercel.app/about</loc>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <!-- Contact Page -->
+  <url>
+    <loc>https://trademaster-omega.vercel.app/contact</loc>
+    <lastmod>2024-04-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+</urlset>
