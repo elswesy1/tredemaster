@@ -6,7 +6,9 @@
       "dom.iterable",
       "esnext"
     ],
-    "types": ["node", "jest"],
+    "types": [
+      "node"
+    ],
     "esModuleInterop": true,
     "allowJs": true,
     "skipLibCheck": true,
@@ -17,7 +19,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "plugins": [
       {
@@ -39,7 +41,5 @@
   ],
   "exclude": [
     "node_modules"
-
-
   ]
 }

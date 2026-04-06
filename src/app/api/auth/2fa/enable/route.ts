@@ -36,11 +36,8 @@ export async function POST(request: NextRequest) {
     }
 
     // التحقق من الكود
-    const totp = new TOTP();
-    const isValid = totp.verify({
-      token: code,
-      secret: twoFactorAuth.secret,
-    });
+    const totp = new TOTP({ secret: twoFactorAuth.secret });
+    const isValid = totp.verify(code);
 
     if (!isValid) {
       return NextResponse.json(

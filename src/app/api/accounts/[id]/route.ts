@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { id } = await params
     
-    const account = await db.account.findUnique({
+    const account = await db.tradingAccount.findUnique({
       where: { id },
       include: {
         portfolio: {
@@ -41,19 +41,15 @@ export async function PUT(
     const { id } = await params
     const data = await request.json()
     
-    const account = await db.account.update({
+    const account = await db.tradingAccount.update({
       where: { id },
       data: {
         name: data.name,
         broker: data.broker,
         accountNumber: data.accountNumber,
-        type: data.type,
+        accountType: data.accountType,
         balance: data.balance !== undefined ? parseFloat(data.balance) : undefined,
         equity: data.equity !== undefined ? parseFloat(data.equity) : undefined,
-        margin: data.margin !== undefined ? parseFloat(data.margin) : undefined,
-        freeMargin: data.freeMargin !== undefined ? parseFloat(data.freeMargin) : undefined,
-        marginLevel: data.marginLevel !== undefined ? parseFloat(data.marginLevel) : undefined,
-        leverage: data.leverage !== undefined ? parseFloat(data.leverage) : undefined,
         lastSync: new Date()
       }
     })
@@ -73,7 +69,7 @@ export async function DELETE(
   try {
     const { id } = await params
     
-    await db.account.delete({ where: { id } })
+    await db.tradingAccount.delete({ where: { id } })
     
     return NextResponse.json({ success: true })
   } catch (error) {

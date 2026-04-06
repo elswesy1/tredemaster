@@ -356,7 +356,7 @@ export function TradingView() {
         if (file.name.endsWith('.csv')) {
           // Parse CSV (MT4/MT5 format)
           const lines = content.split('\n')
-          const parsedTrades = []
+          const parsedTrades: { symbol: string; type: string; entryPrice: number; exitPrice: number | undefined; profitLoss: number; quantity: number }[] = []
           
           for (let i = 1; i < lines.length; i++) {
             const cols = lines[i].split(',')

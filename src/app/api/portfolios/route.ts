@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const portfolios = await db.portfolio.findMany({
       where: { userId: user.userId },
       include: {
-        accounts: true,
+        tradingAccounts: true,
         trades: true,
       },
       orderBy: { createdAt: 'desc' },

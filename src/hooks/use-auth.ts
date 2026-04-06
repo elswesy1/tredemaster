@@ -4,6 +4,21 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+// Extend the session user type
+declare module "next-auth" {
+  interface User {
+    role?: string;
+  }
+  interface Session {
+    user?: User & {
+      id?: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+  }
+}
+
 export function useAuth(requireAuth = false) {
   const { data: session, status } = useSession();
   const router = useRouter();

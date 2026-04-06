@@ -82,7 +82,7 @@ export async function logAudit(
       data: {
         userId: entry.userId,
         action: entry.action,
-        details: entry.details || {},
+        details: entry.details ? JSON.parse(JSON.stringify(entry.details)) : {},
         ipAddress: clientInfo.ipAddress,
         userAgent: clientInfo.userAgent,
       },

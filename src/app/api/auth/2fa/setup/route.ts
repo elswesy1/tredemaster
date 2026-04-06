@@ -26,8 +26,7 @@ export async function POST(request: NextRequest) {
     
     // إنشاء URI للـ QR Code
     const serviceName = "TradeMaster";
-    const totp = new TOTP();
-    const otpauth = totp.keyuri(user.email, serviceName, secret);
+    const otpauth = `otpauth://totp/${encodeURIComponent(serviceName)}:${encodeURIComponent(user.email)}?secret=${secret}&issuer=${encodeURIComponent(serviceName)}&algorithm=SHA1&digits=6&period=30`;
     
     // إنشاء QR Code كـ base64
     const qrCodeUrl = await QRCode.toDataURL(otpauth);

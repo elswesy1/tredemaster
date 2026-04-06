@@ -21,7 +21,8 @@ const translations: Record<Language, Translations> = {
 
 // Helper function to get nested value
 function getNestedValue(obj: Record<string, any>, path: string): string | undefined {
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj) as string | undefined
+  const result = path.split('.').reduce((acc, part) => acc && acc[part], obj as unknown)
+  return typeof result === 'string' ? result : undefined
 }
 
 // Helper function to replace params in translation
