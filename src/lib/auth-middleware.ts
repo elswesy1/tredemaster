@@ -1,71 +1,145 @@
+/**
+ * Authentication Middleware for TradeMaster
+ * حماية API routes والتأكد من هوية المستخدم
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from './auth-simple'
+import { getToken } from 'next-auth/jwt'
 
-// الحصول على المستخدم من الطلب
-export async function getAuthUser(request: NextRequest) {
-  const token = request.cookies.get('auth-token')?.value
+// المسارات التي لا تحتاج مصادقة
+const publicPaths = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/verify-email',
+  '/api/auth/send-verification',
+  '/api/auth/verify-reset',
+  '/api/health',
+]
 
-  if (!token) {
+// المسارات التي تحتاج مصادقة
+const protectedPaths = [
+  '/api/dashboard',
+  '/api/trades',
+  '/api/portfolios',
+  '/api/accounts',
+  '/api/journal',
+  '/api/psychology',
+  '/api/risk',
+  '/api/strategies',
+  '/api/statistics',
+  '/api/subscription',
+  '/api/plans',
+  '/api/audits',
+  '/api/ai-chat',
+]
+
+/**
+ * التحقق من أن المسار محمي
+ */
+function isProtectedPath(pathname: string): boolean {
+  return protectedPaths.some(p => pathname.startsWith(p))
+}
+
+/**
+ * التحقق من أن المسار عام
+ */
+function isPublicPath(pathname: string): boolean {
+  return publicPaths.some(p => pathname === p)
+}
+
+/**
+ * Middleware للمصادقة
+ */
+export async function authMiddleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  
+  // تخطي المسارات العامة
+  if (isPublicPath(pathname)) {
     return null
   }
-
-  const payload = await verifyToken(token)
-  return payload
+  
+  // التحقق من المسارات المحمية
+  if (isProtectedPath(pathname)) {
+    try {
+      const token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      })
+      
+      if (!token) {
+        return NextResponse.json(
+          { 
+            error: 'غير مصرح', 
+            message: 'يجب تسجيل الدخول للوصول لهذه البيانات',
+            code: 'UNAUTHORIZED'
+          },
+          { status: 401 }
+        )
+      }
+      
+      // إضافة معلومات المستخدم للـ headers
+      const response = NextResponse.next()
+      response.headers.set('x-user-id', token.id as string)
+      response.headers.set('x-user-email', token.email as string)
+      
+      return response
+    } catch (error) {
+      console.error('Auth middleware error:', error)
+      return NextResponse.json(
+        { error: 'خطأ في المصادقة' },
+        { status: 500 }
+      )
+    }
+  }
+  
+  return null
 }
 
-// التحقق من المصادقة - يستخدم في API routes
-export async function withAuth(
+/**
+ * التحقق من ملكية المورد
+ */
+export async function verifyOwnership(
   request: NextRequest,
-  handler: (userId: string, email: string) => Promise<NextResponse>
-) {
-  const user = await getAuthUser(request)
-
-  if (!user) {
-    return NextResponse.json(
-      { error: 'غير مصرح - يجب تسجيل الدخول' },
-      { status: 401 }
-    )
-  }
-
-  return handler(user.userId, user.email)
+  resourceUserId: string
+): Promise<boolean> {
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  })
+  
+  if (!token) return false
+  
+  return token.id === resourceUserId
 }
 
-// التحقق من ملكية المورد - المستخدم لا يمكنه الوصول لموارد مستخدم آخر
-export async function withResourceAuth(
-  request: NextRequest,
-  resourceUserId: string,
-  handler: () => Promise<NextResponse>
-) {
-  const user = await getAuthUser(request)
-
-  if (!user) {
-    return NextResponse.json(
-      { error: 'غير مصرح - يجب تسجيل الدخول' },
-      { status: 401 }
-    )
-  }
-
-  // التحقق من أن المستخدم يملك المورد
-  if (user.userId !== resourceUserId) {
-    return NextResponse.json(
-      { error: 'غير مصرح - لا يمكنك الوصول لهذا المورد' },
-      { status: 403 }
-    )
-  }
-
-  return handler()
+/**
+ * الحصول على معرف المستخدم من الطلب
+ */
+export async function getUserId(request: NextRequest): Promise<string | null> {
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  })
+  
+  return token?.id as string | null
 }
 
-// Helper للحصول على userId من الطلب
-export async function requireAuth(request: NextRequest): Promise<{ userId: string; email: string } | NextResponse> {
-  const user = await getAuthUser(request)
-
-  if (!user) {
-    return NextResponse.json(
-      { error: 'غير مصرح' },
-      { status: 401 }
-    )
+/**
+ * Helper للحصول على المستخدم الكامل
+ */
+export async function getCurrentUser(request: NextRequest) {
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  })
+  
+  if (!token) return null
+  
+  return {
+    id: token.id as string,
+    email: token.email as string,
+    name: token.name as string,
   }
-
-  return user
 }

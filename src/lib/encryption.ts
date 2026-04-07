@@ -1,8 +1,11 @@
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes, scryptSync, createHash } from "crypto";
 import { env } from "process";
 
-// مفتاح التشفير من متغيرات البيئة
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "your-secret-encryption-key-32-chars!!";
+// مفتاح التشفير من متغيرات البيئة - إلزامي
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+if (!ENCRYPTION_KEY) {
+  throw new Error("ENCRYPTION_KEY environment variable is required for security");
+}
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
@@ -75,8 +78,7 @@ export function encryptApiKey(apiKey: string): { encrypted: string; hash: string
  * @returns hash
  */
 export function createHash(data: string): string {
-  const { createHash: hash } = require("crypto");
-  return hash("sha256").update(data).digest("hex").substring(0, 16);
+  return createHash("sha256").update(data).digest("hex").substring(0, 16);
 }
 
 /**

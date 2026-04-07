@@ -4,12 +4,53 @@ import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { SignJWT } from 'jose'
+import { checkRateLimit } from '@/lib/rate-limit'
+
+// التحقق من صحة البريد الإلكتروني
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+// التحقق من قوة كلمة المرور
+function isStrongPassword(password: string): { valid: boolean; errors: string[] } {
+  const errors: string[] = []
+  
+  if (password.length < 8) {
+    errors.push('كلمة المرور يجب أن تكون 8 أحرف على الأقل')
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push('يجب أن تحتوي على حرف كبير واحد على الأقل')
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push('يجب أن تحتوي على حرف صغير واحد على الأقل')
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push('يجب أن تحتوي على رقم واحد على الأقل')
+  }
+  
+  return { valid: errors.length === 0, errors }
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // ⚠️ Rate Limiting - حماية من الهجمات
+    const rateLimit = checkRateLimit(request, {
+      windowMs: 15 * 60 * 1000, // 15 دقيقة
+      maxRequests: 5, // 5 محاولات فقط
+    })
+    
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'عدد محاولات كثيرة، حاول بعد 15 دقيقة' },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
     const { name, email, password } = body
 
+    // التحقق من وجود البيانات
     if (!email || !password || !name) {
       return NextResponse.json(
         { error: 'جميع الحقول مطلوبة' },
@@ -17,39 +58,73 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
-
-    if (existingUser) {
+    // التحقق من صحة البريد
+    if (!isValidEmail(email)) {
       return NextResponse.json(
-        { error: 'البريد الإلكتروني مستخدم بالفعل' },
+        { error: 'البريد الإلكتروني غير صالح' },
         { status: 400 }
       )
     }
 
+    // التحقق من قوة كلمة المرور
+    const passwordCheck = isStrongPassword(password)
+    if (!passwordCheck.valid) {
+      return NextResponse.json(
+        { error: 'كلمة المرور ضعيفة', details: passwordCheck.errors },
+        { status: 400 }
+      )
+    }
+
+    // التحقق من عدم وجود المستخدم
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() }
+    })
+
+    if (existingUser) {
+      // ⚠️ لا نكشف أن البريد مسجل لأسباب أمنية
+      return NextResponse.json(
+        { error: 'حدث خطأ أثناء التسجيل' },
+        { status: 400 }
+      )
+    }
+
+    // تشفير كلمة المرور
     const hashedPassword = await hash(password, 12)
 
-    const verifyToken = await new SignJWT({ email })
+    // توليد token التحقق
+    const verifyToken = await new SignJWT({ email: email.toLowerCase() })
       .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
       .setExpirationTime('24h')
       .sign(new TextEncoder().encode(process.env.NEXTAUTH_SECRET))
 
+    // إنشاء المستخدم
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
         verifyToken,
-        emailVerified: null
+        emailVerified: null,
+        role: 'trader',
+        isActive: true,
       }
     })
 
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://trademaster-omega.vercel.app'}/verify-email?token=${verifyToken}`
+    // إنشاء اشتراك مجاني تلقائي
+    await prisma.subscription.create({
+      data: {
+        userId: user.id,
+        plan: 'free',
+        status: 'active',
+      }
+    })
+
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${verifyToken}`
 
     return NextResponse.json({
       success: true,
-      message: 'تم إنشاء الحساب بنجاح!',
+      message: 'تم إنشاء الحساب بنجاح! تحقق من بريدك الإلكتروني',
       user: {
         id: user.id,
         name: user.name,
