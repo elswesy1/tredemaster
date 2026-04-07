@@ -1,11 +1,15 @@
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync, createHash } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes, scryptSync, createHash as cryptoHash } from "crypto";
 import { env } from "process";
 
 // مفتاح التشفير من متغيرات البيئة - إلزامي
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-if (!ENCRYPTION_KEY) {
-  throw new Error("ENCRYPTION_KEY environment variable is required for security");
-}
+const getEncryptionKey = (): string => {
+  const key = process.env.ENCRYPTION_KEY;
+  if (!key) {
+    throw new Error("ENCRYPTION_KEY environment variable is required for security");
+  }
+  return key;
+};
+
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
@@ -22,7 +26,7 @@ function deriveKey(key: string): Buffer {
  */
 export function encrypt(text: string): string {
   const iv = randomBytes(IV_LENGTH);
-  const key = deriveKey(ENCRYPTION_KEY);
+  const key = deriveKey(getEncryptionKey());
   
   const cipher = createCipheriv(ALGORITHM, key, iv);
   
@@ -49,7 +53,7 @@ export function decrypt(encryptedData: string): string {
   const authTag = combined.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
   const encrypted = combined.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
   
-  const key = deriveKey(ENCRYPTION_KEY);
+  const key = deriveKey(getEncryptionKey());
   
   const decipher = createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(authTag);
@@ -78,7 +82,7 @@ export function encryptApiKey(apiKey: string): { encrypted: string; hash: string
  * @returns hash
  */
 export function createHash(data: string): string {
-  return createHash("sha256").update(data).digest("hex").substring(0, 16);
+  return cryptoHash("sha256").update(data).digest("hex").substring(0, 16);
 }
 
 /**
