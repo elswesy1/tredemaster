@@ -143,3 +143,21 @@ export async function getCurrentUser(request: NextRequest) {
     name: token.name as string,
   }
 }
+
+/**
+ * الحصول على المستخدم مع userId (للتوافقية مع الكود القديم)
+ */
+export async function getAuthUser(request: NextRequest) {
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  })
+  
+  if (!token) return null
+  
+  return {
+    userId: token.id as string,
+    email: token.email as string,
+    name: token.name as string,
+  }
+}
