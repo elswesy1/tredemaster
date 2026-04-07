@@ -16,6 +16,18 @@ export async function GET(request: NextRequest) {
 
     const profiles = await db.riskProfile.findMany({
       where: { userId: user.userId },
+      include: {
+        account: {
+          select: {
+            id: true,
+            name: true,
+            accountType: true,
+            currency: true,
+            balance: true,
+            equity: true,
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(profiles)
@@ -55,10 +67,28 @@ export async function POST(request: NextRequest) {
       takeProfitRequired,
       riskRewardMin,
       isConfigured,
-      accountId,
-      accountName,
-      accountType,
+      accountId, // required
     } = body
+
+    // التحقق من وجود الحساب
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'يجب ربط ملف المخاطر بحساب تداول' },
+        { status: 400 }
+      )
+    }
+
+    // التحقق من أن الحساب يخص المستخدم
+    const account = await db.tradingAccount.findFirst({
+      where: { id: accountId, userId: user.userId }
+    })
+
+    if (!account) {
+      return NextResponse.json(
+        { error: 'الحساب غير موجود أو لا تملك صلاحية الوصول إليه' },
+        { status: 404 }
+      )
+    }
 
     const profile = await db.riskProfile.create({
       data: {
@@ -78,11 +108,21 @@ export async function POST(request: NextRequest) {
         takeProfitRequired: takeProfitRequired || false,
         riskRewardMin: riskRewardMin !== undefined ? parseFloat(riskRewardMin) : null,
         isConfigured: isConfigured || false,
-        accountId: accountId || null,
-        accountName: accountName || null,
-        accountType: accountType || null,
-        userId: user.userId, // ربط بالمستخدم الحالي
+        accountId, // required
+        accountName: account.name,
+        accountType: account.accountType,
+        userId: user.userId,
       },
+      include: {
+        account: {
+          select: {
+            id: true,
+            name: true,
+            accountType: true,
+            currency: true,
+          }
+        }
+      }
     })
     return NextResponse.json(profile, { status: 201 })
   } catch (error) {

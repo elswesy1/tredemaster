@@ -17,10 +17,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
     const date = searchParams.get('date')
+    const accountId = searchParams.get('accountId')
 
     // فلترة حسب المستخدم
     const where: Record<string, unknown> = { userId: user.userId }
     if (type) where.type = type
+    if (accountId) where.accountId = accountId
     if (date) {
       const startDate = new Date(date)
       startDate.setHours(0, 0, 0, 0)
@@ -34,6 +36,16 @@ export async function GET(request: NextRequest) {
 
     const entries = await db.tradingJournal.findMany({
       where,
+      include: {
+        account: {
+          select: {
+            id: true,
+            name: true,
+            accountType: true,
+            currency: true,
+          }
+        }
+      },
       orderBy: { date: 'desc' },
     })
     return NextResponse.json(entries)
@@ -57,11 +69,25 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
+    // التحقق من الحساب إذا تم تقديمه
+    if (body.accountId) {
+      const account = await db.tradingAccount.findFirst({
+        where: { id: body.accountId, userId: user.userId }
+      })
+      if (!account) {
+        return NextResponse.json(
+          { error: 'الحساب غير موجود أو لا تملك صلاحية الوصول إليه' },
+          { status: 404 }
+        )
+      }
+    }
+
     const entry = await db.tradingJournal.create({
       data: {
         type: body.type || 'daily',
         date: body.date ? new Date(body.date) : new Date(),
-        userId: user.userId, // ربط بالمستخدم الحالي
+        userId: user.userId,
+        accountId: body.accountId || null, // optional
 
         // Pre-market fields
         marketAnalysis: body.marketAnalysis,
@@ -111,6 +137,15 @@ export async function POST(request: NextRequest) {
         sentiment: body.sentiment,
         notes: body.notes,
       },
+      include: {
+        account: {
+          select: {
+            id: true,
+            name: true,
+            accountType: true,
+          }
+        }
+      }
     })
     return NextResponse.json(entry, { status: 201 })
   } catch (error) {

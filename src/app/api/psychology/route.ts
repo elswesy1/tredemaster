@@ -1,17 +1,37 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getAuthUser } from '@/lib/auth-middleware'
 
-// GET - Fetch all psychology logs
-export async function GET(request: Request) {
+// GET - Fetch psychology logs for authenticated user
+export async function GET(request: NextRequest) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json(
+        { error: 'غير مصارح - يجب تسجيل الدخول' },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
+    const accountId = searchParams.get('accountId')
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { userId: user.userId }
     if (type) where.type = type
+    if (accountId) where.accountId = accountId
 
     const logs = await db.psychologyLog.findMany({
       where,
+      include: {
+        account: {
+          select: {
+            id: true,
+            name: true,
+            accountType: true,
+          }
+        }
+      },
       orderBy: { date: 'desc' },
     })
     return NextResponse.json(logs)
@@ -22,8 +42,16 @@ export async function GET(request: Request) {
 }
 
 // POST - Create a new psychology log
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json(
+        { error: 'غير مصارح - يجب تسجيل الدخول' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const {
       type,
@@ -41,13 +69,27 @@ export async function POST(request: Request) {
       patience,
       confidence,
       notes,
-      userId,
+      accountId,
     } = body
+
+    // التحقق من الحساب إذا تم تقديمه
+    if (accountId) {
+      const account = await db.tradingAccount.findFirst({
+        where: { id: accountId, userId: user.userId }
+      })
+      if (!account) {
+        return NextResponse.json(
+          { error: 'الحساب غير موجود أو لا تملك صلاحية الوصول إليه' },
+          { status: 404 }
+        )
+      }
+    }
 
     const log = await db.psychologyLog.create({
       data: {
         type: type || 'check-in',
         tradeId,
+        accountId: accountId || null,
         emotion,
         emotionIntensity,
         trigger,
@@ -61,8 +103,17 @@ export async function POST(request: Request) {
         patience,
         confidence,
         notes,
-        userId: userId || 'default-user',
+        userId: user.userId,
       },
+      include: {
+        account: {
+          select: {
+            id: true,
+            name: true,
+            accountType: true,
+          }
+        }
+      }
     })
     return NextResponse.json(log, { status: 201 })
   } catch (error) {

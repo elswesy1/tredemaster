@@ -159,9 +159,12 @@ model TradingAccount {
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   portfolio       Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
   trades          Trade[]
+  riskProfiles    RiskProfile[]
+  journals        TradingJournal[]
+  psychologyLogs  PsychologyLog[]
   metaApiToken    MetaApiToken? @relation(fields: [metaApiTokenId], references: [id], onDelete: SetNull)
   dailySyncLogs   DailySyncLog[]
-    webhooks        TradingViewWebhook[]
+  webhooks        TradingViewWebhook[]
 
   @@index([userId])
   @@index([portfolioId])
@@ -319,11 +322,11 @@ model Setup {
   @@index([category])
 }
 
-// ملف المخاطر
+// ملف المخاطر - مرتبط إجبارياً بالحساب
 model RiskProfile {
   id                   String    @id @default(cuid())
   userId               String
-  accountId            String?
+  accountId            String    // required - يجب ربطه بحساب
   accountName          String?
   accountType          String?
   name                 String
@@ -346,16 +349,18 @@ model RiskProfile {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account TradingAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([accountId])
 }
 
-// يومية التداول
+// يومية التداول - مرتبطة بالحساب
 model TradingJournal {
   id                   String    @id @default(cuid())
   userId               String
+  accountId            String?   // optional للتوافقية، لكن يفضل ربطه
   date                 DateTime  @default(now())
   type                 String    @default("daily")
   marketAnalysis       String?
@@ -422,9 +427,11 @@ model TradingJournal {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([accountId])
   @@index([date])
   @@index([type])
   @@index([sessionType])
@@ -461,10 +468,11 @@ model SessionReview {
   @@index([session])
 }
 
-// سجل علم النفس
+// سجل علم النفس - مرتبط بالحساب
 model PsychologyLog {
   id               String    @id @default(cuid())
   userId           String
+  accountId        String?   // optional للتوافقية
   date             DateTime  @default(now())
   type             String    @default("check-in")
   tradeId          String?
@@ -484,9 +492,11 @@ model PsychologyLog {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([accountId])
   @@index([date])
   @@index([type])
 }

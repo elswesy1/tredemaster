@@ -39,6 +39,15 @@ export async function GET(request: NextRequest) {
                 closedAt: true,
               },
             },
+            riskProfiles: {
+              where: { isActive: true },
+              select: {
+                id: true,
+                name: true,
+                maxDailyLoss: true,
+                maxWeeklyLoss: true,
+              }
+            }
           },
         },
         trades: {
@@ -58,23 +67,53 @@ export async function GET(request: NextRequest) {
         _count: {
           select: { trades: true },
         },
+        riskProfiles: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true,
+            maxDailyLoss: true,
+            maxWeeklyLoss: true,
+          }
+        }
       },
     })
 
     // 3️⃣ جلب الصفقات المفتوحة والمغلقة
     const openTrades = await db.trade.findMany({
       where: { userId, status: 'open' },
+      include: {
+        account: {
+          select: { id: true, name: true, accountType: true }
+        }
+      }
     })
 
     const closedTrades = await db.trade.findMany({
       where: { userId, status: 'closed' },
       orderBy: { closedAt: 'desc' },
-      take: 100, // آخر 100 صفقة
+      take: 100,
+      include: {
+        account: {
+          select: { id: true, name: true, accountType: true }
+        }
+      }
     })
 
-    // 4️⃣ جلب ملفات المخاطر
+    // 4️⃣ جلب ملفات المخاطر مع الحسابات المرتبطة
     const riskProfiles = await db.riskProfile.findMany({
       where: { userId },
+      include: {
+        account: {
+          select: {
+            id: true,
+            name: true,
+            accountType: true,
+            balance: true,
+            equity: true,
+          }
+        }
+      }
     })
 
     // 5️⃣ جلب استخدام المخاطر اليومي
@@ -85,20 +124,30 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // 6️⃣ جلب يومية اليوم
+    // 6️⃣ جلب يومية اليوم مع الحساب المرتبط
     const todayJournal = await db.tradingJournal.findFirst({
       where: {
         userId,
         date: { gte: todayStart },
       },
+      include: {
+        account: {
+          select: { id: true, name: true, accountType: true }
+        }
+      }
     })
 
-    // 7️⃣ جلب سجل النفسية لليوم
+    // 7️⃣ جلب سجل النفسية لليوم مع الحساب المرتبط
     const todayPsychology = await db.psychologyLog.findFirst({
       where: {
         userId,
         date: { gte: todayStart },
       },
+      include: {
+        account: {
+          select: { id: true, name: true, accountType: true }
+        }
+      }
     })
 
     // ========== حساب الإحصائيات ==========
@@ -173,7 +222,6 @@ export async function GET(request: NextRequest) {
     ]
 
     // حساب سلسلة الانضباط
-    // (عدد الأيام المتتالية التي تم فيها اتباع الخطة)
     const disciplineStreak = await calculateDisciplineStreak(userId)
 
     // حساب Max Drawdown
@@ -196,12 +244,16 @@ export async function GET(request: NextRequest) {
         maxDrawdown,
       },
 
-      // المخاطر
+      // المخاطر (مع الحسابات المرتبطة)
       risk: {
         dailyUsed: dailyRiskUsed,
         weeklyUsed: weeklyRiskUsed,
         monthlyUsed: monthlyRiskUsed,
-        profiles: riskProfiles,
+        profiles: riskProfiles.map(p => ({
+          ...p,
+          accountName: p.account?.name,
+          accountType: p.account?.accountType,
+        })),
         activeProfile: riskProfiles.find(p => p.isActive),
       },
 
@@ -220,7 +272,7 @@ export async function GET(request: NextRequest) {
         accountsCount: p.tradingAccounts.length,
       })),
 
-      // الحسابات
+      // الحسابات (مع ملفات المخاطر)
       accounts: tradingAccounts.map(a => ({
         id: a.id,
         name: a.name,
@@ -230,6 +282,7 @@ export async function GET(request: NextRequest) {
         healthStatus: a.healthStatus,
         currentDrawdown: a.currentDrawdown,
         tradesCount: a._count.trades,
+        riskProfile: a.riskProfiles[0] || null,
       })),
 
       // آخر الصفقات
@@ -239,6 +292,7 @@ export async function GET(request: NextRequest) {
         type: t.type,
         profitLoss: t.profitLoss,
         closedAt: t.closedAt,
+        account: t.account,
       })),
 
       // حالة النفسية اليوم
@@ -247,6 +301,7 @@ export async function GET(request: NextRequest) {
         confidence: todayPsychology.confidence,
         discipline: todayPsychology.discipline,
         patience: todayPsychology.patience,
+        account: todayPsychology.account,
       } : null,
 
       // حالة اليومية
@@ -255,6 +310,7 @@ export async function GET(request: NextRequest) {
         hasInMarket: !!todayJournal.executionNotes,
         hasPostMarket: !!todayJournal.whatWentWell,
         sessionResult: todayJournal.sessionResult,
+        account: todayJournal.account,
       } : null,
 
       // Timestamp
