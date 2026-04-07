@@ -428,6 +428,13 @@ export function DashboardView() {
           },
         })
 
+        if (response.status === 401) {
+          // المستخدم غير مسجل الدخول - توجيه لصفحة تسجيل الدخول
+          setError('UNAUTHORIZED')
+          setIsLoading(false)
+          return
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
@@ -444,8 +451,12 @@ export function DashboardView() {
 
     fetchDashboardData()
 
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchDashboardData, 30000)
+    // Auto-refresh every 30 seconds (only if authorized)
+    const interval = setInterval(() => {
+      if (error !== 'UNAUTHORIZED') {
+        fetchDashboardData()
+      }
+    }, 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -582,16 +593,42 @@ export function DashboardView() {
 
       {/* Error Alert */}
       {error && (
-        <Card className="border-red-500/30 bg-red-500/10">
-          <CardContent className="flex items-center gap-3 py-4">
-            <AlertCircle className="h-5 w-5 text-red-400" />
-            <div className="flex-1">
-              <p className="text-red-400">{language === 'ar' ? 'خطأ في تحميل البيانات' : 'Error loading data'}</p>
-              <p className="text-sm text-gray-400">{error}</p>
-            </div>
-            <Button size="sm" onClick={handleRefresh} variant="outline">
-              {language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
-            </Button>
+        <Card className={`border ${error === 'UNAUTHORIZED' ? 'border-yellow-500/30 bg-yellow-500/10' : 'border-red-500/30 bg-red-500/10'}`}>
+          <CardContent className="flex flex-col sm:flex-row items-center gap-4 py-6">
+            {error === 'UNAUTHORIZED' ? (
+              <>
+                <div className="flex items-center gap-3 flex-1">
+                  <Shield className="h-6 w-6 text-yellow-400" />
+                  <div>
+                    <p className="text-yellow-400 font-medium">
+                      {language === 'ar' ? 'يجب تسجيل الدخول' : 'Login Required'}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {language === 'ar' 
+                        ? 'يرجى تسجيل الدخول للوصول إلى لوحة التحكم الخاصة بك' 
+                        : 'Please login to access your dashboard'}
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => window.location.href = '/'} 
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600"
+                >
+                  {language === 'ar' ? 'تسجيل الدخول' : 'Login'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="h-5 w-5 text-red-400" />
+                <div className="flex-1">
+                  <p className="text-red-400">{language === 'ar' ? 'خطأ في تحميل البيانات' : 'Error loading data'}</p>
+                  <p className="text-sm text-gray-400">{error}</p>
+                </div>
+                <Button size="sm" onClick={handleRefresh} variant="outline">
+                  {language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       )}

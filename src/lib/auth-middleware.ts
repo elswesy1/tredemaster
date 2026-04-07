@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { verifyToken } from './auth-simple'
 
 // المسارات التي لا تحتاج مصادقة
 const publicPaths = [
@@ -146,8 +147,24 @@ export async function getCurrentUser(request: NextRequest) {
 
 /**
  * الحصول على المستخدم مع userId (للتوافقية مع الكود القديم)
+ * يدعم نظامين: next-auth و jose token
  */
 export async function getAuthUser(request: NextRequest) {
+  // أولاً: محاولة الحصول على token من cookies (نظام jose)
+  const cookieStore = request.cookies
+  const sessionToken = cookieStore.get('auth-token')?.value
+  
+  if (sessionToken) {
+    const payload = await verifyToken(sessionToken)
+    if (payload) {
+      return {
+        userId: payload.userId,
+        email: payload.email,
+      }
+    }
+  }
+  
+  // ثانياً: محاولة استخدام next-auth (fallback)
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
