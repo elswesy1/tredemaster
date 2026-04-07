@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
+import { getAuthUser } from '@/lib/auth-middleware'
 
 // GET /api/trading-accounts/[id]/stats - إحصائيات حساب
 export async function GET(
@@ -8,25 +8,20 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth()
+    const user = await getAuthUser(request)
     
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json({ 
+        error: 'غير مصرح', 
+        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
+      }, { status: 401 })
     }
 
     // التحقق من ملكية الحساب
     const account = await prisma.tradingAccount.findFirst({
       where: {
         id: params.id,
-        userId: user.id
+        userId: user.userId
       }
     })
 

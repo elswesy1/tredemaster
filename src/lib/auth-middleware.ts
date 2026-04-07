@@ -4,8 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { cookies } from 'next/headers'
 import { verifyToken } from './auth-simple'
+import { prisma } from './prisma'
 
 // المسارات التي لا تحتاج مصادقة
 const publicPaths = [
@@ -34,6 +35,14 @@ const protectedPaths = [
   '/api/plans',
   '/api/audits',
   '/api/ai-chat',
+  '/api/trading-accounts',
+  '/api/sessions',
+  '/api/rules',
+  '/api/setups',
+  '/api/risk-profiles',
+  '/api/risk-alerts',
+  '/api/risk-usage',
+  '/api/risk-check',
 ]
 
 /**
@@ -51,6 +60,45 @@ function isPublicPath(pathname: string): boolean {
 }
 
 /**
+ * Helper داخلي للحصول على token من cookies
+ */
+async function getTokenFromCookies(request?: NextRequest): Promise<{ userId: string; email: string } | null> {
+  try {
+    let token: string | undefined
+    
+    // 1. محاولة الحصول على token من request cookies
+    if (request) {
+      token = request.cookies.get('auth-token')?.value
+    }
+    
+    // 2. محاولة الحصول على token من next/headers cookies
+    if (!token) {
+      const cookieStore = await cookies()
+      token = cookieStore.get('auth-token')?.value
+    }
+    
+    if (!token) {
+      return null
+    }
+    
+    // التحقق من الـ token
+    const payload = await verifyToken(token)
+    
+    if (!payload?.userId) {
+      return null
+    }
+    
+    return {
+      userId: payload.userId,
+      email: payload.email,
+    }
+  } catch (error) {
+    console.error('getTokenFromCookies error:', error)
+    return null
+  }
+}
+
+/**
  * Middleware للمصادقة
  */
 export async function authMiddleware(request: NextRequest) {
@@ -63,36 +111,25 @@ export async function authMiddleware(request: NextRequest) {
   
   // التحقق من المسارات المحمية
   if (isProtectedPath(pathname)) {
-    try {
-      const token = await getToken({
-        req: request,
-        secret: process.env.NEXTAUTH_SECRET,
-      })
-      
-      if (!token) {
-        return NextResponse.json(
-          { 
-            error: 'غير مصرح', 
-            message: 'يجب تسجيل الدخول للوصول لهذه البيانات',
-            code: 'UNAUTHORIZED'
-          },
-          { status: 401 }
-        )
-      }
-      
-      // إضافة معلومات المستخدم للـ headers
-      const response = NextResponse.next()
-      response.headers.set('x-user-id', token.id as string)
-      response.headers.set('x-user-email', token.email as string)
-      
-      return response
-    } catch (error) {
-      console.error('Auth middleware error:', error)
+    const tokenData = await getTokenFromCookies(request)
+    
+    if (!tokenData) {
       return NextResponse.json(
-        { error: 'خطأ في المصادقة' },
-        { status: 500 }
+        { 
+          error: 'غير مصرح', 
+          message: 'يجب تسجيل الدخول للوصول لهذه البيانات',
+          code: 'UNAUTHORIZED'
+        },
+        { status: 401 }
       )
     }
+    
+    // إضافة معلومات المستخدم للـ headers
+    const response = NextResponse.next()
+    response.headers.set('x-user-id', tokenData.userId)
+    response.headers.set('x-user-email', tokenData.email)
+    
+    return response
   }
   
   return null
@@ -105,76 +142,66 @@ export async function verifyOwnership(
   request: NextRequest,
   resourceUserId: string
 ): Promise<boolean> {
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  })
+  const tokenData = await getTokenFromCookies(request)
   
-  if (!token) return false
+  if (!tokenData) return false
   
-  return token.id === resourceUserId
+  return tokenData.userId === resourceUserId
 }
 
 /**
  * الحصول على معرف المستخدم من الطلب
  */
 export async function getUserId(request: NextRequest): Promise<string | null> {
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  })
-  
-  return token?.id as string | null
+  const tokenData = await getTokenFromCookies(request)
+  return tokenData?.userId || null
 }
 
 /**
  * Helper للحصول على المستخدم الكامل
  */
 export async function getCurrentUser(request: NextRequest) {
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
+  const tokenData = await getTokenFromCookies(request)
+  
+  if (!tokenData) return null
+  
+  const user = await prisma.user.findUnique({
+    where: { id: tokenData.userId },
+    select: { id: true, email: true, name: true }
   })
   
-  if (!token) return null
-  
-  return {
-    id: token.id as string,
-    email: token.email as string,
-    name: token.name as string,
-  }
+  return user
 }
 
 /**
  * الحصول على المستخدم مع userId (للتوافقية مع الكود القديم)
- * يدعم نظامين: next-auth و jose token
+ * يدعم نظامين: jose token cookie
  */
-export async function getAuthUser(request: NextRequest) {
-  // أولاً: محاولة الحصول على token من cookies (نظام jose)
-  const cookieStore = request.cookies
-  const sessionToken = cookieStore.get('auth-token')?.value
-  
-  if (sessionToken) {
-    const payload = await verifyToken(sessionToken)
-    if (payload) {
-      return {
-        userId: payload.userId,
-        email: payload.email,
-      }
+export async function getAuthUser(request?: NextRequest): Promise<{ userId: string; email: string; name?: string } | null> {
+  try {
+    const tokenData = await getTokenFromCookies(request)
+    
+    if (!tokenData) {
+      return null
     }
-  }
-  
-  // ثانياً: محاولة استخدام next-auth (fallback)
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  })
-  
-  if (!token) return null
-  
-  return {
-    userId: token.id as string,
-    email: token.email as string,
-    name: token.name as string,
+    
+    // التحقق من وجود المستخدم في قاعدة البيانات
+    const user = await prisma.user.findUnique({
+      where: { id: tokenData.userId },
+      select: { id: true, email: true, name: true }
+    })
+    
+    if (!user) {
+      return null
+    }
+    
+    return {
+      userId: user.id,
+      email: user.email,
+      name: user.name || undefined,
+    }
+  } catch (error) {
+    console.error('getAuthUser error:', error)
+    return null
   }
 }

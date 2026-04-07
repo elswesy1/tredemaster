@@ -1,26 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
+import { getAuthUser } from '@/lib/auth-middleware'
 
 // GET /api/trading-accounts - جلب جميع الحسابات
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
+    const user = await getAuthUser(request)
     
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json({ 
+        error: 'غير مصرح', 
+        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
+      }, { status: 401 })
     }
 
     const accounts = await prisma.tradingAccount.findMany({
-      where: { userId: user.id },
+      where: { userId: user.userId },
       include: {
         _count: {
           select: { trades: true }
@@ -42,18 +37,13 @@ export async function GET(request: NextRequest) {
 // POST /api/trading-accounts - إنشاء حساب جديد
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
+    const user = await getAuthUser(request)
     
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json({ 
+        error: 'غير مصرح', 
+        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
+      }, { status: 401 })
     }
 
     const body = await request.json()
@@ -89,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     const account = await prisma.tradingAccount.create({
       data: {
-        userId: user.id,
+        userId: user.userId,
         name,
         accountType,
         broker: broker || null,
