@@ -46,6 +46,8 @@ export async function GET(request: NextRequest) {
                 name: true,
                 maxDailyLoss: true,
                 maxWeeklyLoss: true,
+                maxMonthlyLoss: true,
+                maxDrawdown: true,
               }
             }
           },
@@ -74,6 +76,8 @@ export async function GET(request: NextRequest) {
             name: true,
             maxDailyLoss: true,
             maxWeeklyLoss: true,
+            maxMonthlyLoss: true,
+            maxDrawdown: true,
           }
         }
       },

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useI18n } from '@/lib/i18n'
+import { useTradingStore } from '@/lib/store'
 import { 
   Wallet,
   Building2,
@@ -588,7 +589,10 @@ export function PortfolioView() {
               : 'Manage all your accounts and assets in one place'}
           </p>
         </div>
-        <Button className="bg-gradient-to-r from-green-500 to-emerald-600">
+        <Button 
+          className="bg-gradient-to-r from-green-500 to-emerald-600"
+          onClick={() => useTradingStore.getState().setActiveSection('accounts')}
+        >
           <Plus className="h-4 w-4 mr-2" />
           {language === 'ar' ? 'إضافة حساب' : 'Add Account'}
         </Button>

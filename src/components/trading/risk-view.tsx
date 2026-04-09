@@ -43,7 +43,7 @@ interface Account {
   name: string
   broker?: string
   accountNumber?: string
-  type: string
+  accountType: string  // Changed from 'type' to 'accountType' to match API response
   balance: number
   currency: string
 }
@@ -122,8 +122,8 @@ export function RiskView() {
     const fetchData = async () => {
       try {
         const [profilesRes, accountsRes] = await Promise.all([
-          fetch('/api/risk-profiles'),
-          fetch('/api/accounts')
+          fetch('/api/risk-profiles', { credentials: 'include' }),
+          fetch('/api/accounts', { credentials: 'include' })
         ])
         
         if (profilesRes.ok) {
@@ -200,12 +200,14 @@ export function RiskView() {
         response = await fetch(`/api/risk-profiles/${editingProfile.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(profileData)
         })
       } else {
         response = await fetch('/api/risk-profiles', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(profileData)
         })
       }
@@ -255,7 +257,8 @@ export function RiskView() {
     
     try {
       const response = await fetch(`/api/risk-profiles/${profileToDelete.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       })
       
       if (response.ok) {
@@ -464,7 +467,7 @@ export function RiskView() {
                                 <Link2 className="h-3 w-3" />
                                 {account.name}
                                 <span className="text-xs text-muted-foreground">
-                                  ({account.broker || account.type})
+                                  ({account.broker || account.accountType})
                                 </span>
                               </div>
                             </SelectItem>

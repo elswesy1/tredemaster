@@ -235,7 +235,9 @@ export function TradingAccountsView() {
   const fetchAccounts = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/trading-accounts')
+      const response = await fetch('/api/trading-accounts', {
+        credentials: 'include'
+      })
       if (response.ok) {
         const data = await response.json()
         setAccounts(data)
@@ -254,7 +256,9 @@ export function TradingAccountsView() {
 
   const fetchAccountStats = async (accountId: string) => {
     try {
-      const response = await fetch(`/api/trading-accounts/${accountId}/stats`)
+      const response = await fetch(`/api/trading-accounts/${accountId}/stats`, {
+        credentials: 'include'
+      })
       if (response.ok) {
         const data = await response.json()
         setStats(prev => ({ ...prev, [accountId]: data.performance }))
@@ -327,6 +331,7 @@ export function TradingAccountsView() {
       const response = await fetch('/api/trading-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           ...formData,
           balance: parseFloat(formData.balance) || 0,
@@ -377,6 +382,7 @@ export function TradingAccountsView() {
       const response = await fetch(`/api/trading-accounts/${selectedAccount.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           ...formData,
           balance: parseFloat(formData.balance) || 0,
@@ -418,7 +424,8 @@ export function TradingAccountsView() {
 
     try {
       const response = await fetch(`/api/trading-accounts/${selectedAccount.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       })
 
       if (response.ok) {
@@ -448,7 +455,8 @@ export function TradingAccountsView() {
     
     try {
       const response = await fetch(`/api/trading-accounts/${account.id}/sync`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
       })
 
       if (response.ok) {
