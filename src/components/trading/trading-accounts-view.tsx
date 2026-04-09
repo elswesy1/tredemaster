@@ -43,7 +43,7 @@ import { Switch } from '@/components/ui/switch'
 import { Progress } from '@/components/ui/progress'
 import { useI18n } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   Plus, 
   Wallet, 
@@ -80,7 +80,7 @@ import {
   Activity,
   Gauge
 } from 'lucide-react'
-import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts'
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, Line, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts'
 
 // Types
 interface TradingAccount {
@@ -216,7 +216,7 @@ const COLORS = ['#22C55E', '#3B82F6', '#A855F7', '#F59E0B', '#EF4444', '#06B6D4'
 
 export function TradingAccountsView() {
   const { t, language } = useI18n()
-  const { toast } = useToast()
+  
   const isRTL = language === 'ar'
   
   // State
@@ -319,10 +319,7 @@ export function TradingAccountsView() {
   // Handle add account
   const handleAddAccount = async () => {
     if (!formData.name) {
-      toast({
-        title: t('portfolio.messages.requiredFields'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.requiredFields'))
       return
     }
 
@@ -347,9 +344,7 @@ export function TradingAccountsView() {
       })
 
       if (response.ok) {
-        toast({
-          title: t('portfolio.messages.accountAdded')
-        })
+        toast.success(t('portfolio.messages.accountAdded'))
         setShowAddDialog(false)
         setFormData(initialFormData)
         fetchAccounts()
@@ -358,10 +353,7 @@ export function TradingAccountsView() {
       }
     } catch (error) {
       console.error('Error adding account:', error)
-      toast({
-        title: t('portfolio.messages.connectionError'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.connectionError'))
     } finally {
       setSaving(false)
     }
@@ -370,10 +362,7 @@ export function TradingAccountsView() {
   // Handle edit account
   const handleEditAccount = async () => {
     if (!selectedAccount || !formData.name) {
-      toast({
-        title: t('portfolio.messages.requiredFields'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.requiredFields'))
       return
     }
 
@@ -397,9 +386,7 @@ export function TradingAccountsView() {
       })
 
       if (response.ok) {
-        toast({
-          title: t('portfolio.messages.accountUpdated')
-        })
+        toast.success(t('portfolio.messages.accountUpdated'))
         setShowEditDialog(false)
         setSelectedAccount(null)
         setFormData(initialFormData)
@@ -409,10 +396,7 @@ export function TradingAccountsView() {
       }
     } catch (error) {
       console.error('Error updating account:', error)
-      toast({
-        title: t('portfolio.messages.connectionError'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.connectionError'))
     } finally {
       setSaving(false)
     }
@@ -429,9 +413,7 @@ export function TradingAccountsView() {
       })
 
       if (response.ok) {
-        toast({
-          title: t('portfolio.messages.accountDeleted')
-        })
+        toast.success(t('portfolio.messages.accountDeleted'))
         setShowDeleteDialog(false)
         setSelectedAccount(null)
         fetchAccounts()
@@ -440,10 +422,7 @@ export function TradingAccountsView() {
       }
     } catch (error) {
       console.error('Error deleting account:', error)
-      toast({
-        title: t('portfolio.messages.connectionError'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.connectionError'))
     }
   }
 
@@ -460,17 +439,12 @@ export function TradingAccountsView() {
       })
 
       if (response.ok) {
-        toast({
-          title: t('portfolio.messages.syncSuccess')
-        })
+        toast.success(t('portfolio.messages.syncSuccess'))
         fetchAccounts()
       }
     } catch (error) {
       console.error('Error syncing:', error)
-      toast({
-        title: t('portfolio.messages.syncFailed'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.syncFailed'))
     }
   }
 

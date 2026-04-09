@@ -61,7 +61,7 @@ import {
   Radar,
 } from 'recharts'
 import { getApiHeaders, apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 // Types
@@ -151,7 +151,6 @@ const emotionLabels: Record<string, { label: string; icon: React.ElementType; co
 }
 
 export function PsychologyView() {
-  const { toast } = useToast()
   const [logs, setLogs] = useState<PsychologyLog[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -169,15 +168,11 @@ export function PsychologyView() {
       setLogs(data)
     } catch (error) {
       console.error('Error fetching psychology logs:', error)
-      toast({
-        title: 'خطأ',
-        description: 'فشل في جلب سجلات علم النفس',
-        variant: 'destructive',
-      })
+      toast.error('فشل في جلب سجلات علم النفس')
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [])
 
   useEffect(() => {
     fetchLogs()
@@ -229,17 +224,10 @@ export function PsychologyView() {
       setLogs([newLog, ...logs])
       setNewLogOpen(false)
       setFormData(initialFormData)
-      toast({
-        title: 'تم بنجاح',
-        description: 'تم إنشاء السجل النفسي بنجاح',
-      })
+      toast.success('تم إنشاء السجل النفسي بنجاح')
     } catch (error) {
       console.error('Error creating psychology log:', error)
-      toast({
-        title: 'خطأ',
-        description: 'فشل في إنشاء السجل النفسي',
-        variant: 'destructive',
-      })
+      toast.error('فشل في إنشاء السجل النفسي')
     } finally {
       setSaving(false)
     }
@@ -258,17 +246,10 @@ export function PsychologyView() {
       setEditLogOpen(false)
       setSelectedLog(null)
       setFormData(initialFormData)
-      toast({
-        title: 'تم بنجاح',
-        description: 'تم تحديث السجل النفسي بنجاح',
-      })
+      toast.success('تم تحديث السجل النفسي بنجاح')
     } catch (error) {
       console.error('Error updating psychology log:', error)
-      toast({
-        title: 'خطأ',
-        description: 'فشل في تحديث السجل النفسي',
-        variant: 'destructive',
-      })
+      toast.error('فشل في تحديث السجل النفسي')
     } finally {
       setSaving(false)
     }
@@ -283,17 +264,10 @@ export function PsychologyView() {
       setLogs(logs.filter(log => log.id !== selectedLog.id))
       setDeleteDialogOpen(false)
       setSelectedLog(null)
-      toast({
-        title: 'تم بنجاح',
-        description: 'تم حذف السجل النفسي بنجاح',
-      })
+      toast.success('تم حذف السجل النفسي بنجاح')
     } catch (error) {
       console.error('Error deleting psychology log:', error)
-      toast({
-        title: 'خطأ',
-        description: 'فشل في حذف السجل النفسي',
-        variant: 'destructive',
-      })
+      toast.error('فشل في حذف السجل النفسي')
     } finally {
       setSaving(false)
     }

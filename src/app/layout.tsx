@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "sonner";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/components/auth/auth-provider";
 
@@ -55,6 +56,7 @@ export default function RootLayout({
             {children}
           </AuthProvider>
           <Toaster />
+          <Sonner />
         </ThemeProvider>
       </body>
     </html>
