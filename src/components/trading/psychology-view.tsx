@@ -62,6 +62,7 @@ import {
 } from 'recharts'
 import { getApiHeaders, apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
+import { cn } from '@/lib/utils'
 
 // Types
 interface PsychologyLog {
@@ -848,8 +849,4 @@ export function PsychologyView() {
       </Dialog>
     </div>
   )
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
 }
