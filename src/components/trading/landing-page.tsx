@@ -182,97 +182,99 @@ function SocialProof({ lng }: { lng: string }) {
 }
 
 // ============================================
-// 4️⃣ FEATURES SECTION - مع Glow Effects
+// 4️⃣ FEATURES SECTION - الركائز الأربع
 // ============================================
 function FeaturesSection({ language }: { language: string }) {
-  const features = [
+  const pillars = [
     {
-      icon: Wallet,
-      title: language === 'ar' ? 'إدارة المحافظ' : 'Portfolio Management',
+      icon: BookOpen,
+      title: language === 'ar' ? 'يومية التداول الذكية' : 'Smart Trading Journal',
       description: language === 'ar' 
-        ? 'تتبع وإدارة محافظك الاستثمارية بسهولة تامة مع تحديثات لحظية وتقارير تفصيلية'
-        : 'Track and manage your investment portfolios with ease, real-time updates, and detailed reports',
+        ? 'تتبع جلساتك بثلاث مراحل: ما قبل الجلسة، أثناء الجلسة، وما بعدها. سجل تحليلاتك، صفقاتك، ومشاعرك في مكان واحد.'
+        : 'Track your sessions in three phases: Pre-Market, Market-In, and Market-Post. Record your analysis, trades, and emotions in one place.',
       color: 'cyan'
     },
     {
-      icon: Shield,
-      title: language === 'ar' ? 'إدارة المخاطر' : 'Risk Management',
+      icon: Sparkles,
+      title: language === 'ar' ? 'مُوجه التداول الذكي' : 'AI Trading Mentor',
       description: language === 'ar'
-        ? 'تحديد ومراقبة معايير المخاطر مع تنبيهات ذكية تحمي رأس مالك'
-        : 'Define and monitor risk parameters with smart alerts that protect your capital',
-      color: 'emerald'
-    },
-    {
-      icon: LineChart,
-      title: language === 'ar' ? 'سجل الصفقات' : 'Trade Journal',
-      description: language === 'ar'
-        ? 'سجل وحلل جميع صفقاتك مع استخراج الأنماط والرؤى القيمة'
-        : 'Log and analyze all your trades with pattern extraction and valuable insights',
-      color: 'cyan'
+        ? 'محرك ذكي يحلل صفقاتك ويقدم توصيات مبنية على أسلوب SMC (Smart Money Concepts). يتعلم من أنماط تداولك ويطور أداءك.'
+        : 'An intelligent engine that analyzes your trades and provides SMC (Smart Money Concepts) based recommendations. Learns from your trading patterns and improves your performance.',
+      color: 'amber'
     },
     {
       icon: Brain,
-      title: language === 'ar' ? 'تحليل السيكولوجي' : 'Psychology Analysis',
+      title: language === 'ar' ? 'مساعد علم النفس المتقدم' : 'Advanced Psychology Assistant',
       description: language === 'ar'
-        ? 'راقب حالتك النفسية وابنِ عادات تداول صحية تدوم'
-        : 'Monitor your psychological state and build sustainable healthy trading habits',
-      color: 'emerald'
+        ? 'راقب حالتك النفسية، مستوى التوتر، والانضباط. احصل على تنبيهات عند الانحراف عن خطتك واقتراحات لتحسين السيكولوجية.'
+        : 'Monitor your mental state, stress levels, and discipline. Get alerts when you deviate from your plan and suggestions for psychology improvement.',
+      color: 'purple'
     },
     {
-      icon: BarChart3,
-      title: language === 'ar' ? 'إحصائيات الأداء' : 'Performance Statistics',
+      icon: Target,
+      title: language === 'ar' ? 'باني الـ Playbook الاحترافي' : 'Custom Playbook Builder',
       description: language === 'ar'
-        ? 'تحليلات مفصلة لأدائك مع رسوم بيانية تفاعلية ومقاييس مهمة'
-        : 'Detailed analytics of your performance with interactive charts and key metrics',
-      color: 'cyan'
-    },
-    {
-      icon: Zap,
-      title: language === 'ar' ? 'AI المساعد الذكي' : 'AI Assistant',
-      description: language === 'ar'
-        ? 'مساعد ذكي يتعلم من أسلوبك ويقدم توصيات شخصية'
-        : 'Smart assistant that learns your style and provides personalized recommendations',
+        ? 'أنشئ playbook خاص بك يحتوي على قواعد الدخول والخروج، إدارة المخاطر، والسيناريوهات المفضلة. طبقه بشكل منهجي في كل صفقة.'
+        : 'Create your own playbook with entry/exit rules, risk management, and favorite scenarios. Apply it systematically to every trade.',
       color: 'emerald'
     }
   ]
 
   return (
     <section className="py-24 relative">
-      <div className="container mx-auto px-4">
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
+      
+      <div className="container mx-auto px-4 relative z-10">
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            {language === 'ar' ? 'كل ما تحتاجه في مكان واحد' : 'Everything You Need in One Place'}
+            {language === 'ar' ? 'الركائز الأربع للتميز' : 'The Four Pillars of Excellence'}
           </h2>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
             {language === 'ar' 
-              ? 'أدوات احترافية مصممة خصيصاً للمتداولين العرب'
-              : 'Professional tools designed specifically for Arab traders'}
+              ? 'منصة متكاملة لإدارة تداولك بشكل احترافي'
+              : 'A comprehensive platform for professional trading management'}
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
+        {/* Pillars Grid - 2x2 */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {pillars.map((pillar, index) => (
             <div 
               key={index} 
-              className="group p-6 rounded-2xl bg-gradient-to-br from-gray-900/50 to-black border border-gray-800 hover:border-cyan-500/50 transition-all duration-300"
+              className="group p-8 rounded-2xl bg-gradient-to-br from-gray-900/80 to-black border border-gray-800 hover:border-cyan-500/50 transition-all duration-300 relative overflow-hidden"
             >
-              <div className={`w-14 h-14 rounded-xl ${
-                feature.color === 'cyan' 
-                  ? 'bg-cyan-500/10 border-cyan-500/30' 
-                  : 'bg-emerald-500/10 border-emerald-500/30'
-              } border flex items-center justify-center mb-4 group-hover:shadow-lg ${
-                feature.color === 'cyan' 
-                  ? 'group-hover:shadow-cyan-500/20' 
-                  : 'group-hover:shadow-emerald-500/20'
-              } transition-all`}>
-                <feature.icon className={`w-7 h-7 ${
-                  feature.color === 'cyan' ? 'text-cyan-400' : 'text-emerald-400'
-                }`} />
+              {/* Glow Effect */}
+              <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity ${
+                pillar.color === 'cyan' ? 'bg-cyan-500' :
+                pillar.color === 'amber' ? 'bg-amber-500' :
+                pillar.color === 'purple' ? 'bg-purple-500' :
+                'bg-emerald-500'
+              }`} />
+              
+              <div className={`relative z-10`}>
+                <div className={`w-16 h-16 rounded-xl ${
+                  pillar.color === 'cyan' ? 'bg-cyan-500/10 border-cyan-500/30' :
+                  pillar.color === 'amber' ? 'bg-amber-500/10 border-amber-500/30' :
+                  pillar.color === 'purple' ? 'bg-purple-500/10 border-purple-500/30' :
+                  'bg-emerald-500/10 border-emerald-500/30'
+                } border flex items-center justify-center mb-6 group-hover:shadow-lg ${
+                  pillar.color === 'cyan' ? 'group-hover:shadow-cyan-500/20' :
+                  pillar.color === 'amber' ? 'group-hover:shadow-amber-500/20' :
+                  pillar.color === 'purple' ? 'group-hover:shadow-purple-500/20' :
+                  'group-hover:shadow-emerald-500/20'
+                } transition-all`}>
+                  <pillar.icon className={`w-8 h-8 ${
+                    pillar.color === 'cyan' ? 'text-cyan-400' :
+                    pillar.color === 'amber' ? 'text-amber-400' :
+                    pillar.color === 'purple' ? 'text-purple-400' :
+                    'text-emerald-400'
+                  }`} />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-3">{pillar.title}</h3>
+                <p className="text-gray-400 leading-relaxed text-lg">{pillar.description}</p>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
-              <p className="text-gray-400 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
@@ -632,7 +634,7 @@ function PricingSection({ language, onGetStarted }: { language: string; onGetSta
       price: '$0',
       features: [
         language === 'ar' ? 'محفظة واحدة' : '1 Portfolio',
-        language === 'ar' ? '10 صفقات/شهر' : '10 Trades/Month',
+        language === 'ar' ? '50 صفقة/شهر' : '50 Trades/Month',
         language === 'ar' ? 'يومية التداول' : 'Trading Journal',
         language === 'ar' ? 'إحصائيات أساسية' : 'Basic Statistics'
       ]

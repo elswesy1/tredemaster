@@ -18,6 +18,28 @@
     "zenMode": "ZEN Mode",
     "pricing": "Pricing"
   },
+  "features": {
+    "title": "The Four Core Pillars",
+    "subtitle": "A comprehensive platform for professional trading management",
+    "pillars": {
+      "tradingJournal": {
+        "title": "Smart Trading Journal",
+        "description": "Track your sessions in three phases: Pre-Market, Market-In, and Market-Post. Record your analysis, trades, and emotions in one place."
+      },
+      "aiMentor": {
+        "title": "AI Trading Mentor",
+        "description": "An intelligent engine that analyzes your trades and provides SMC (Smart Money Concepts) based recommendations. Learns from your trading patterns and improves your performance."
+      },
+      "psychologyAssistant": {
+        "title": "Advanced Psychology Assistant",
+        "description": "Monitor your mental state, stress levels, and discipline. Get alerts when you deviate from your plan and suggestions for psychology improvement."
+      },
+      "playbookBuilder": {
+        "title": "Custom Playbook Builder",
+        "description": "Create your own playbook with entry/exit rules, risk management, and favorite scenarios. Apply it systematically to every trade."
+      }
+    }
+  },
   "dashboard": {
     "title": "Dashboard",
     "totalAssets": "Total Assets",
