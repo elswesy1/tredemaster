@@ -182,7 +182,7 @@ function SocialProof({ lng }: { lng: string }) {
 }
 
 // ============================================
-// 4️⃣ FEATURES SECTION - الركائز الأربع
+// 4️⃣ FEATURES SECTION - الركائز الست
 // ============================================
 function FeaturesSection({ language }: { language: string }) {
   const pillars = [
@@ -190,93 +190,155 @@ function FeaturesSection({ language }: { language: string }) {
       icon: BookOpen,
       title: language === 'ar' ? 'يومية التداول الذكية' : 'Smart Trading Journal',
       description: language === 'ar' 
-        ? 'تتبع جلساتك بثلاث مراحل: ما قبل الجلسة، أثناء الجلسة، وما بعدها. سجل تحليلاتك، صفقاتك، ومشاعرك في مكان واحد.'
-        : 'Track your sessions in three phases: Pre-Market, Market-In, and Market-Post. Record your analysis, trades, and emotions in one place.',
-      color: 'cyan'
+        ? 'الأساس: تتبع جلساتك بثلاث مراحل. سجل تحليلاتك، صفقاتك، ومشاعرك في مكان واحد.'
+        : 'The Foundation: Track sessions in 3 phases. Record analysis, trades, and emotions in one place.',
+      color: 'cyan',
+      badge: language === 'ar' ? 'الأساس' : 'Foundation'
     },
     {
       icon: Sparkles,
       title: language === 'ar' ? 'مُوجه التداول الذكي' : 'AI Trading Mentor',
       description: language === 'ar'
-        ? 'محرك ذكي يحلل صفقاتك ويقدم توصيات مبنية على أسلوب SMC (Smart Money Concepts). يتعلم من أنماط تداولك ويطور أداءك.'
-        : 'An intelligent engine that analyzes your trades and provides SMC (Smart Money Concepts) based recommendations. Learns from your trading patterns and improves your performance.',
-      color: 'amber'
+        ? 'دعم AI شامل: تحليل صفقاتك وتوصيات مبنية على SMC. يتعلم من أنماطك ويطور أداءك.'
+        : 'Universal AI Support: Trade analysis and SMC-based recommendations. Learns and improves your performance.',
+      color: 'amber',
+      badge: 'AI'
     },
     {
       icon: Brain,
       title: language === 'ar' ? 'مساعد علم النفس المتقدم' : 'Advanced Psychology Assistant',
       description: language === 'ar'
-        ? 'راقب حالتك النفسية، مستوى التوتر، والانضباط. احصل على تنبيهات عند الانحراف عن خطتك واقتراحات لتحسين السيكولوجية.'
-        : 'Monitor your mental state, stress levels, and discipline. Get alerts when you deviate from your plan and suggestions for psychology improvement.',
-      color: 'purple'
+        ? 'منطق مارك دوغلاس: راقب حالتك النفسية والتوتر. تنبيهات عند الانحراف عن خطتك.'
+        : 'Mark Douglas Logic: Monitor mental state and stress. Alerts when deviating from your plan.',
+      color: 'purple',
+      badge: language === 'ar' ? 'متقدم' : 'Advanced'
     },
     {
       icon: Target,
       title: language === 'ar' ? 'باني الـ Playbook الاحترافي' : 'Custom Playbook Builder',
       description: language === 'ar'
-        ? 'أنشئ playbook خاص بك يحتوي على قواعد الدخول والخروج، إدارة المخاطر، والسيناريوهات المفضلة. طبقه بشكل منهجي في كل صفقة.'
-        : 'Create your own playbook with entry/exit rules, risk management, and favorite scenarios. Apply it systematically to every trade.',
-      color: 'emerald'
+        ? 'تداول قائم على القواعد: أنشئ playbook بقواعد الدخول/الخروج وإدارة المخاطر.'
+        : 'Rule-based Trading: Create playbook with entry/exit rules and risk management.',
+      color: 'emerald',
+      badge: language === 'ar' ? 'احترافي' : 'Pro'
+    },
+    {
+      icon: Wallet,
+      title: language === 'ar' ? 'محفظة متعددة الحسابات' : 'Multi-Account Portfolio',
+      description: language === 'ar'
+        ? 'إدارة 8+ حسابات: دعم للوسطاء و Prop Firms والمؤشرات والأسهم في مكان واحد.'
+        : 'Manage 8+ Accounts: Support for brokers, prop firms, indices, and stocks in one place.',
+      color: 'blue',
+      badge: '8+'
+    },
+    {
+      icon: BarChart3,
+      title: language === 'ar' ? 'التحليلات المؤسسية' : 'Institutional Analytics',
+      description: language === 'ar'
+        ? 'تقارير ومقاييس احترافية: تحليلات متعمقة، رسوم بيانية تفاعلية، ومقاييس أداء متقدمة.'
+        : 'Professional Reports & Metrics: Deep analytics, interactive charts, and advanced performance metrics.',
+      color: 'rose',
+      badge: language === 'ar' ? 'مؤسسي' : 'Institutional'
     }
   ]
 
   return (
-    <section className="py-24 relative">
+    <section className="py-24 relative" id="features">
       {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/5 rounded-full blur-3xl" />
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Section Header */}
         <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 mb-6">
+            <Sparkles className="w-4 h-4 text-cyan-400" />
+            <span className="text-sm text-cyan-400">
+              {language === 'ar' ? 'الركائز الست للتميز' : 'The Six Pillars of Excellence'}
+            </span>
+          </div>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            {language === 'ar' ? 'الركائز الأربع للتميز' : 'The Four Pillars of Excellence'}
+            {language === 'ar' ? 'كل ما تحتاجه في مكان واحد' : 'Everything You Need in One Place'}
           </h2>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
             {language === 'ar' 
-              ? 'منصة متكاملة لإدارة تداولك بشكل احترافي'
-              : 'A comprehensive platform for professional trading management'}
+              ? 'منصة متكاملة لإدارة تداولك بشكل احترافي مع أدوات ذكية ومتقدمة'
+              : 'A comprehensive platform for professional trading with smart and advanced tools'}
           </p>
         </div>
 
-        {/* Pillars Grid - 2x2 */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        {/* Pillars Grid - 3 columns */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {pillars.map((pillar, index) => (
             <div 
               key={index} 
-              className="group p-8 rounded-2xl bg-gradient-to-br from-gray-900/80 to-black border border-gray-800 hover:border-cyan-500/50 transition-all duration-300 relative overflow-hidden"
+              className="group p-6 rounded-2xl bg-gradient-to-br from-gray-900/80 to-black border border-gray-800 hover:border-cyan-500/50 transition-all duration-300 relative overflow-hidden"
             >
               {/* Glow Effect */}
               <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity ${
                 pillar.color === 'cyan' ? 'bg-cyan-500' :
                 pillar.color === 'amber' ? 'bg-amber-500' :
                 pillar.color === 'purple' ? 'bg-purple-500' :
-                'bg-emerald-500'
+                pillar.color === 'emerald' ? 'bg-emerald-500' :
+                pillar.color === 'blue' ? 'bg-blue-500' :
+                'bg-rose-500'
               }`} />
               
-              <div className={`relative z-10`}>
-                <div className={`w-16 h-16 rounded-xl ${
-                  pillar.color === 'cyan' ? 'bg-cyan-500/10 border-cyan-500/30' :
-                  pillar.color === 'amber' ? 'bg-amber-500/10 border-amber-500/30' :
-                  pillar.color === 'purple' ? 'bg-purple-500/10 border-purple-500/30' :
-                  'bg-emerald-500/10 border-emerald-500/30'
-                } border flex items-center justify-center mb-6 group-hover:shadow-lg ${
-                  pillar.color === 'cyan' ? 'group-hover:shadow-cyan-500/20' :
-                  pillar.color === 'amber' ? 'group-hover:shadow-amber-500/20' :
-                  pillar.color === 'purple' ? 'group-hover:shadow-purple-500/20' :
-                  'group-hover:shadow-emerald-500/20'
-                } transition-all`}>
-                  <pillar.icon className={`w-8 h-8 ${
-                    pillar.color === 'cyan' ? 'text-cyan-400' :
-                    pillar.color === 'amber' ? 'text-amber-400' :
-                    pillar.color === 'purple' ? 'text-purple-400' :
-                    'text-emerald-400'
-                  }`} />
+              <div className="relative z-10">
+                {/* Icon with Badge */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-14 h-14 rounded-xl ${
+                    pillar.color === 'cyan' ? 'bg-cyan-500/10 border-cyan-500/30' :
+                    pillar.color === 'amber' ? 'bg-amber-500/10 border-amber-500/30' :
+                    pillar.color === 'purple' ? 'bg-purple-500/10 border-purple-500/30' :
+                    pillar.color === 'emerald' ? 'bg-emerald-500/10 border-emerald-500/30' :
+                    pillar.color === 'blue' ? 'bg-blue-500/10 border-blue-500/30' :
+                    'bg-rose-500/10 border-rose-500/30'
+                  } border flex items-center justify-center group-hover:shadow-lg ${
+                    pillar.color === 'cyan' ? 'group-hover:shadow-cyan-500/20' :
+                    pillar.color === 'amber' ? 'group-hover:shadow-amber-500/20' :
+                    pillar.color === 'purple' ? 'group-hover:shadow-purple-500/20' :
+                    pillar.color === 'emerald' ? 'group-hover:shadow-emerald-500/20' :
+                    pillar.color === 'blue' ? 'group-hover:shadow-blue-500/20' :
+                    'group-hover:shadow-rose-500/20'
+                  } transition-all`}>
+                    <pillar.icon className={`w-7 h-7 ${
+                      pillar.color === 'cyan' ? 'text-cyan-400' :
+                      pillar.color === 'amber' ? 'text-amber-400' :
+                      pillar.color === 'purple' ? 'text-purple-400' :
+                      pillar.color === 'emerald' ? 'text-emerald-400' :
+                      pillar.color === 'blue' ? 'text-blue-400' :
+                      'text-rose-400'
+                    }`} />
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                    pillar.color === 'cyan' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
+                    pillar.color === 'amber' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                    pillar.color === 'purple' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                    pillar.color === 'emerald' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                    pillar.color === 'blue' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                    'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  }`}>
+                    {pillar.badge}
+                  </span>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-3">{pillar.title}</h3>
-                <p className="text-gray-400 leading-relaxed text-lg">{pillar.description}</p>
+                
+                {/* Content */}
+                <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-cyan-400 transition-colors">{pillar.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{pillar.description}</p>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="text-center mt-12">
+          <Button 
+            size="lg"
+            className="bg-gradient-to-r from-cyan-500 to-emerald-500 hover:opacity-90 text-black font-semibold px-8 shadow-lg shadow-cyan-500/20"
+          >
+            {language === 'ar' ? 'استكشف كل المميزات' : 'Explore All Features'}
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
         </div>
       </div>
     </section>
@@ -359,7 +421,7 @@ function PainPointSection({ language }: { language: string }) {
                 language === 'ar' ? 'تتبع الصفقات' : 'Track Trades',
                 language === 'ar' ? 'تحليل الأداء' : 'Analyze Performance',
                 language === 'ar' ? 'إدارة المخاطر' : 'Risk Management',
-                language === 'ar' ? 'تحسين السيكولوجي' : 'Psychology Improvement'
+                language === 'ar' ? 'تحسين السيكولوجية' : 'Psychology Improvement'
               ].map((item, i) => (
                 <li key={i} className="px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-sm text-cyan-400">
                   {item}
@@ -390,7 +452,7 @@ function DashboardPreview({ language }: { language: string }) {
   const tabs = [
     { id: 'overview', label: language === 'ar' ? 'نظرة عامة' : 'Overview' },
     { id: 'trades', label: language === 'ar' ? 'الصفقات' : 'Trades' },
-    { id: 'psychology', label: language === 'ar' ? 'السيكولوجي' : 'Psychology' }
+    { id: 'psychology', label: language === 'ar' ? 'السيكولوجية' : 'Psychology' }
   ]
 
   const stats = [
@@ -647,7 +709,7 @@ function PricingSection({ language, onGetStarted }: { language: string; onGetSta
         language === 'ar' ? 'محافظ غير محدودة' : 'Unlimited Portfolios',
         language === 'ar' ? 'صفقات غير محدودة' : 'Unlimited Trades',
         language === 'ar' ? 'تكامل MT4/MT5' : 'MT4/MT5 Integration',
-        language === 'ar' ? 'تحليل السيكولوجي' : 'Psychology Analysis',
+        language === 'ar' ? 'تحليل السيكولوجية' : 'Psychology Analysis',
         language === 'ar' ? 'تقارير متقدمة' : 'Advanced Reports',
         language === 'ar' ? 'مساعد AI' : 'AI Assistant'
       ],
