@@ -141,6 +141,7 @@ export type ActiveSection =
   | 'ai-assistant'
   | 'trading-hub'
   | 'strategies'
+  | 'playbook'
   | 'log-trade'
   | 'zen-mode'
   | 'pricing'

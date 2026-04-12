@@ -46,7 +46,7 @@ model User {
   psychologyLogs    PsychologyLog[]
   audits            Audit[]
   subscription      Subscription?
-  strategies        Strategy[]
+  playbooks         Playbook[]  @relation("UserPlaybooks")
   zenStates         ZenState[]
   tradingRules      TradingRule[]
   riskUsages        RiskUsage[]
@@ -570,11 +570,14 @@ model Usage {
 }
 
 // الاستراتيجيات
-model Strategy {
+model Playbook {
   id            String    @id @default(cuid())
   userId        String
   name          String
   description   String?
+  setupName     String?
+  rulesChecklist String?
+  screenshotUrl  String?
   category      String?
   timeframe     String?
   entryRules    String?
@@ -590,10 +593,11 @@ model Strategy {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation("UserPlaybooks", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([category])
+  @@map("strategies")
 }
 
 // حالات ZEN

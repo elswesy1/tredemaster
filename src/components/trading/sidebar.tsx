@@ -39,6 +39,7 @@ const coreFeatures: { id: ActiveSection; labelKey: string; icon: React.ElementTy
   { id: 'risk', labelKey: 'sidebar.risk', icon: Shield },
   { id: 'trading', labelKey: 'sidebar.trading', icon: LineChart },
   { id: 'journal', labelKey: 'sidebar.journal', icon: BookOpen },
+  { id: 'playbook', labelKey: 'sidebar.playbook', icon: Target },
 ]
 
 const tradingTools: { id: ActiveSection; labelKey: string; icon: React.ElementType }[] = [

@@ -14,6 +14,7 @@
     "aiAssistant": "AI Assistant",
     "tradingHub": "Trading Hub",
     "strategies": "Strategies",
+    "playbook": "Trading Playbook",
     "logTrade": "Log Trade",
     "zenMode": "ZEN Mode",
     "pricing": "Pricing"
@@ -413,5 +414,31 @@
     "close": "Close",
     "yes": "Yes",
     "no": "No"
+  },
+  "playbook": {
+    "title": "Trading Playbook",
+    "subtitle": "Create and manage your trading playbooks",
+    "newPlaybook": "New Playbook",
+    "createPlaybook": "Create New Playbook",
+    "editPlaybook": "Edit Playbook",
+    "playbookName": "Playbook Name",
+    "setupName": "Setup Name",
+    "rulesChecklist": "Rules Checklist",
+    "screenshotUrl": "Screenshot URL",
+    "description": "Description",
+    "category": "Category",
+    "timeframe": "Timeframe",
+    "entryRules": "Entry Rules",
+    "exitRules": "Exit Rules",
+    "create": "Create",
+    "update": "Update",
+    "noPlaybooks": "No playbooks yet",
+    "startCreating": "Start by creating your first playbook to organize your strategies",
+    "createFirstPlaybook": "Create Playbook",
+    "addRule": "Add Rule",
+    "removeRule": "Remove Rule",
+    "totalTrades": "Total Trades",
+    "winRate": "Win Rate",
+    "profitLoss": "Profit/Loss"
   }
 }

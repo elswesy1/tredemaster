@@ -14,6 +14,7 @@
     "aiAssistant": "المساعد الذكي",
     "tradingHub": "مركز التداول",
     "strategies": "الاستراتيجيات",
+    "playbook": "كتيب القواعد (Playbook)",
     "logTrade": "تسجيل صفقة",
     "zenMode": "وضع ZEN",
     "pricing": "الأسعار"
@@ -413,5 +414,31 @@
     "close": "إغلاق",
     "yes": "نعم",
     "no": "لا"
+  },
+  "playbook": {
+    "title": "كتيب القواعد",
+    "subtitle": "أنشئ وأدر كتب القواعد الخاصة بك",
+    "newPlaybook": "كتيب جديد",
+    "createPlaybook": "إنشاء كتيب قواعد جديد",
+    "editPlaybook": "تعديل كتيب القواعد",
+    "playbookName": "اسم الكتيب",
+    "setupName": "اسم النموذج",
+    "rulesChecklist": "قائمة القواعد",
+    "screenshotUrl": "رابط الصورة",
+    "description": "الوصف",
+    "category": "الفئة",
+    "timeframe": "الإطار الزمني",
+    "entryRules": "قواعد الدخول",
+    "exitRules": "قواعد الخروج",
+    "create": "إنشاء",
+    "update": "تحديث",
+    "noPlaybooks": "لا توجد كتب قواعد بعد",
+    "startCreating": "ابدأ بإنشاء كتيب القواعد الأول لتنظيم استراتيجياتك",
+    "createFirstPlaybook": "إنشاء كتيب",
+    "addRule": "إضافة قاعدة",
+    "removeRule": "إزالة القاعدة",
+    "totalTrades": "إجمالي الصفقات",
+    "winRate": "نسبة الفوز",
+    "profitLoss": "الربح/الخسارة"
   }
 }

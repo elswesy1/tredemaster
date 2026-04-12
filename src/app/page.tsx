@@ -25,6 +25,7 @@ import { RulesView } from '@/components/trading/rules-view'
 import { AIChat } from '@/components/trading/ai-chat'
 import { AuditsView } from '@/components/trading/audits-view'
 import { LoginHistoryView } from '@/components/trading/login-history-view'
+import { PlaybookView } from '@/components/trading/playbook-view'
 import { ThemeToggle } from '@/components/trading/theme-toggle'
 import { LanguageToggle } from '@/components/trading/language-toggle'
 import { Toaster } from '@/components/ui/toaster'
@@ -229,6 +230,8 @@ export default function Home() {
         return <AuditsView />
       case 'login-history':
         return <LoginHistoryView />
+      case 'playbook':
+        return <PlaybookView />
       // Redirect old sections to new unified trading view
       case 'strategies':
       case 'log-trade':
@@ -257,6 +260,7 @@ export default function Home() {
     'zen-mode': t('sidebar.zenMode'),
     pricing: t('sidebar.pricing'),
     'login-history': language === 'ar' ? 'سجل تسجيلات الدخول' : 'Login History',
+    playbook: t('sidebar.playbook'),
   }
 
   // Loading state - show loading until client-side mounted

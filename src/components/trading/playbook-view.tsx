@@ -36,13 +36,21 @@ import {
   BarChart3,
   Clock,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  BookOpen,
+  Image,
+  CheckCircle,
+  XCircle
 } from 'lucide-react'
 
-interface Strategy {
+// Playbook Interface - Updated with new fields
+interface Playbook {
   id: string
   name: string
   description: string | null
+  setupName: string | null
+  rulesChecklist: string | null  // JSON string from database
+  screenshotUrl: string | null
   category: string | null
   timeframe: string | null
   entryRules: string | null
@@ -58,44 +66,52 @@ interface Strategy {
   updatedAt: string
 }
 
-interface StrategyFormData {
+interface PlaybookFormData {
   name: string
   description: string
+  setupName: string
+  rulesChecklist: string[]
+  screenshotUrl: string
   category: string
   timeframe: string
   entryRules: string
   exitRules: string
 }
 
-const initialFormData: StrategyFormData = {
+const initialFormData: PlaybookFormData = {
   name: '',
   description: '',
+  setupName: '',
+  rulesChecklist: [],
+  screenshotUrl: '',
   category: 'technical',
   timeframe: 'H1',
   entryRules: '',
   exitRules: ''
 }
 
-export function StrategyView() {
+export function PlaybookView() {
   const { t, language } = useI18n()
   const isRTL = language === 'ar'
   const { toast } = useToast()
   
   // States
-  const [strategies, setStrategies] = useState<Strategy[]>([])
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null)
-  const [strategyToDelete, setStrategyToDelete] = useState<Strategy | null>(null)
-  const [newStrategy, setNewStrategy] = useState<StrategyFormData>(initialFormData)
-  const [editStrategy, setEditStrategy] = useState<StrategyFormData>(initialFormData)
+  const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null)
+  const [playbookToDelete, setPlaybookToDelete] = useState<Playbook | null>(null)
+  const [newPlaybook, setNewPlaybook] = useState<PlaybookFormData>(initialFormData)
+  const [editPlaybook, setEditPlaybook] = useState<PlaybookFormData>(initialFormData)
+  const [newRule, setNewRule] = useState('')
 
   const categories = [
     { value: 'technical', label: isRTL ? 'تحليل فني' : 'Technical' },
     { value: 'fundamental', label: isRTL ? 'تحليل أساسي' : 'Fundamental' },
-    { value: 'hybrid', label: isRTL ? 'مختلط' : 'Hybrid' }
+    { value: 'hybrid', label: isRTL ? 'مختلط' : 'Hybrid' },
+    { value: 'smc', label: isRTL ? 'SMC (Smart Money)' : 'SMC (Smart Money)' }
   ]
 
   const timeframes = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1']
@@ -114,7 +130,7 @@ export function StrategyView() {
       }
       
       const data = await response.json()
-      setStrategies(data)
+      setPlaybooks(data)
     } catch (error) {
       console.error('Error fetching strategies:', error)
       toast({
@@ -134,7 +150,7 @@ export function StrategyView() {
 
   // Create new strategy
   const handleAddStrategy = async () => {
-    if (!newStrategy.name.trim()) {
+    if (!newPlaybook.name.trim()) {
       toast({
         title: isRTL ? 'خطأ' : 'Error',
         description: isRTL ? 'يرجى إدخال اسم الاستراتيجية' : 'Please enter a strategy name',
@@ -148,7 +164,7 @@ export function StrategyView() {
       const response = await fetch('/api/strategies', {
         method: 'POST',
         headers: getApiHeaders(),
-        body: JSON.stringify(newStrategy),
+        body: JSON.stringify(newPlaybook),
       })
       
       if (!response.ok) {
@@ -156,9 +172,9 @@ export function StrategyView() {
       }
       
       const createdStrategy = await response.json()
-      setStrategies([createdStrategy, ...strategies])
+      setPlaybooks([createdStrategy, ...playbooks])
       setIsAddDialogOpen(false)
-      setNewStrategy(initialFormData)
+      setNewPlaybook(initialFormData)
       
       toast({
         title: isRTL ? 'نجاح' : 'Success',
@@ -178,7 +194,7 @@ export function StrategyView() {
 
   // Update strategy
   const handleUpdateStrategy = async () => {
-    if (!selectedStrategy || !editStrategy.name.trim()) {
+    if (!selectedPlaybook || !editPlaybook.name.trim()) {
       toast({
         title: isRTL ? 'خطأ' : 'Error',
         description: isRTL ? 'يرجى إدخال اسم الاستراتيجية' : 'Please enter a strategy name',
@@ -193,8 +209,8 @@ export function StrategyView() {
         method: 'PUT',
         headers: getApiHeaders(),
         body: JSON.stringify({
-          id: selectedStrategy.id,
-          ...editStrategy,
+          id: selectedPlaybook.id,
+          ...editPlaybook,
         }),
       })
       
@@ -203,12 +219,12 @@ export function StrategyView() {
       }
       
       const updatedStrategy = await response.json()
-      setStrategies(strategies.map(s => 
+      setPlaybooks(playbooks.map(s => 
         s.id === updatedStrategy.id ? updatedStrategy : s
       ))
       setIsEditDialogOpen(false)
-      setSelectedStrategy(null)
-      setEditStrategy(initialFormData)
+      setSelectedPlaybook(null)
+      setEditPlaybook(initialFormData)
       
       toast({
         title: isRTL ? 'نجاح' : 'Success',
@@ -239,9 +255,9 @@ export function StrategyView() {
         throw new Error('Failed to delete strategy')
       }
       
-      setStrategies(strategies.filter(s => s.id !== id))
-      setStrategyToDelete(null)
-      setSelectedStrategy(null)
+      setPlaybooks(playbooks.filter(s => s.id !== id))
+      setPlaybookToDelete(null)
+      setSelectedPlaybook(null)
       
       toast({
         title: isRTL ? 'نجاح' : 'Success',
@@ -260,11 +276,14 @@ export function StrategyView() {
   }
 
   // Open edit dialog
-  const openEditDialog = (strategy: Strategy) => {
-    setSelectedStrategy(strategy)
-    setEditStrategy({
+  const openEditDialog = (strategy: Playbook) => {
+    setSelectedPlaybook(strategy)
+    setEditPlaybook({
       name: strategy.name,
       description: strategy.description || '',
+      setupName: strategy.setupName || '',
+      rulesChecklist: strategy.rulesChecklist ? JSON.parse(strategy.rulesChecklist) : [],
+      screenshotUrl: strategy.screenshotUrl || '',
       category: strategy.category || 'technical',
       timeframe: strategy.timeframe || 'H1',
       entryRules: strategy.entryRules || '',
@@ -274,8 +293,8 @@ export function StrategyView() {
   }
 
   // Open detail dialog
-  const openDetailDialog = (strategy: Strategy) => {
-    setSelectedStrategy(strategy)
+  const openDetailDialog = (strategy: Playbook) => {
+    setSelectedPlaybook(strategy)
   }
 
   const getCategoryBadge = (category: string | null) => {
@@ -298,10 +317,10 @@ export function StrategyView() {
   }
 
   // Calculate stats
-  const totalTrades = strategies.reduce((acc, s) => acc + s.totalTrades, 0)
-  const totalProfit = strategies.reduce((acc, s) => acc + s.profitLoss, 0)
-  const avgWinRate = strategies.length > 0 
-    ? strategies.reduce((acc, s) => acc + (s.winRate || 0), 0) / strategies.length 
+  const totalTrades = playbooks.reduce((acc, s) => acc + s.totalTrades, 0)
+  const totalProfit = playbooks.reduce((acc, s) => acc + s.profitLoss, 0)
+  const avgWinRate = playbooks.length > 0 
+    ? playbooks.reduce((acc, s) => acc + (s.winRate || 0), 0) / playbooks.length 
     : 0
 
   return (
@@ -327,7 +346,7 @@ export function StrategyView() {
           </Button>
           <Button 
             onClick={() => {
-              setNewStrategy(initialFormData)
+              setNewPlaybook(initialFormData)
               setIsAddDialogOpen(true)
             }} 
             className="bg-green-500 hover:bg-green-600"
@@ -347,7 +366,7 @@ export function StrategyView() {
                 <Target className="w-6 h-6 text-green-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{strategies.length}</div>
+                <div className="text-2xl font-bold">{playbooks.length}</div>
                 <div className="text-sm text-muted-foreground">
                   {isRTL ? 'إجمالي الاستراتيجيات' : 'Total Strategies'}
                 </div>
@@ -407,7 +426,7 @@ export function StrategyView() {
       </div>
 
       {/* Loading State */}
-      {isLoading && strategies.length === 0 && (
+      {isLoading && playbooks.length === 0 && (
         <Card>
           <CardContent className="py-12 flex flex-col items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-green-500 mb-4" />
@@ -419,7 +438,7 @@ export function StrategyView() {
       )}
 
       {/* Empty State */}
-      {!isLoading && strategies.length === 0 && (
+      {!isLoading && playbooks.length === 0 && (
         <Card>
           <CardContent className="py-12 flex flex-col items-center justify-center">
             <Target className="w-12 h-12 text-muted-foreground mb-4" />
@@ -442,7 +461,7 @@ export function StrategyView() {
 
       {/* Strategies List */}
       <div className="grid gap-4">
-        {strategies.map((strategy) => (
+        {playbooks.map((strategy) => (
           <Card 
             key={strategy.id} 
             className="hover:shadow-lg transition-all cursor-pointer border-green-500/10 hover:border-green-500/30"
@@ -514,8 +533,8 @@ export function StrategyView() {
             <div className="space-y-2">
               <Label>{isRTL ? 'اسم الاستراتيجية' : 'Strategy Name'} *</Label>
               <Input
-                value={newStrategy.name}
-                onChange={(e) => setNewStrategy({ ...newStrategy, name: e.target.value })}
+                value={newPlaybook.name}
+                onChange={(e) => setNewPlaybook({ ...newPlaybook, name: e.target.value })}
                 placeholder={isRTL ? 'مثال: استراتيجية الاختراق' : 'e.g., Breakout Strategy'}
                 disabled={isSaving}
               />
@@ -523,8 +542,8 @@ export function StrategyView() {
             <div className="space-y-2">
               <Label>{isRTL ? 'الوصف' : 'Description'}</Label>
               <Textarea
-                value={newStrategy.description}
-                onChange={(e) => setNewStrategy({ ...newStrategy, description: e.target.value })}
+                value={newPlaybook.description}
+                onChange={(e) => setNewPlaybook({ ...newPlaybook, description: e.target.value })}
                 placeholder={isRTL ? 'وصف مختصر للاستراتيجية' : 'Brief description of the strategy'}
                 rows={3}
                 disabled={isSaving}
@@ -534,8 +553,8 @@ export function StrategyView() {
               <div className="space-y-2">
                 <Label>{isRTL ? 'الفئة' : 'Category'}</Label>
                 <Select 
-                  value={newStrategy.category} 
-                  onValueChange={(v) => setNewStrategy({ ...newStrategy, category: v })}
+                  value={newPlaybook.category} 
+                  onValueChange={(v) => setNewPlaybook({ ...newPlaybook, category: v })}
                   disabled={isSaving}
                 >
                   <SelectTrigger>
@@ -551,8 +570,8 @@ export function StrategyView() {
               <div className="space-y-2">
                 <Label>{isRTL ? 'الإطار الزمني' : 'Timeframe'}</Label>
                 <Select 
-                  value={newStrategy.timeframe} 
-                  onValueChange={(v) => setNewStrategy({ ...newStrategy, timeframe: v })}
+                  value={newPlaybook.timeframe} 
+                  onValueChange={(v) => setNewPlaybook({ ...newPlaybook, timeframe: v })}
                   disabled={isSaving}
                 >
                   <SelectTrigger>
@@ -569,8 +588,8 @@ export function StrategyView() {
             <div className="space-y-2">
               <Label>{isRTL ? 'قواعد الدخول' : 'Entry Rules'}</Label>
               <Textarea
-                value={newStrategy.entryRules}
-                onChange={(e) => setNewStrategy({ ...newStrategy, entryRules: e.target.value })}
+                value={newPlaybook.entryRules}
+                onChange={(e) => setNewPlaybook({ ...newPlaybook, entryRules: e.target.value })}
                 placeholder={isRTL ? 'متى تدخل في الصفقة؟' : 'When to enter a trade?'}
                 rows={2}
                 disabled={isSaving}
@@ -579,8 +598,8 @@ export function StrategyView() {
             <div className="space-y-2">
               <Label>{isRTL ? 'قواعد الخروج' : 'Exit Rules'}</Label>
               <Textarea
-                value={newStrategy.exitRules}
-                onChange={(e) => setNewStrategy({ ...newStrategy, exitRules: e.target.value })}
+                value={newPlaybook.exitRules}
+                onChange={(e) => setNewPlaybook({ ...newPlaybook, exitRules: e.target.value })}
                 placeholder={isRTL ? 'متى تخرج من الصفقة؟' : 'When to exit a trade?'}
                 rows={2}
                 disabled={isSaving}
@@ -598,7 +617,7 @@ export function StrategyView() {
             <Button 
               onClick={handleAddStrategy} 
               className="bg-green-500 hover:bg-green-600"
-              disabled={isSaving || !newStrategy.name.trim()}
+              disabled={isSaving || !newPlaybook.name.trim()}
             >
               {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isRTL ? 'إضافة' : 'Add Strategy'}
@@ -620,8 +639,8 @@ export function StrategyView() {
             <div className="space-y-2">
               <Label>{isRTL ? 'اسم الاستراتيجية' : 'Strategy Name'} *</Label>
               <Input
-                value={editStrategy.name}
-                onChange={(e) => setEditStrategy({ ...editStrategy, name: e.target.value })}
+                value={editPlaybook.name}
+                onChange={(e) => setEditPlaybook({ ...editPlaybook, name: e.target.value })}
                 placeholder={isRTL ? 'مثال: استراتيجية الاختراق' : 'e.g., Breakout Strategy'}
                 disabled={isSaving}
               />
@@ -629,8 +648,8 @@ export function StrategyView() {
             <div className="space-y-2">
               <Label>{isRTL ? 'الوصف' : 'Description'}</Label>
               <Textarea
-                value={editStrategy.description}
-                onChange={(e) => setEditStrategy({ ...editStrategy, description: e.target.value })}
+                value={editPlaybook.description}
+                onChange={(e) => setEditPlaybook({ ...editPlaybook, description: e.target.value })}
                 placeholder={isRTL ? 'وصف مختصر للاستراتيجية' : 'Brief description of the strategy'}
                 rows={3}
                 disabled={isSaving}
@@ -640,8 +659,8 @@ export function StrategyView() {
               <div className="space-y-2">
                 <Label>{isRTL ? 'الفئة' : 'Category'}</Label>
                 <Select 
-                  value={editStrategy.category} 
-                  onValueChange={(v) => setEditStrategy({ ...editStrategy, category: v })}
+                  value={editPlaybook.category} 
+                  onValueChange={(v) => setEditPlaybook({ ...editPlaybook, category: v })}
                   disabled={isSaving}
                 >
                   <SelectTrigger>
@@ -657,8 +676,8 @@ export function StrategyView() {
               <div className="space-y-2">
                 <Label>{isRTL ? 'الإطار الزمني' : 'Timeframe'}</Label>
                 <Select 
-                  value={editStrategy.timeframe} 
-                  onValueChange={(v) => setEditStrategy({ ...editStrategy, timeframe: v })}
+                  value={editPlaybook.timeframe} 
+                  onValueChange={(v) => setEditPlaybook({ ...editPlaybook, timeframe: v })}
                   disabled={isSaving}
                 >
                   <SelectTrigger>
@@ -675,8 +694,8 @@ export function StrategyView() {
             <div className="space-y-2">
               <Label>{isRTL ? 'قواعد الدخول' : 'Entry Rules'}</Label>
               <Textarea
-                value={editStrategy.entryRules}
-                onChange={(e) => setEditStrategy({ ...editStrategy, entryRules: e.target.value })}
+                value={editPlaybook.entryRules}
+                onChange={(e) => setEditPlaybook({ ...editPlaybook, entryRules: e.target.value })}
                 placeholder={isRTL ? 'متى تدخل في الصفقة؟' : 'When to enter a trade?'}
                 rows={2}
                 disabled={isSaving}
@@ -685,8 +704,8 @@ export function StrategyView() {
             <div className="space-y-2">
               <Label>{isRTL ? 'قواعد الخروج' : 'Exit Rules'}</Label>
               <Textarea
-                value={editStrategy.exitRules}
-                onChange={(e) => setEditStrategy({ ...editStrategy, exitRules: e.target.value })}
+                value={editPlaybook.exitRules}
+                onChange={(e) => setEditPlaybook({ ...editPlaybook, exitRules: e.target.value })}
                 placeholder={isRTL ? 'متى تخرج من الصفقة؟' : 'When to exit a trade?'}
                 rows={2}
                 disabled={isSaving}
@@ -704,7 +723,7 @@ export function StrategyView() {
             <Button 
               onClick={handleUpdateStrategy} 
               className="bg-green-500 hover:bg-green-600"
-              disabled={isSaving || !editStrategy.name.trim()}
+              disabled={isSaving || !editPlaybook.name.trim()}
             >
               {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isRTL ? 'حفظ' : 'Save Changes'}
@@ -714,60 +733,60 @@ export function StrategyView() {
       </Dialog>
 
       {/* Strategy Detail Dialog */}
-      <Dialog open={!!selectedStrategy && !isEditDialogOpen} onOpenChange={() => setSelectedStrategy(null)}>
+      <Dialog open={!!selectedPlaybook && !isEditDialogOpen} onOpenChange={() => setSelectedPlaybook(null)}>
         <DialogContent className="max-w-2xl">
-          {selectedStrategy && (
+          {selectedPlaybook && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  {selectedStrategy.name}
-                  {getCategoryBadge(selectedStrategy.category)}
+                  {selectedPlaybook.name}
+                  {getCategoryBadge(selectedPlaybook.category)}
                 </DialogTitle>
-                <DialogDescription>{selectedStrategy.description || (isRTL ? 'لا يوجد وصف' : 'No description')}</DialogDescription>
+                <DialogDescription>{selectedPlaybook.description || (isRTL ? 'لا يوجد وصف' : 'No description')}</DialogDescription>
               </DialogHeader>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
                 <div className="bg-muted/50 rounded-lg p-4">
                   <div className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الصفقات' : 'Total Trades'}</div>
-                  <div className="text-2xl font-bold">{selectedStrategy.totalTrades}</div>
+                  <div className="text-2xl font-bold">{selectedPlaybook.totalTrades}</div>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4">
                   <div className="text-sm text-muted-foreground">{isRTL ? 'نسبة الفوز' : 'Win Rate'}</div>
-                  <div className="text-2xl font-bold text-green-500">{selectedStrategy.winRate?.toFixed(1) || 0}%</div>
+                  <div className="text-2xl font-bold text-green-500">{selectedPlaybook.winRate?.toFixed(1) || 0}%</div>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4">
                   <div className="text-sm text-muted-foreground">{isRTL ? 'متوسط R:R' : 'Avg R:R'}</div>
-                  <div className="text-2xl font-bold">{selectedStrategy.avgRRR?.toFixed(2) || '0.00'}</div>
+                  <div className="text-2xl font-bold">{selectedPlaybook.avgRRR?.toFixed(2) || '0.00'}</div>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4">
                   <div className="text-sm text-muted-foreground">{isRTL ? 'الربح' : 'Profit'}</div>
-                  <div className="text-2xl font-bold text-green-500">${selectedStrategy.profitLoss.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-green-500">${selectedPlaybook.profitLoss.toLocaleString()}</div>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4">
                   <div className="text-sm text-muted-foreground">{isRTL ? 'الإطار الزمني' : 'Timeframe'}</div>
-                  <div className="text-2xl font-bold">{selectedStrategy.timeframe || '-'}</div>
+                  <div className="text-2xl font-bold">{selectedPlaybook.timeframe || '-'}</div>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4">
                   <div className="text-sm text-muted-foreground">{isRTL ? 'الصفقات الرابحة' : 'Winning Trades'}</div>
-                  <div className="text-2xl font-bold">{selectedStrategy.winningTrades}</div>
+                  <div className="text-2xl font-bold">{selectedPlaybook.winningTrades}</div>
                 </div>
               </div>
               
               {/* Entry/Exit Rules */}
-              {(selectedStrategy.entryRules || selectedStrategy.exitRules) && (
+              {(selectedPlaybook.entryRules || selectedPlaybook.exitRules) && (
                 <div className="space-y-4 border-t pt-4">
-                  {selectedStrategy.entryRules && (
+                  {selectedPlaybook.entryRules && (
                     <div>
                       <div className="text-sm font-medium mb-1">{isRTL ? 'قواعد الدخول' : 'Entry Rules'}</div>
                       <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-                        {selectedStrategy.entryRules}
+                        {selectedPlaybook.entryRules}
                       </div>
                     </div>
                   )}
-                  {selectedStrategy.exitRules && (
+                  {selectedPlaybook.exitRules && (
                     <div>
                       <div className="text-sm font-medium mb-1">{isRTL ? 'قواعد الخروج' : 'Exit Rules'}</div>
                       <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-                        {selectedStrategy.exitRules}
+                        {selectedPlaybook.exitRules}
                       </div>
                     </div>
                   )}
@@ -777,7 +796,7 @@ export function StrategyView() {
               <DialogFooter className="flex-col sm:flex-row gap-2">
                 <Button 
                   variant="outline" 
-                  onClick={() => setStrategyToDelete(selectedStrategy)}
+                  onClick={() => setPlaybookToDelete(selectedPlaybook)}
                   className="text-red-500 w-full sm:w-auto"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
@@ -785,14 +804,14 @@ export function StrategyView() {
                 </Button>
                 <Button 
                   variant="outline"
-                  onClick={() => openEditDialog(selectedStrategy)}
+                  onClick={() => openEditDialog(selectedPlaybook)}
                   className="w-full sm:w-auto"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   {isRTL ? 'تعديل' : 'Edit'}
                 </Button>
                 <Button 
-                  onClick={() => setSelectedStrategy(null)} 
+                  onClick={() => setSelectedPlaybook(null)} 
                   className="bg-green-500 hover:bg-green-600 w-full sm:w-auto"
                 >
                   {isRTL ? 'إغلاق' : 'Close'}
@@ -804,28 +823,28 @@ export function StrategyView() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!strategyToDelete} onOpenChange={() => setStrategyToDelete(null)}>
+      <Dialog open={!!playbookToDelete} onOpenChange={() => setPlaybookToDelete(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{isRTL ? 'تأكيد الحذف' : 'Confirm Delete'}</DialogTitle>
             <DialogDescription>
               {isRTL 
-                ? `هل أنت متأكد من حذف استراتيجية "${strategyToDelete?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`
-                : `Are you sure you want to delete "${strategyToDelete?.name}"? This action cannot be undone.`
+                ? `هل أنت متأكد من حذف استراتيجية "${playbookToDelete?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`
+                : `Are you sure you want to delete "${playbookToDelete?.name}"? This action cannot be undone.`
               }
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button 
               variant="outline" 
-              onClick={() => setStrategyToDelete(null)}
+              onClick={() => setPlaybookToDelete(null)}
               disabled={isSaving}
             >
               {isRTL ? 'إلغاء' : 'Cancel'}
             </Button>
             <Button 
               variant="destructive" 
-              onClick={() => strategyToDelete && handleDeleteStrategy(strategyToDelete.id)}
+              onClick={() => playbookToDelete && handleDeleteStrategy(playbookToDelete.id)}
               disabled={isSaving}
             >
               {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
