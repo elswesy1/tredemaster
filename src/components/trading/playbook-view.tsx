@@ -56,7 +56,7 @@ interface Playbook {
   imageUrl: string | null
   confluences: string | null  // JSON string from database
   killZones: string | null    // JSON string from database
-  hardRules: string | null
+  hardRules: string
   category: string | null
   timeframe: string | null
   entryRules: string | null
@@ -100,7 +100,17 @@ const initialFormData: PlaybookFormData = {
   exitRules: ''
 }
 
-// Confluence Options
+// Core Checklist Items (Permanent Pillars) - Always included
+const CORE_CHECK_ITEMS = [
+  { value: 'key_levels', key: 'core_check_key_levels' },
+  { value: 'liquidity', key: 'core_check_liquidity' },
+  { value: 'fvg', key: 'core_check_fvg' },
+  { value: 'trend', key: 'core_check_trend' },
+  { value: 'sr', key: 'core_check_sr' },
+  { value: 'bos', key: 'core_check_bos' },
+]
+
+// Confluence Options (Additional)
 const CONFLUENCE_OPTIONS = [
   { value: 'liquidity_swept', label: { ar: 'اكتساح السيولة', en: 'Liquidity Swept' } },
   { value: 'choch', label: { ar: 'ChoCH (تغيير الاتجاه)', en: 'ChoCH (Change of Character)' } },
@@ -469,32 +479,105 @@ export function PlaybookView() {
 
       {/* Confluence Checklist */}
       <div className="space-y-3">
-        <Label>{t('playbook.confluence_checklist')}</Label>
-        <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-muted/30 border border-border">
-          {CONFLUENCE_OPTIONS.map((option) => (
-            <label
-              key={option.value}
-              className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors"
-            >
-              <Checkbox
-                checked={formData.confluences.includes(option.value)}
-                onCheckedChange={() => toggleConfluence(option.value, isEdit)}
-              />
-              <span className="text-sm">
-                {isRTL ? option.label.ar : option.label.en}
-              </span>
-            </label>
-          ))}
-        </div>
-        {formData.confluences.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {formData.confluences.map((c) => (
-              <Badge key={c} variant="secondary" className="text-xs">
-                {isRTL 
-                  ? CONFLUENCE_OPTIONS.find(o => o.value === c)?.label.ar 
-                  : CONFLUENCE_OPTIONS.find(o => o.value === c)?.label.en}
-              </Badge>
+        <Label className="flex items-center gap-2">
+          {t('playbook.confluence_checklist')}
+          <Badge variant="outline" className="text-xs">
+            {isRTL ? 'اختر الشروط المطلوبة' : 'Select required conditions'}
+          </Badge>
+        </Label>
+        
+        {/* Core Pillars - Permanent with Gold styling */}
+        <div className="space-y-2">
+          <div className="text-xs text-gold font-semibold uppercase tracking-wider flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-gold" />
+            {isRTL ? 'الركائز الأساسية (دائمة)' : 'Core Pillars (Permanent)'}
+          </div>
+          <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-gold/5 border-2 border-gold/30">
+            {CORE_CHECK_ITEMS.map((item) => (
+              <label
+                key={item.value}
+                className="flex items-center gap-2 cursor-pointer hover:bg-gold/10 p-2 rounded transition-colors group"
+              >
+                <Checkbox
+                  checked={formData.confluences.includes(item.value)}
+                  onCheckedChange={() => toggleConfluence(item.value, isEdit)}
+                  className="border-gold data-[state=checked]:bg-gold data-[state=checked]:text-navy-dark"
+                />
+                <span className="text-sm text-gold group-hover:text-gold-light transition-colors">
+                  {t(`playbook.${item.key}`)}
+                </span>
+              </label>
             ))}
+          </div>
+        </div>
+        
+        {/* Additional Confluences */}
+        <div className="space-y-2">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider">
+            {isRTL ? 'شروط إضافية' : 'Additional Confluences'}
+          </div>
+          <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-muted/30 border border-border">
+            {CONFLUENCE_OPTIONS.map((option) => (
+              <label
+                key={option.value}
+                className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors"
+              >
+                <Checkbox
+                  checked={formData.confluences.includes(option.value)}
+                  onCheckedChange={() => toggleConfluence(option.value, isEdit)}
+                />
+                <span className="text-sm">
+                  {isRTL ? option.label.ar : option.label.en}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+        
+        {/* Custom Rules - Dynamic */}
+        <div className="space-y-2">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider">
+            {t('playbook.add_custom_rule')}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder={t('playbook.custom_rule_placeholder')}
+              className="flex-1"
+            />
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Selected Confluences Summary */}
+        {formData.confluences.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-2">
+            {formData.confluences.map((c) => {
+              const isCore = CORE_CHECK_ITEMS.some(item => item.value === c)
+              const label = isCore 
+                ? t(`playbook.${CORE_CHECK_ITEMS.find(item => item.value === c)?.key || ''}`)
+                : (isRTL 
+                  ? CONFLUENCE_OPTIONS.find(o => o.value === c)?.label.ar 
+                  : CONFLUENCE_OPTIONS.find(o => o.value === c)?.label.en)
+              
+              return (
+                <Badge 
+                  key={c} 
+                  variant={isCore ? "default" : "secondary"} 
+                  className={cn(
+                    "text-xs",
+                    isCore && "bg-gold text-navy-dark border-gold"
+                  )}
+                >
+                  {label}
+                </Badge>
+              )
+            })}
           </div>
         )}
       </div>
@@ -606,7 +689,7 @@ export function PlaybookView() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-cyan-500" />
-            {t('playbook.trading_models')}
+            {t('sidebar.playbook')}
           </h2>
           <p className="text-muted-foreground mt-1">
             {t('playbook.create_and_manage')}
