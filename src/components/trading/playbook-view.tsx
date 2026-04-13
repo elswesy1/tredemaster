@@ -151,6 +151,9 @@ export function PlaybookView() {
   const [isDragging, setIsDragging] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>('')
+  
+  // Custom Rule State
+  const [newCustomRule, setNewCustomRule] = useState('')
 
   const categories = [
     { value: 'smc', label: 'SMC (Smart Money)' },
@@ -392,6 +395,23 @@ export function PlaybookView() {
     setIsEditDialogOpen(true)
   }
 
+  // Add Custom Rule
+  const addCustomRule = (isEdit: boolean = false) => {
+    if (!newCustomRule.trim()) return
+    
+    const formData = isEdit ? editPlaybook : newPlaybook
+    const setFormData = isEdit ? setEditPlaybook : setNewPlaybook
+    
+    // Add custom rule as a confluence
+    const customValue = `custom_${Date.now()}`
+    const updated = [...formData.confluences, customValue]
+    
+    setFormData({ ...formData, confluences: updated })
+    setNewCustomRule('')
+    
+    toast.success(isRTL ? 'تم إضافة القاعدة المخصصة' : 'Custom rule added')
+  }
+
   // Form Component
   const PlaybookForm = ({ formData, setFormData, isEdit = false }: { 
     formData: PlaybookFormData
@@ -486,68 +506,60 @@ export function PlaybookView() {
           </Badge>
         </Label>
         
-        {/* Core Pillars - Permanent with Gold styling */}
-        <div className="space-y-2">
-          <div className="text-xs text-gold font-semibold uppercase tracking-wider flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-gold" />
-            {isRTL ? 'الركائز الأساسية (دائمة)' : 'Core Pillars (Permanent)'}
-          </div>
-          <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-gold/5 border-2 border-gold/30">
-            {CORE_CHECK_ITEMS.map((item) => (
-              <label
-                key={item.value}
-                className="flex items-center gap-2 cursor-pointer hover:bg-gold/10 p-2 rounded transition-colors group"
-              >
-                <Checkbox
-                  checked={formData.confluences.includes(item.value)}
-                  onCheckedChange={() => toggleConfluence(item.value, isEdit)}
-                  className="border-gold data-[state=checked]:bg-gold data-[state=checked]:text-navy-dark"
-                />
-                <span className="text-sm text-gold group-hover:text-gold-light transition-colors">
-                  {t(`playbook.${item.key}`)}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-        
-        {/* Additional Confluences */}
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">
-            {isRTL ? 'شروط إضافية' : 'Additional Confluences'}
-          </div>
-          <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-muted/30 border border-border">
-            {CONFLUENCE_OPTIONS.map((option) => (
-              <label
-                key={option.value}
-                className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors"
-              >
-                <Checkbox
-                  checked={formData.confluences.includes(option.value)}
-                  onCheckedChange={() => toggleConfluence(option.value, isEdit)}
-                />
-                <span className="text-sm">
-                  {isRTL ? option.label.ar : option.label.en}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-        
-        {/* Custom Rules - Dynamic */}
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">
-            {t('playbook.add_custom_rule')}
-          </div>
-          <div className="flex gap-2">
+        {/* Unified Grid - Core + Additional + Custom */}
+        <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-muted/20 border border-border">
+          {/* Core 6 Items - Permanent with Gold labels */}
+          {CORE_CHECK_ITEMS.map((item) => (
+            <label
+              key={item.value}
+              className="flex items-center gap-2 cursor-pointer hover:bg-muted/30 p-2 rounded transition-colors group"
+            >
+              <Checkbox
+                checked={formData.confluences.includes(item.value)}
+                onCheckedChange={() => toggleConfluence(item.value, isEdit)}
+                className="border-gold/50 data-[state=checked]:bg-gold data-[state=checked]:text-navy-dark"
+              />
+              <span className="text-sm text-gold group-hover:text-gold-light transition-colors font-medium">
+                {t(`playbook.${item.key}`)}
+              </span>
+            </label>
+          ))}
+          
+          {/* Additional Confluences */}
+          {CONFLUENCE_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className="flex items-center gap-2 cursor-pointer hover:bg-muted/30 p-2 rounded transition-colors"
+            >
+              <Checkbox
+                checked={formData.confluences.includes(option.value)}
+                onCheckedChange={() => toggleConfluence(option.value, isEdit)}
+              />
+              <span className="text-sm">
+                {isRTL ? option.label.ar : option.label.en}
+              </span>
+            </label>
+          ))}
+          
+          {/* Custom Rule Input */}
+          <div className="col-span-2 flex gap-2 pt-2 border-t border-border mt-2">
             <Input
               placeholder={t('playbook.custom_rule_placeholder')}
-              className="flex-1"
+              className="flex-1 text-sm"
+              value={newCustomRule}
+              onChange={(e) => setNewCustomRule(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newCustomRule.trim()) {
+                  addCustomRule(isEdit)
+                }
+              }}
             />
             <Button 
               variant="outline" 
               size="icon"
               className="shrink-0"
+              onClick={() => addCustomRule(isEdit)}
+              disabled={!newCustomRule.trim()}
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -575,6 +587,12 @@ export function PlaybookView() {
                   )}
                 >
                   {label}
+                  <button
+                    onClick={() => toggleConfluence(c, isEdit)}
+                    className="ml-1 hover:opacity-70"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </Badge>
               )
             })}
