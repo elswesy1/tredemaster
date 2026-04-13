@@ -143,10 +143,10 @@ export function PlaybookView() {
   const [previewUrl, setPreviewUrl] = useState<string>('')
 
   const categories = [
-    { value: 'smc', label: isRTL ? 'SMC (Smart Money)' : 'SMC (Smart Money)' },
-    { value: 'technical', label: isRTL ? 'تحليل فني' : 'Technical' },
-    { value: 'fundamental', label: isRTL ? 'تحليل أساسي' : 'Fundamental' },
-    { value: 'hybrid', label: isRTL ? 'مختلط' : 'Hybrid' }
+    { value: 'smc', label: 'SMC (Smart Money)' },
+    { value: 'technical', label: 'Technical' },
+    { value: 'fundamental', label: 'Fundamental' },
+    { value: 'hybrid', label: 'Hybrid' }
   ]
 
   const timeframes = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1']
@@ -168,11 +168,11 @@ export function PlaybookView() {
       setPlaybooks(data)
     } catch (error) {
       console.error('Error fetching playbooks:', error)
-      toast.error(isRTL ? 'فشل في تحميل نماذج التداول' : 'Failed to load trading models')
+      toast.error(t('playbook.failed_to_load'))
     } finally {
       setIsLoading(false)
     }
-  }, [isRTL])
+  }, [t])
 
   // Fetch on mount
   useEffect(() => {
@@ -202,12 +202,12 @@ export function PlaybookView() {
 
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      toast.error(isRTL ? 'يرجى اختيار ملف صورة' : 'Please select an image file')
+      toast.error(t('playbook.select_image_file'))
       return
     }
     
     if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      toast.error(isRTL ? 'حجم الملف يجب أن يكون أقل من 5MB' : 'File size must be less than 5MB')
+      toast.error(t('playbook.file_size_limit'))
       return
     }
     
@@ -262,7 +262,7 @@ export function PlaybookView() {
   // Create new playbook
   const handleAddPlaybook = async () => {
     if (!newPlaybook.name.trim()) {
-      toast.error(isRTL ? 'يرجى إدخال اسم النموذج' : 'Please enter a model name')
+      toast.error(t('playbook.enter_model_name'))
       return
     }
 
@@ -290,10 +290,10 @@ export function PlaybookView() {
       setNewPlaybook(initialFormData)
       clearUploadedFile()
       
-      toast.success(isRTL ? 'تم إضافة نموذج التداول بنجاح' : 'Trading model added successfully')
+      toast.success(t('playbook.added_successfully'))
     } catch (error) {
       console.error('Error creating playbook:', error)
-      toast.error(isRTL ? 'فشل في إضافة نموذج التداول' : 'Failed to add trading model')
+      toast.error(t('playbook.failed_to_add'))
     } finally {
       setIsSaving(false)
     }
@@ -302,7 +302,7 @@ export function PlaybookView() {
   // Update playbook
   const handleUpdatePlaybook = async () => {
     if (!selectedPlaybook || !editPlaybook.name.trim()) {
-      toast.error(isRTL ? 'يرجى إدخال اسم النموذج' : 'Please enter a model name')
+      toast.error(t('playbook.enter_model_name'))
       return
     }
 
@@ -330,10 +330,10 @@ export function PlaybookView() {
       setSelectedPlaybook(null)
       setEditPlaybook(initialFormData)
       
-      toast.success(isRTL ? 'تم تحديث نموذج التداول بنجاح' : 'Trading model updated successfully')
+      toast.success(t('playbook.updated_successfully'))
     } catch (error) {
       console.error('Error updating playbook:', error)
-      toast.error(isRTL ? 'فشل في تحديث نموذج التداول' : 'Failed to update trading model')
+      toast.error(t('playbook.failed_to_update'))
     } finally {
       setIsSaving(false)
     }
@@ -356,10 +356,10 @@ export function PlaybookView() {
       setPlaybooks(playbooks.filter(p => p.id !== playbookToDelete.id))
       setPlaybookToDelete(null)
       
-      toast.success(isRTL ? 'تم حذف نموذج التداول بنجاح' : 'Trading model deleted successfully')
+      toast.success(t('playbook.deleted_successfully'))
     } catch (error) {
       console.error('Error deleting playbook:', error)
-      toast.error(isRTL ? 'فشل في حذف نموذج التداول' : 'Failed to delete trading model')
+      toast.error(t('playbook.failed_to_delete'))
     }
   }
 
@@ -393,29 +393,29 @@ export function PlaybookView() {
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>{isRTL ? 'اسم النموذج' : 'Model Name'} *</Label>
+            <Label>{t('playbook.model_name')} *</Label>
             <Input 
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder={isRTL ? 'مثال: DAX ChoCH Setup' : 'e.g., DAX ChoCH Setup'}
+              placeholder={t('playbook.model_name_placeholder')}
             />
           </div>
           <div className="space-y-2">
-            <Label>{isRTL ? 'اسم الإعداد (A+ Setup)' : 'Setup Name (A+ Setup)'}</Label>
+            <Label>{t('playbook.setup_name')}</Label>
             <Input 
               value={formData.setupName}
               onChange={(e) => setFormData({ ...formData, setupName: e.target.value })}
-              placeholder={isRTL ? 'مثال: London Kill Zone ChoCH' : 'e.g., London Kill Zone ChoCH'}
+              placeholder={t('playbook.setup_name_placeholder')}
             />
           </div>
         </div>
         
         <div className="space-y-2">
-          <Label>{isRTL ? 'الوصف' : 'Description'}</Label>
+          <Label>{t('playbook.description')}</Label>
           <Textarea 
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder={isRTL ? 'وصف مختصر للنموذج...' : 'Brief description of the model...'}
+            placeholder={t('playbook.description_placeholder')}
             rows={2}
           />
         </div>
@@ -423,7 +423,7 @@ export function PlaybookView() {
 
       {/* Reference Chart Upload */}
       <div className="space-y-2">
-        <Label>{isRTL ? 'الرسم البياني المرجعي (A+ Setup)' : 'Reference Chart (A+ Setup)'}</Label>
+        <Label>{t('playbook.reference_chart')}</Label>
         
         {!previewUrl ? (
           <div
@@ -445,12 +445,10 @@ export function PlaybookView() {
             <label htmlFor="file-upload" className="cursor-pointer">
               <Upload className="h-10 w-10 mx-auto text-gray-400 mb-3" />
               <p className="text-sm text-gray-400">
-                {isRTL 
-                  ? 'اسحب وأفلت صورة هنا أو انقر للاختيار' 
-                  : 'Drag and drop an image here or click to select'}
+                {t('playbook.drag_and_drop_image')}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {isRTL ? 'PNG, JPG حتى 5MB' : 'PNG, JPG up to 5MB'}
+                {t('playbook.image_size_limit')}
               </p>
             </label>
           </div>
@@ -471,7 +469,7 @@ export function PlaybookView() {
 
       {/* Confluence Checklist */}
       <div className="space-y-3">
-        <Label>{isRTL ? 'قائمة التقاء الشروط (Confluence Checklist)' : 'Confluence Checklist'}</Label>
+        <Label>{t('playbook.confluence_checklist')}</Label>
         <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-muted/30 border border-border">
           {CONFLUENCE_OPTIONS.map((option) => (
             <label
@@ -503,7 +501,7 @@ export function PlaybookView() {
 
       {/* Kill Zones */}
       <div className="space-y-3">
-        <Label>{isRTL ? 'مناطق التداول (Kill Zones)' : 'Kill Zones'}</Label>
+        <Label>{t('playbook.kill_zones')}</Label>
         <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-muted/30 border border-border">
           {KILL_ZONE_OPTIONS.map((zone) => (
             <label
@@ -527,13 +525,11 @@ export function PlaybookView() {
 
       {/* Hard Rules */}
       <div className="space-y-2">
-        <Label>{isRTL ? 'قواعد التنفيذ والملاحظات' : 'Execution Rules & Notes'}</Label>
+        <Label>{t('playbook.execution_rules')}</Label>
         <Textarea 
           value={formData.hardRules}
           onChange={(e) => setFormData({ ...formData, hardRules: e.target.value })}
-          placeholder={isRTL 
-            ? 'مثال:\n- لا تدخل بدون 3 شروط على الأقل\n- وقف الخسارة دائماً عند الـ swing low\n- لا تتداول خلال الأخبار العالية...' 
-            : 'e.g.:\n- No entry without at least 3 conditions\n- Stop loss always at swing low\n- No trading during high-impact news...'}
+          placeholder={t('playbook.execution_rules_placeholder')}
           rows={5}
           className="font-mono text-sm"
         />
@@ -542,7 +538,7 @@ export function PlaybookView() {
       {/* Category & Timeframe */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>{isRTL ? 'الفئة' : 'Category'}</Label>
+          <Label>{t('playbook.category')}</Label>
           <Select 
             value={formData.category} 
             onValueChange={(v) => setFormData({ ...formData, category: v })}
@@ -560,7 +556,7 @@ export function PlaybookView() {
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>{isRTL ? 'الإطار الزمني' : 'Timeframe'}</Label>
+          <Label>{t('playbook.timeframe')}</Label>
           <Select 
             value={formData.timeframe} 
             onValueChange={(v) => setFormData({ ...formData, timeframe: v })}
@@ -582,20 +578,20 @@ export function PlaybookView() {
       {/* Entry & Exit Rules */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>{isRTL ? 'قواعد الدخول' : 'Entry Rules'}</Label>
+          <Label>{t('playbook.entry_rules')}</Label>
           <Textarea 
             value={formData.entryRules}
             onChange={(e) => setFormData({ ...formData, entryRules: e.target.value })}
-            placeholder={isRTL ? 'قواعد الدخول...' : 'Entry rules...'}
+            placeholder={t('playbook.entry_rules_placeholder')}
             rows={3}
           />
         </div>
         <div className="space-y-2">
-          <Label>{isRTL ? 'قواعد الخروج' : 'Exit Rules'}</Label>
+          <Label>{t('playbook.exit_rules')}</Label>
           <Textarea 
             value={formData.exitRules}
             onChange={(e) => setFormData({ ...formData, exitRules: e.target.value })}
-            placeholder={isRTL ? 'قواعد الخروج...' : 'Exit rules...'}
+            placeholder={t('playbook.exit_rules_placeholder')}
             rows={3}
           />
         </div>
@@ -610,12 +606,10 @@ export function PlaybookView() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-cyan-500" />
-            {isRTL ? 'نماذج التداول' : 'Trading Models'}
+            {t('playbook.trading_models')}
           </h2>
           <p className="text-muted-foreground mt-1">
-            {isRTL 
-              ? 'أنشئ وأدر نماذج التداول الخاصة بك مع قواعد محددة' 
-              : 'Create and manage your trading models with defined rules'}
+            {t('playbook.create_and_manage')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -636,7 +630,7 @@ export function PlaybookView() {
             }}
           >
             <Plus className="h-4 w-4 mr-2" />
-            {isRTL ? 'إنشاء نموذج' : 'Create Model'}
+            {t('playbook.create_model')}
           </Button>
         </div>
       </div>
@@ -651,17 +645,17 @@ export function PlaybookView() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Target className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              {isRTL ? 'لا توجد نماذج تداول بعد' : 'No trading models yet'}
+              {t('playbook.no_models_yet')}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              {isRTL ? 'ابدأ بإنشاء نموذجك الأول' : 'Start by creating your first model'}
+              {t('playbook.start_by_creating')}
             </p>
             <Button 
               className="mt-4 bg-gradient-to-r from-cyan-500 to-emerald-500 text-black"
               onClick={() => setIsAddDialogOpen(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
-              {isRTL ? 'إنشاء نموذج' : 'Create Model'}
+              {t('playbook.create_model')}
             </Button>
           </CardContent>
         </Card>
@@ -702,11 +696,11 @@ export function PlaybookView() {
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="p-2 rounded-lg bg-muted/30">
-                      <p className="text-xs text-muted-foreground">{isRTL ? 'الصفقات' : 'Trades'}</p>
+                      <p className="text-xs text-muted-foreground">{t('playbook.trades')}</p>
                       <p className="font-bold">{playbook.totalTrades}</p>
                     </div>
                     <div className="p-2 rounded-lg bg-muted/30">
-                      <p className="text-xs text-muted-foreground">{isRTL ? 'نسبة الفوز' : 'Win Rate'}</p>
+                      <p className="text-xs text-muted-foreground">{t('playbook.win_rate')}</p>
                       <p className={cn(
                         "font-bold",
                         winRate >= 60 ? "text-green-500" : winRate >= 40 ? "text-yellow-500" : "text-red-500"
@@ -715,7 +709,7 @@ export function PlaybookView() {
                       </p>
                     </div>
                     <div className="p-2 rounded-lg bg-muted/30">
-                      <p className="text-xs text-muted-foreground">{isRTL ? 'P/L' : 'P/L'}</p>
+                      <p className="text-xs text-muted-foreground">{t('playbook.p_l')}</p>
                       <p className={cn(
                         "font-bold",
                         playbook.profitLoss >= 0 ? "text-green-500" : "text-red-500"
@@ -764,7 +758,7 @@ export function PlaybookView() {
                       onClick={() => openEditDialog(playbook)}
                     >
                       <Edit className="h-4 w-4 mr-1" />
-                      {isRTL ? 'تعديل' : 'Edit'}
+                      {t('playbook.edit')}
                     </Button>
                     <Button 
                       variant="outline" 
@@ -787,12 +781,10 @@ export function PlaybookView() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {isRTL ? 'إنشاء نموذج تداول جديد' : 'Create New Trading Model'}
+              {t('playbook.create_new_model')}
             </DialogTitle>
             <DialogDescription>
-              {isRTL 
-                ? 'حدد قواعد الدخول والخروج ومناطق التداول' 
-                : 'Define your entry/exit rules and trading zones'}
+              {t('playbook.define_rules')}
             </DialogDescription>
           </DialogHeader>
           
@@ -803,7 +795,7 @@ export function PlaybookView() {
           
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-              {isRTL ? 'إلغاء' : 'Cancel'}
+              {t('playbook.cancel')}
             </Button>
             <Button 
               className="bg-gradient-to-r from-cyan-500 to-emerald-500 text-black"
@@ -813,12 +805,12 @@ export function PlaybookView() {
               {isSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {isRTL ? 'جاري الحفظ...' : 'Saving...'}
+                  {t('playbook.saving')}
                 </>
               ) : (
                 <>
                   <Plus className="h-4 w-4 mr-2" />
-                  {isRTL ? 'إنشاء' : 'Create'}
+                  {t('playbook.create')}
                 </>
               )}
             </Button>
@@ -831,10 +823,10 @@ export function PlaybookView() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {isRTL ? 'تعديل نموذج التداول' : 'Edit Trading Model'}
+              {t('playbook.edit_model')}
             </DialogTitle>
             <DialogDescription>
-              {isRTL ? 'تحديث قواعد وإعدادات النموذج' : 'Update model rules and settings'}
+              {t('playbook.update_rules')}
             </DialogDescription>
           </DialogHeader>
           
@@ -846,7 +838,7 @@ export function PlaybookView() {
           
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              {isRTL ? 'إلغاء' : 'Cancel'}
+              {t('playbook.cancel')}
             </Button>
             <Button 
               className="bg-gradient-to-r from-cyan-500 to-emerald-500 text-black"
@@ -856,12 +848,12 @@ export function PlaybookView() {
               {isSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {isRTL ? 'جاري التحديث...' : 'Updating...'}
+                  {t('playbook.updating')}
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  {isRTL ? 'حفظ التغييرات' : 'Save Changes'}
+                  {t('playbook.save_changes')}
                 </>
               )}
             </Button>
@@ -874,7 +866,7 @@ export function PlaybookView() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="text-red-500">
-              {isRTL ? 'تأكيد الحذف' : 'Confirm Delete'}
+              {t('playbook.confirm_delete')}
             </DialogTitle>
             <DialogDescription>
               {isRTL 
@@ -884,14 +876,14 @@ export function PlaybookView() {
           </DialogHeader>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setPlaybookToDelete(null)}>
-              {isRTL ? 'إلغاء' : 'Cancel'}
+              {t('playbook.cancel')}
             </Button>
             <Button 
               variant="destructive"
               onClick={handleDeletePlaybook}
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              {isRTL ? 'حذف' : 'Delete'}
+              {t('playbook.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
