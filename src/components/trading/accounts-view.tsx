@@ -67,6 +67,7 @@ export function AccountsView() {
   const [riskProfiles, setRiskProfiles] = useState<RiskProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
 
   // Form state for new account
   const [formData, setFormData] = useState({
@@ -112,6 +113,7 @@ export function AccountsView() {
 
   const handleCreateAccount = async () => {
     try {
+      setIsCreating(true)
       const response = await fetch('/api/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -142,6 +144,8 @@ export function AccountsView() {
       }
     } catch (error) {
       console.error('Error creating account:', error)
+    } finally {
+      setIsCreating(false)
     }
   }
 
@@ -321,11 +325,18 @@ export function AccountsView() {
               <Button 
                 onClick={handleCreateAccount}
                 className="bg-gradient-to-r from-cyan-500 to-blue-600"
-                disabled={!formData.name}
+                disabled={!formData.name || isCreating}
               >
-                {t('accounts.connect')}
+                {isCreating ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    {language === 'ar' ? 'جاري الإنشاء...' : 'Creating...'}
+                  </>
+                ) : (
+                  t('accounts.connect')
+                )}
               </Button>
-              <Button variant="outline" onClick={() => setShowAddForm(false)}>
+              <Button variant="outline" onClick={() => setShowAddForm(false)} disabled={isCreating}>
                 {t('common.cancel')}
               </Button>
             </div>
