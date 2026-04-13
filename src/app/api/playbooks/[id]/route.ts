@@ -53,15 +53,32 @@ export async function PUT(
       return NextResponse.json({ error: 'Playbook not found' }, { status: 404 })
     }
 
-    // Process rulesChecklist if provided
-    const updates: Record<string, unknown> = { ...body }
-    if (body.rulesChecklist && Array.isArray(body.rulesChecklist)) {
-      updates.rulesChecklist = JSON.stringify(body.rulesChecklist)
+    // Process JSON fields if they're arrays
+    const updates = { ...body }
+    if (updates.confluences && Array.isArray(updates.confluences)) {
+      updates.confluences = JSON.stringify(updates.confluences)
+    }
+    if (updates.killZones && Array.isArray(updates.killZones)) {
+      updates.killZones = JSON.stringify(updates.killZones)
     }
 
     const playbook = await db.playbook.update({
       where: { id },
-      data: updates,
+      data: {
+        name: updates.name,
+        description: updates.description,
+        setupName: updates.setupName,
+        imageUrl: updates.imageUrl,
+        confluences: updates.confluences,
+        killZones: updates.killZones,
+        hardRules: updates.hardRules,
+        category: updates.category,
+        timeframe: updates.timeframe,
+        entryRules: updates.entryRules,
+        exitRules: updates.exitRules,
+        riskRules: updates.riskRules,
+        isActive: updates.isActive,
+      },
     })
 
     return NextResponse.json(playbook)

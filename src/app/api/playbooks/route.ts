@@ -41,8 +41,10 @@ export async function POST(request: NextRequest) {
       name, 
       description, 
       setupName,
-      rulesChecklist,
-      screenshotUrl,
+      imageUrl,
+      confluences,
+      killZones,
+      hardRules,
       category,
       timeframe,
       entryRules,
@@ -61,8 +63,10 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         description: description || null,
         setupName: setupName || null,
-        rulesChecklist: rulesChecklist ? JSON.stringify(rulesChecklist) : null,
-        screenshotUrl: screenshotUrl || null,
+        imageUrl: imageUrl || null,
+        confluences: confluences || null,  // Already JSON string from frontend
+        killZones: killZones || null,      // Already JSON string from frontend
+        hardRules: hardRules || null,
         category: category || null,
         timeframe: timeframe || null,
         entryRules: entryRules || null,
@@ -107,9 +111,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Playbook not found' }, { status: 404 })
     }
 
-    // Process rulesChecklist if provided
-    if (updates.rulesChecklist && Array.isArray(updates.rulesChecklist)) {
-      updates.rulesChecklist = JSON.stringify(updates.rulesChecklist)
+    // Process JSON fields if they're arrays
+    if (updates.confluences && Array.isArray(updates.confluences)) {
+      updates.confluences = JSON.stringify(updates.confluences)
+    }
+    if (updates.killZones && Array.isArray(updates.killZones)) {
+      updates.killZones = JSON.stringify(updates.killZones)
     }
 
     const playbook = await db.playbook.update({

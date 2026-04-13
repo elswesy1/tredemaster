@@ -571,27 +571,29 @@ model Usage {
 
 // الاستراتيجيات
 model Playbook {
-  id            String    @id @default(cuid())
-  userId        String
-  name          String
-  description   String?
-  setupName     String?
-  rulesChecklist String?
-  screenshotUrl  String?
-  category      String?
-  timeframe     String?
-  entryRules    String?
-  exitRules     String?
-  riskRules     String?
-  totalTrades   Int       @default(0)
-  winningTrades Int       @default(0)
-  losingTrades  Int       @default(0)
-  profitLoss    Float     @default(0)
-  winRate       Float?
-  avgRRR        Float?
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  userId          String
+  name            String
+  description     String?
+  setupName       String?   // اسم النموذج (A+ Setup Name)
+  imageUrl        String?   // صورة المرجع (Reference Chart)
+  confluences     String?   // JSON array: ["Liquidity Swept", "ChoCH", ...]
+  killZones       String?   // JSON array: ["asia", "london", "ny_am", "ny_pm"]
+  hardRules       String?   // قواعد التنفيذ (Execution Rules)
+  category        String?
+  timeframe       String?
+  entryRules      String?
+  exitRules       String?
+  riskRules       String?
+  totalTrades     Int       @default(0)
+  winningTrades   Int       @default(0)
+  losingTrades    Int       @default(0)
+  profitLoss      Float     @default(0)
+  winRate         Float?
+  avgRRR          Float?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   
   user User @relation("UserPlaybooks", fields: [userId], references: [id], onDelete: Cascade)
 
