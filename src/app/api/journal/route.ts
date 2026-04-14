@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
@@ -148,6 +149,7 @@ export async function POST(request: NextRequest) {
       }
     })
     return NextResponse.json(entry, { status: 201 })
+    revalidateTag('journal')
   } catch (error) {
     console.error('Error creating journal entry:', error)
     return NextResponse.json({ error: 'Failed to create journal entry' }, { status: 500 })

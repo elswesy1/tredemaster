@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
       },
     })
     return NextResponse.json(portfolio, { status: 201 })
+    revalidateTag('portfolios')
   } catch (error) {
     console.error('Error creating portfolio:', error)
     return NextResponse.json({ error: 'Failed to create portfolio' }, { status: 500 })

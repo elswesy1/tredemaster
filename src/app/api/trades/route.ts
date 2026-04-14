@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
@@ -77,6 +78,7 @@ export async function POST(request: NextRequest) {
       },
     })
     return NextResponse.json(trade, { status: 201 })
+    revalidateTag('trades')
   } catch (error) {
     console.error('Error creating trade:', error)
     return NextResponse.json({ error: 'Failed to create trade' }, { status: 500 })

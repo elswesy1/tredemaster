@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
       },
     })
     return NextResponse.json(audit, { status: 201 })
+    revalidateTag('audits')
   } catch (error) {
     console.error('Error creating audit:', error)
     return NextResponse.json({ error: 'Failed to create audit' }, { status: 500 })

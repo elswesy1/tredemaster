@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth-middleware'
@@ -109,6 +110,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(account, { status: 201 })
+    revalidateTag('trading-accounts')
   } catch (error) {
     console.error('Error creating account:', error)
     return NextResponse.json(

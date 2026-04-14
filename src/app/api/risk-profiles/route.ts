@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
@@ -125,6 +126,7 @@ export async function POST(request: NextRequest) {
       }
     })
     return NextResponse.json(profile, { status: 201 })
+    revalidateTag('risk-profiles')
   } catch (error) {
     console.error('Error creating risk profile:', error)
     return NextResponse.json({ error: 'Failed to create risk profile' }, { status: 500 })

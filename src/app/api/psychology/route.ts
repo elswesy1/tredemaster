@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
@@ -116,6 +117,7 @@ export async function POST(request: NextRequest) {
       }
     })
     return NextResponse.json(log, { status: 201 })
+    revalidateTag('psychology')
   } catch (error) {
     console.error('Error creating psychology log:', error)
     return NextResponse.json({ error: 'Failed to create psychology log' }, { status: 500 })

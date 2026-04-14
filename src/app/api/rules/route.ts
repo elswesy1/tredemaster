@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
       },
     })
     return NextResponse.json(rule, { status: 201 })
+    revalidateTag('rules')
   } catch (error) {
     console.error('Error creating trading rule:', error)
     return NextResponse.json({ error: 'Failed to create trading rule' }, { status: 500 })
