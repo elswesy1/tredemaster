@@ -103,6 +103,7 @@ model TradingAccount {
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
   
   // Broker Fields (MT4/MT5)
   broker          String?
@@ -170,6 +171,8 @@ model TradingAccount {
   @@index([portfolioId])
   @@index([accountType])
   @@index([connectionStatus])
+  @@index([deletedAt])
+  @@unique([id, deletedAt])
 }
 
 // MetaAPI Token للربط مع MT4/MT5
@@ -260,15 +263,20 @@ model Trade {
   closedAt         DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  playbookId       String?
   
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   portfolio Portfolio?       @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
   account   TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  playbook  Playbook?        @relation(fields: [playbookId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([symbol])
   @@index([status])
   @@index([openedAt])
+  @@index([deletedAt])
+  @@index([playbookId])
 }
 
 // خطط التداول
@@ -594,7 +602,9 @@ model Playbook {
   isActive        Boolean   @default(true)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  
+  deletedAt       DateTime?
+  trades          Trade[]
+
   user User @relation("UserPlaybooks", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
