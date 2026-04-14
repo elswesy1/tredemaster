@@ -1,0 +1,13 @@
+Environment variables loaded from .env
+Failed to compile.
+
+./src/app/api/accounts/route.ts:34:29
+Type error: 'user' is possibly 'null'.
+
+[0m [90m 32 |[39m     [90m// Rate limit check[39m[0m
+[0m [90m 33 |[39m     [36mconst[39m { rateLimit } [33m=[39m [36mawait[39m [36mimport[39m([32m'@/lib/rate-limiter'[39m)[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m 34 |[39m     [36mconst[39m limit [33m=[39m rateLimit(user[33m.[39muserId[33m,[39m [32m'create_account'[39m)[33m;[39m[0m
+[0m [90m    |[39m                             [31m[1m^[22m[39m[0m
+[0m [90m 35 |[39m     [36mif[39m ([33m![39mlimit[33m.[39msuccess) [36mreturn[39m [33mNextResponse[39m[33m.[39mjson({ error[33m:[39m [32m'Too many requests'[39m[33m,[39m retryAfter[33m:[39m limit[33m.[39mretryAfter }[33m,[39m { status[33m:[39m [35m429[39m })[33m;[39m[0m
+[0m [90m 36 |[39m     [36mif[39m ([33m![39muser) {[0m
+[0m [90m 37 |[39m       [36mreturn[39m jsonResponse([36mfalse[39m[33m,[39m undefined[33m,[39m [32m'غير مصرح - يجب تسجيل الدخول'[39m[33m,[39m [35m401[39m)[0m
