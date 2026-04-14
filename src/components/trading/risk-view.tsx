@@ -93,7 +93,7 @@ export function RiskView() {
   const [profileToDelete, setProfileToDelete] = useState<RiskProfile | null>(null)
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null)
   
-  // Form state
+  // Form state - riskDegree and maxDrawdown are READ-ONLY calculated fields
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -101,11 +101,9 @@ export function RiskView() {
     accountName: '',
     accountType: 'account',
     riskTolerance: 'moderate',
-    riskDegree: 5,
     maxDailyLoss: '',
     maxWeeklyLoss: '',
     maxMonthlyLoss: '',
-    maxDrawdown: '',
     maxPositionSize: '',
     maxRiskPerTrade: '',
     maxCorrelatedTrades: '',
@@ -153,11 +151,9 @@ export function RiskView() {
       accountName: '',
       accountType: 'account',
       riskTolerance: 'moderate',
-      riskDegree: 5,
       maxDailyLoss: '',
       maxWeeklyLoss: '',
       maxMonthlyLoss: '',
-      maxDrawdown: '',
       maxPositionSize: '',
       maxRiskPerTrade: '',
       maxCorrelatedTrades: '',
@@ -180,11 +176,9 @@ export function RiskView() {
         accountName: selectedAccount?.name || null,
         accountType: formData.accountType,
         riskTolerance: formData.riskTolerance,
-        riskDegree: formData.riskDegree,
         maxDailyLoss: formData.maxDailyLoss ? parseFloat(formData.maxDailyLoss) : null,
         maxWeeklyLoss: formData.maxWeeklyLoss ? parseFloat(formData.maxWeeklyLoss) : null,
         maxMonthlyLoss: formData.maxMonthlyLoss ? parseFloat(formData.maxMonthlyLoss) : null,
-        maxDrawdown: formData.maxDrawdown ? parseFloat(formData.maxDrawdown) : null,
         maxPositionSize: formData.maxPositionSize ? parseFloat(formData.maxPositionSize) : null,
         maxRiskPerTrade: formData.maxRiskPerTrade ? parseFloat(formData.maxRiskPerTrade) : null,
         maxCorrelatedTrades: formData.maxCorrelatedTrades ? parseInt(formData.maxCorrelatedTrades) : null,
@@ -236,11 +230,9 @@ export function RiskView() {
       accountName: profile.accountName || '',
       accountType: profile.accountType || 'account',
       riskTolerance: profile.riskTolerance,
-      riskDegree: profile.riskDegree,
       maxDailyLoss: profile.maxDailyLoss?.toString() || '',
       maxWeeklyLoss: profile.maxWeeklyLoss?.toString() || '',
       maxMonthlyLoss: profile.maxMonthlyLoss?.toString() || '',
-      maxDrawdown: profile.maxDrawdown?.toString() || '',
       maxPositionSize: profile.maxPositionSize?.toString() || '',
       maxRiskPerTrade: profile.maxRiskPerTrade?.toString() || '',
       maxCorrelatedTrades: profile.maxCorrelatedTrades?.toString() || '',
