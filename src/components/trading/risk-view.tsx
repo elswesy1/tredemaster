@@ -527,25 +527,16 @@ export function RiskView() {
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <Label>{t('risk.riskDegree')}: {formData.riskDegree}</Label>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-green-500">1</span>
-                      <Slider
-                        value={[formData.riskDegree]}
-                        onValueChange={(value) => setFormData({ ...formData, riskDegree: value[0] })}
-                        max={10}
-                        min={1}
-                        step={1}
-                        className="flex-1"
-                      />
-                      <span className="text-sm text-red-500">10</span>
+                  {/* Read-only Risk Degree Display */}
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">{t('risk.riskDegree')}</Label>
+                    <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 border">
+                      <span className="text-2xl font-bold">{formData.riskTolerance === 'conservative' ? 3 : formData.riskTolerance === 'moderate' ? 5 : 8}</span>
+                      <span className="text-sm text-muted-foreground">/ 10</span>
                     </div>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{t('risk.conservative')}</span>
-                      <span>{t('risk.moderate')}</span>
-                      <span>{t('risk.aggressive')}</span>
-                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Auto-calculated based on risk tolerance
+                    </p>
                   </div>
                 </TabsContent>
 
