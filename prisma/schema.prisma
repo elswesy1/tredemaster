@@ -173,6 +173,7 @@ model TradingAccount {
   @@index([connectionStatus])
   @@index([deletedAt])
   @@unique([id, deletedAt])
+  @@unique([userId, platform, name])
 }
 
 // MetaAPI Token للربط مع MT4/MT5
@@ -819,6 +820,11 @@ model AuditLog {
   id        String   @id @default(cuid())
   userId    String
   action    String
+  entity    String?
+  entityId  String?
+  oldData   Json?
+  newData   Json?
+  timestamp DateTime?
   details   Json?
   ipAddress String?
   userAgent String?
