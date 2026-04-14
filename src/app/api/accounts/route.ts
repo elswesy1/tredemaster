@@ -29,6 +29,10 @@ export async function GET(request: NextRequest) {
   try {
     // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
+    // Rate limit check
+    const { rateLimit } = await import('@/lib/rate-limiter');
+    const limit = rateLimit(user.userId, 'create_account');
+    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
     if (!user) {
       return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
@@ -84,6 +88,10 @@ export async function POST(request: NextRequest) {
   try {
     // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
+    // Rate limit check
+    const { rateLimit } = await import('@/lib/rate-limiter');
+    const limit = rateLimit(user.userId, 'create_account');
+    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
     if (!user) {
       return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
@@ -142,6 +150,10 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = await getAuthUser(request)
+    // Rate limit check
+    const { rateLimit } = await import('@/lib/rate-limiter');
+    const limit = rateLimit(user.userId, 'create_account');
+    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
     if (!user) {
       return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
@@ -197,6 +209,10 @@ export async function DELETE(request: NextRequest) {
   try {
     // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
+    // Rate limit check
+    const { rateLimit } = await import('@/lib/rate-limiter');
+    const limit = rateLimit(user.userId, 'create_account');
+    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
     if (!user) {
       return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
