@@ -1,41 +1,178 @@
+/**
+ * Playbooks API Route - GET & POST
+ * 
+ * GET: جلب جميع النماذج غير المحذوفة مع Rate Limiting
+ * POST: إنشاء نموذج جديد
+ * 
+ * Protection:
+ * - Session verification via getAuthUser()
+ * - Soft delete filter (deletedAt: null)
+ * - Rate limiting (5 requests per minute per user)
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
+import { Prisma } from '@prisma/client'
 
-// GET - Fetch all playbooks for the user
+// Response helper for consistent JSON structure
+const jsonResponse = (success: boolean, data?: unknown, error?: string, status: number = 200) => {
+  const response: Record<string, unknown> = { success }; if (data) response["data"] = data; if (error) response["error"] = error; return NextResponse.json(response, { status })
+}
+
+// ============================================
+// Rate Limiter - 5 requests per minute per user
+// ============================================
+const rateLimiter = new Map<string, { count: number; resetTime: number }>()
+
+const checkRateLimit = (userId: string): { allowed: boolean; remaining: number; resetIn: number } => {
+  const now = Date.now()
+  const windowMs = 60 * 1000 // 1 minute
+  const maxRequests = 5
+
+  const userLimit = rateLimiter.get(userId)
+
+  if (!userLimit || now > userLimit.resetTime) {
+    // نافذة جديدة
+    rateLimiter.set(userId, { count: 1, resetTime: now + windowMs })
+    return { allowed: true, remaining: maxRequests - 1, resetIn: windowMs }
+  }
+
+  if (userLimit.count >= maxRequests) {
+    // تجاوز الحد
+    return { allowed: false, remaining: 0, resetIn: userLimit.resetTime - now }
+  }
+
+  // زيادة العداد
+  userLimit.count++
+  return { allowed: true, remaining: maxRequests - userLimit.count, resetIn: userLimit.resetTime - now }
+}
+
+// تنظيف الذاكرة كل 5 دقائق
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, value] of rateLimiter.entries()) {
+    if (now > value.resetTime) {
+      rateLimiter.delete(key)
+    }
+  }
+}, 5 * 60 * 1000)
+
+// ============================================
+// GET /api/playbooks
+// جلب جميع النماذج غير المحذوفة
+// ============================================
 export async function GET(request: NextRequest) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
+    // 2. Rate Limiting
+    const rateLimit = checkRateLimit(user.userId)
+    if (!rateLimit.allowed) {
+      return jsonResponse(
+        false, 
+        null, 
+        `تم تجاوز حد الطلبات. حاول مرة أخرى بعد ${Math.ceil(rateLimit.resetIn / 1000)} ثواني`, 
+        429
+      )
+    }
+
+    // 3. استخراج معاملات الفلترة
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
+    const timeframe = searchParams.get('timeframe')
+    const includeInactive = searchParams.get('includeInactive') === 'true'
 
-    const where: Record<string, unknown> = { userId: user.userId }
+    // 4. بناء شروط البحث
+    const where: Record<string, unknown> = { 
+      userId: user.userId,
+      deletedAt: null  // فقط النماذج غير المحذوفة
+    }
+    
     if (category) where.category = category
+    if (timeframe) where.timeframe = timeframe
+    if (!includeInactive) where.isActive = true
 
+    // 5. جلب النماذج
     const playbooks = await db.playbook.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        setupName: true,
+        imageUrl: true,
+        category: true,
+        timeframe: true,
+        isActive: true,
+        totalTrades: true,
+        winningTrades: true,
+        losingTrades: true,
+        profitLoss: true,
+        winRate: true,
+        avgRRR: true,
+        createdAt: true,
+        updatedAt: true,
+        //不包括 rules و JSON fields للحفاظ على الأداء
+      },
+      orderBy: [
+        { isActive: 'desc' },
+        { createdAt: 'desc' }
+      ]
     })
 
-    return NextResponse.json(playbooks)
+    // 6. إرجاع النتيجة مع headers للـ Rate Limit
+    const response = jsonResponse(true, playbooks.map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      setupName: p.setupName,
+      imageUrl: p.imageUrl,
+      category: p.category,
+      timeframe: p.timeframe,
+      isActive: p.isActive,
+      stats: {
+        totalTrades: p.totalTrades,
+        winningTrades: p.winningTrades,
+        losingTrades: p.losingTrades,
+        profitLoss: p.profitLoss,
+        winRate: p.winRate,
+        avgRRR: p.avgRRR
+      },
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt
+    })))
+
+    // إضافة Rate Limit headers
+    response.headers.set('X-RateLimit-Limit', '5')
+    response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
+    response.headers.set('X-RateLimit-Reset', rateLimit.resetIn.toString())
+
+    return response
+
   } catch (error) {
-    console.error('Error fetching playbooks:', error)
-    return NextResponse.json({ error: 'Failed to fetch playbooks' }, { status: 500 })
+    console.error('[API_ERR] GET /api/playbooks:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// POST - Create a new playbook
+// ============================================
+// POST /api/playbooks
+// إنشاء نموذج جديد
+// ============================================
 export async function POST(request: NextRequest) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
+    // 2. قراءة البيانات
     const body = await request.json()
     const { 
       name, 
@@ -53,115 +190,188 @@ export async function POST(request: NextRequest) {
       isActive 
     } = body
 
+    // 3. التحقق من الاسم
     if (!name || !name.trim()) {
-      return NextResponse.json({ error: 'Playbook name is required' }, { status: 400 })
+      return jsonResponse(false, undefined, 'اسم النموذج مطلوب', 400)
     }
 
+    // 4. إنشاء النموذج
     const playbook = await db.playbook.create({
       data: {
         userId: user.userId,
         name: name.trim(),
-        description: description || null,
-        setupName: setupName || null,
-        imageUrl: imageUrl || null,
-        confluences: confluences || null,  // Already JSON string from frontend
-        killZones: killZones || null,      // Already JSON string from frontend
-        hardRules: hardRules || null,
-        category: category || null,
-        timeframe: timeframe || null,
-        entryRules: entryRules || null,
-        exitRules: exitRules || null,
-        riskRules: riskRules || null,
+        description: description?.trim() || null,
+        setupName: setupName?.trim() || null,
+        imageUrl: imageUrl?.trim() || null,
+        // معالجة JSON fields
+        confluences: Array.isArray(confluences) ? JSON.stringify(confluences) : (confluences || null),
+        killZones: Array.isArray(killZones) ? JSON.stringify(killZones) : (killZones || null),
+        hardRules: hardRules?.trim() || null,
+        category: category || 'smc',
+        timeframe: timeframe || 'H1',
+        entryRules: entryRules?.trim() || null,
+        exitRules: exitRules?.trim() || null,
+        riskRules: riskRules?.trim() || null,
         isActive: isActive ?? true,
+        // إحصائيات أولية
         totalTrades: 0,
         winningTrades: 0,
         losingTrades: 0,
         profitLoss: 0,
+        winRate: null,
+        avgRRR: null
       },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true
+      }
     })
 
-    return NextResponse.json(playbook, { status: 201 })
+    // 5. إرجاع النجاح
+    return jsonResponse(true, { 
+      id: playbook.id,
+      name: playbook.name 
+    }, undefined, 201)
+
   } catch (error) {
-    console.error('Error creating playbook:', error)
-    return NextResponse.json({ error: 'Failed to create playbook' }, { status: 500 })
+    // 6. معالجة خطأ التكرار (P2002)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        console.error('[API_ERR] POST /api/playbooks - Duplicate')
+        return jsonResponse(false, undefined, 'نموذج مكرر بهذا الاسم', 409)
+      }
+    }
+    
+    console.error('[API_ERR] POST /api/playbooks:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// PUT - Update a playbook
+// ============================================
+// PUT /api/playbooks
+// تحديث نموذج موجود
+// ============================================
 export async function PUT(request: NextRequest) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
+    // 2. قراءة البيانات
     const body = await request.json()
     const { id, ...updates } = body
 
     if (!id) {
-      return NextResponse.json({ error: 'Playbook ID is required' }, { status: 400 })
+      return jsonResponse(false, undefined, 'معرف النموذج مطلوب', 400)
     }
 
-    // Verify ownership
+    // 3. التحقق من الملكية والحالة
     const existing = await db.playbook.findFirst({
-      where: { id, userId: user.userId },
+      where: { 
+        id,
+        userId: user.userId,
+        deletedAt: null  // لا يمكن تعديل نموذج محذوف
+      }
     })
 
     if (!existing) {
-      return NextResponse.json({ error: 'Playbook not found' }, { status: 404 })
+      return jsonResponse(false, undefined, 'النموذج غير موجود', 404)
     }
 
-    // Process JSON fields if they're arrays
-    if (updates.confluences && Array.isArray(updates.confluences)) {
-      updates.confluences = JSON.stringify(updates.confluences)
+    // 4. معالجة JSON fields
+    const processedUpdates: Record<string, unknown> = { ...updates }
+    
+    if (updates.confluences !== undefined) {
+      processedUpdates.confluences = Array.isArray(updates.confluences) 
+        ? JSON.stringify(updates.confluences) 
+        : (updates.confluences || null)
     }
-    if (updates.killZones && Array.isArray(updates.killZones)) {
-      updates.killZones = JSON.stringify(updates.killZones)
+    if (updates.killZones !== undefined) {
+      processedUpdates.killZones = Array.isArray(updates.killZones) 
+        ? JSON.stringify(updates.killZones) 
+        : (updates.killZones || null)
     }
 
+    // 5. تحديث النموذج
     const playbook = await db.playbook.update({
       where: { id },
-      data: updates,
+      data: processedUpdates,
+      select: {
+        id: true,
+        name: true,
+        updatedAt: true
+      }
     })
 
-    return NextResponse.json(playbook)
+    return jsonResponse(true, playbook)
+
   } catch (error) {
-    console.error('Error updating playbook:', error)
-    return NextResponse.json({ error: 'Failed to update playbook' }, { status: 500 })
+    console.error('[API_ERR] PUT /api/playbooks:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// DELETE - Delete a playbook
+// ============================================
+// DELETE /api/playbooks
+// حذف ناعم (Soft Delete) للنموذج
+// ============================================
 export async function DELETE(request: NextRequest) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
+    // 2. استخراج معرف النموذج
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
     if (!id) {
-      return NextResponse.json({ error: 'Playbook ID is required' }, { status: 400 })
+      return jsonResponse(false, undefined, 'معرف النموذج مطلوب', 400)
     }
 
-    // Verify ownership
+    // 3. التحقق من الملكية والحالة
     const existing = await db.playbook.findFirst({
-      where: { id, userId: user.userId },
+      where: { 
+        id,
+        userId: user.userId,
+        deletedAt: null  // لا يمكن حذف نموذج محذوف مسبقاً
+      },
+      select: { 
+        userId: true,
+        name: true 
+      }
     })
 
     if (!existing) {
-      return NextResponse.json({ error: 'Playbook not found' }, { status: 404 })
+      return jsonResponse(false, undefined, 'النموذج غير موجود', 404)
     }
 
-    await db.playbook.delete({
+    // 4. التحقق من الصلاحيات
+    if (existing.userId !== user.userId) {
+      return jsonResponse(false, undefined, 'غير مصرح - لا يمكنك حذف هذا النموذج', 403)
+    }
+
+    // 5. تنفيذ Soft Delete
+    await db.playbook.update({
       where: { id },
+      data: { 
+        deletedAt: new Date(),
+        isActive: false
+      }
     })
 
-    return NextResponse.json({ success: true })
+    return jsonResponse(true, { 
+      message: 'تم حذف النموذج بنجاح',
+      playbookName: existing.name 
+    })
+
   } catch (error) {
-    console.error('Error deleting playbook:', error)
-    return NextResponse.json({ error: 'Failed to delete playbook' }, { status: 500 })
+    console.error('[API_ERR] DELETE /api/playbooks:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }

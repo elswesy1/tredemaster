@@ -1,99 +1,171 @@
+/**
+ * Accounts API Route - GET & POST
+ * 
+ * GET: جلب جميع الحسابات غير المحذوفة للمستخدم الحالي
+ * POST: إنشاء حساب جديد مع منع التكرار
+ * 
+ * Protection:
+ * - Session verification via getAuthUser()
+ * - Soft delete filter (deletedAt: null)
+ * - Duplicate prevention (P2002 error handling)
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
+import { Prisma } from '@prisma/client'
 
-// GET /api/accounts - Get accounts for authenticated user only
+// Response helper for consistent JSON structure
+const jsonResponse = (success: boolean, data?: unknown, error?: string, status: number = 200) => {
+  const response: Record<string, unknown> = { success }; if (data) response["data"] = data; if (error) response["error"] = error; return NextResponse.json(response, { status })
+}
+
+// ============================================
+// GET /api/accounts
+// جلب جميع الحسابات غير المحذوفة للمستخدم الحالي
+// ============================================
 export async function GET(request: NextRequest) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json(
-        { error: 'غير مصرح - يجب تسجيل الدخول' },
-        { status: 401 }
-      )
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
+    // 2. جلب الحسابات مع فلتر Soft Delete
     const accounts = await db.tradingAccount.findMany({
-      where: { userId: user.userId },
+      where: { 
+        userId: user.userId,
+        deletedAt: null  // فقط الحسابات غير المحذوفة
+      },
       include: {
         portfolio: {
-          select: { name: true }
+          select: { 
+            id: true,
+            name: true 
+          }
+        },
+        trades: {
+          where: { 
+            deletedAt: null  // فقط الصفقات غير المحذوفة
+          },
+          select: {
+            id: true,
+            symbol: true,
+            status: true,
+            profitLoss: true
+          }
         },
         _count: {
-          select: { trades: true }
+          select: { 
+            trades: {
+              where: { deletedAt: null }
+            }
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json(accounts)
+    return jsonResponse(true, accounts)
+    
   } catch (error) {
-    console.error('Get accounts error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[API_ERR] GET /api/accounts:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// POST /api/accounts - Create new account for authenticated user
+// ============================================
+// POST /api/accounts
+// إنشاء حساب جديد مع منع التكرار
+// ============================================
 export async function POST(request: NextRequest) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json(
-        { error: 'غير مصرح - يجب تسجيل الدخول' },
-        { status: 401 }
-      )
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
+    // 2. قراءة البيانات
     const data = await request.json()
+    
+    // 3. التحقق من الحقول المطلوبة
+    if (!data.name || !data.name.trim()) {
+      return jsonResponse(false, undefined, 'اسم الحساب مطلوب', 400)
+    }
 
+    // 4. محاولة إنشاء الحساب
     const account = await db.tradingAccount.create({
       data: {
         userId: user.userId,
-        name: data.name,
-        broker: data.broker,
-        accountNumber: data.accountNumber,
-        accountType: data.accountType || 'broker',
+        name: data.name.trim(),
+        broker: data.broker || data.platform || null,
+        platform: data.platform || data.broker || null,
+        accountNumber: data.accountNumber || null,
+        accountType: data.accountType || data.type || 'broker',
         currency: data.currency || 'USD',
         balance: parseFloat(data.balance) || 0,
         equity: parseFloat(data.equity) || 0,
-        portfolioId: data.portfolioId || null
+        portfolioId: data.portfolioId || null,
+        // الحقول الجديدة للحسابات المتصلة
+        connectionMethod: data.connectionMethod || 'manual',
+        connectionStatus: 'disconnected',
+        isActive: true
       }
     })
 
-    return NextResponse.json(account, { status: 201 })
+    // 5. إرجاع النجاح
+    return jsonResponse(true, { id: account.id }, undefined, 201)
+
   } catch (error) {
-    console.error('Create account error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // 6. معالجة خطأ التكرار (P2002 - Unique constraint violation)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        const meta = error.meta as { target?: string[] }
+        const target = meta?.target?.join(', ') || 'حقل فريد'
+        console.error('[API_ERR] POST /api/accounts - Duplicate:', target)
+        return jsonResponse(false, undefined, 'حساب مكرر على هذه المنصة', 409)
+      }
+    }
+    
+    console.error('[API_ERR] POST /api/accounts:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// PUT /api/accounts - Update account (only if owned by user)
+// ============================================
+// PUT /api/accounts
+// تحديث حساب موجود (للتوافقية مع الواجهة القديمة)
+// ============================================
 export async function PUT(request: NextRequest) {
   try {
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json(
-        { error: 'غير مصرح - يجب تسجيل الدخول' },
-        { status: 401 }
-      )
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
     const data = await request.json()
 
-    const existingAccount = await db.tradingAccount.findUnique({
-      where: { id: data.id },
+    if (!data.id) {
+      return jsonResponse(false, undefined, 'معرف الحساب مطلوب', 400)
+    }
+
+    // التحقق من الملكية وحساب غير محذوف
+    const existingAccount = await db.tradingAccount.findFirst({
+      where: { 
+        id: data.id,
+        deletedAt: null  // لا يمكن تعديل حساب محذوف
+      },
       select: { userId: true }
     })
 
     if (!existingAccount) {
-      return NextResponse.json({ error: 'الحساب غير موجود' }, { status: 404 })
+      return jsonResponse(false, undefined, 'الحساب غير موجود', 404)
     }
 
     if (existingAccount.userId !== user.userId) {
-      return NextResponse.json(
-        { error: 'غير مصرح - لا يمكنك تعديل هذا الحساب' },
-        { status: 403 }
-      )
+      return jsonResponse(false, undefined, 'غير مصرح - لا يمكنك تعديل هذا الحساب', 403)
     }
 
     const account = await db.tradingAccount.update({
@@ -108,52 +180,65 @@ export async function PUT(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ account })
+    return jsonResponse(true, { account })
+
   } catch (error) {
-    console.error('Update account error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[API_ERR] PUT /api/accounts:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// DELETE /api/accounts - Delete account (only if owned by user)
+// ============================================
+// DELETE /api/accounts (query param version)
+// حذف ناعم (Soft Delete) للحساب
+// ============================================
 export async function DELETE(request: NextRequest) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json(
-        { error: 'غير مصرح - يجب تسجيل الدخول' },
-        { status: 401 }
-      )
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
+    // 2. استخراج معرف الحساب
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
     if (!id) {
-      return NextResponse.json({ error: 'Account ID required' }, { status: 400 })
+      return jsonResponse(false, undefined, 'معرف الحساب مطلوب', 400)
     }
 
-    const existingAccount = await db.tradingAccount.findUnique({
-      where: { id },
+    // 3. التحقق من الملكية والحالة
+    const existingAccount = await db.tradingAccount.findFirst({
+      where: { 
+        id,
+        deletedAt: null  // لا يمكن حذف حساب محذوف مسبقاً
+      },
       select: { userId: true }
     })
 
     if (!existingAccount) {
-      return NextResponse.json({ error: 'الحساب غير موجود' }, { status: 404 })
+      return jsonResponse(false, undefined, 'الحساب غير موجود', 404)
     }
 
+    // 4. التحقق من الصلاحيات
     if (existingAccount.userId !== user.userId) {
-      return NextResponse.json(
-        { error: 'غير مصرح - لا يمكنك حذف هذا الحساب' },
-        { status: 403 }
-      )
+      return jsonResponse(false, undefined, 'غير مصرح - لا يمكنك حذف هذا الحساب', 403)
     }
 
-    await db.tradingAccount.delete({ where: { id } })
+    // 5. تنفيذ Soft Delete
+    await db.tradingAccount.update({
+      where: { id },
+      data: { 
+        deletedAt: new Date(),
+        isActive: false
+      }
+    })
 
-    return NextResponse.json({ success: true })
+    return jsonResponse(true)
+
   } catch (error) {
-    console.error('Delete account error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[API_ERR] DELETE /api/accounts:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
