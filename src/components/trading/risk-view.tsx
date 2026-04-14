@@ -573,12 +573,9 @@ export function RiskView() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>{t('risk.maxDrawdown')}</Label>
                       <Input 
                         type="number" 
                         placeholder="10"
-                        value={formData.maxDrawdown}
-                        onChange={(e) => setFormData({ ...formData, maxDrawdown: e.target.value })}
                       />
                     </div>
                   </div>
