@@ -5,22 +5,24 @@ import { getAuthUser } from '@/lib/auth-middleware'
 // POST /api/trading-accounts/[id]/sync - مزامنة حساب
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'غير مصرح', message: 'يجب تسجيل الدخول للوصول للددات' },
+        { status: 401 }
+      )
     }
+
+    const { id } = await params
 
     // التحقق من ملكية الحساب
     const account = await prisma.tradingAccount.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.userId
       }
     })
@@ -31,17 +33,16 @@ export async function POST(
 
     // تحديث حالة الاتصال إلى "syncing"
     await prisma.tradingAccount.update({
-      where: { id: params.id },
+      where: { id },
       data: {
-        connectionStatus: 'syncing',  // ✅ تم الإصلاح: connectionStatus بدلاً من status
+        connectionStatus: 'syncing',
         lastSync: new Date()
       }
     })
 
     // محاكاة عملية المزامنة (في الإنتاج، ستتصل بـ MetaAPI أو TradingView)
-    // في الواقع، ستقوم بجلب البيانات من الـ broker
     const syncData = {
-      balance: account.balance + Math.random() * 100 - 50, // محاكاة
+      balance: account.balance + Math.random() * 100 - 50,
       equity: account.equity + Math.random() * 100 - 50,
       timestamp: new Date()
     }
@@ -50,24 +51,24 @@ export async function POST(
     await prisma.dailySyncLog.create({
       data: {
         userId: user.userId,
-        accountId: params.id,
+        accountId: id,
         syncDate: new Date(),
         balanceBefore: account.balance,
         balanceAfter: syncData.balance,
         equityBefore: account.equity,
         equityAfter: syncData.equity,
         tradesSynced: 0,
-        syncStatus: 'success'  // ✅ تم الإصلاح: syncStatus بدلاً من status
+        syncStatus: 'success'
       }
     })
 
     // تحديث الحساب بالبيانات الجديدة
     const updatedAccount = await prisma.tradingAccount.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         balance: syncData.balance,
         equity: syncData.equity,
-        connectionStatus: 'connected',  // ✅ تم الإصلاح
+        connectionStatus: 'connected',
         lastSync: new Date()
       }
     })
@@ -82,16 +83,17 @@ export async function POST(
     
     // تحديث حالة الخطأ
     try {
+      const { id } = await params
       await prisma.tradingAccount.update({
-        where: { id: params.id },
+        where: { id },
         data: {
-          connectionStatus: 'error'  // ✅ تم الإصلاح
+          connectionStatus: 'error'
         }
       })
     } catch (e) {
       console.error('Error updating error status:', e)
     }
-    
+
     return NextResponse.json(
       { error: 'Failed to sync account' },
       { status: 500 }
@@ -102,22 +104,24 @@ export async function POST(
 // GET /api/trading-accounts/[id]/sync - جلب سجل المزامنة
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'غير مصرح', message: 'يجب تسجيل الدخول للوصول للددات' },
+        { status: 401 }
+      )
     }
+
+    const { id } = await params
 
     // التحقق من ملكية الحساب
     const account = await prisma.tradingAccount.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.userId
       }
     })
@@ -128,8 +132,8 @@ export async function GET(
 
     // جلب سجل المزامنة
     const syncLogs = await prisma.dailySyncLog.findMany({
-      where: { accountId: params.id },
-      orderBy: { syncDate: 'desc' },  // ✅ تم الإصلاح
+      where: { accountId: id },
+      orderBy: { syncDate: 'desc' },
       take: 30
     })
 

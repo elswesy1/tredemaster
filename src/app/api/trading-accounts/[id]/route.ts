@@ -5,21 +5,22 @@ import { getAuthUser } from '@/lib/auth-middleware'
 // GET /api/trading-accounts/[id] - جلب حساب محدد
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'غير مصرح', message: 'يجب تسجيل الدخول للوصول لهذه البيانات' },
+        { status: 401 }
+      )
     }
 
+    const { id } = await params
     const account = await prisma.tradingAccount.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.userId
       },
       include: {
@@ -29,7 +30,7 @@ export async function GET(
         },
         dailySyncLogs: {
           take: 30,
-          orderBy: { syncDate: 'desc' }  // ✅ تم الإصلاح: syncDate بدلاً من date
+          orderBy: { syncDate: 'desc' }
         },
         _count: {
           select: { trades: true }
@@ -54,24 +55,25 @@ export async function GET(
 // PUT /api/trading-accounts/[id] - تحديث حساب
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'غير مصرح', message: 'يجب تسجيل الدخول للوصول لهذه البيانات' },
+        { status: 401 }
+      )
     }
 
+    const { id } = await params
     const body = await request.json()
 
     // التحقق من ملكية الحساب
     const existingAccount = await prisma.tradingAccount.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.userId
       }
     })
@@ -81,15 +83,15 @@ export async function PUT(
     }
 
     // تحديث الحساب
-    const updateData: any = { ...body }
-    
+    const updateData: Record<string, unknown> = { ...body }
+
     if (body.startDate) updateData.startDate = new Date(body.startDate)
     if (body.endDate) updateData.endDate = new Date(body.endDate)
     if (body.challengeStart) updateData.challengeStart = new Date(body.challengeStart)
     if (body.challengeEnd) updateData.challengeEnd = new Date(body.challengeEnd)
-    
+
     const account = await prisma.tradingAccount.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData
     })
 
@@ -106,22 +108,24 @@ export async function PUT(
 // DELETE /api/trading-accounts/[id] - حذف حساب
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'غير مصرح', message: 'يجب تسجيل الدخول للوصول للددات' },
+        { status: 401 }
+      )
     }
+
+    const { id } = await params
 
     // التحقق من ملكية الحساب
     const existingAccount = await prisma.tradingAccount.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.userId
       }
     })
@@ -131,7 +135,7 @@ export async function DELETE(
     }
 
     await prisma.tradingAccount.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ success: true })
