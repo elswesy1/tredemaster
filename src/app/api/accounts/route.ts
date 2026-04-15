@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { Prisma } from '@prisma/client'
+import { rateLimit, getRateLimitKey, getClientIp } from '@/lib/rate-limiter'
 
 // Response helper for consistent JSON structure
 const jsonResponse = (success: boolean, data?: unknown, error?: string, status: number = 200) => {
@@ -35,10 +36,10 @@ export async function GET(request: NextRequest) {
       return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
-    // ✅ الآن user مضمون أنه ليس null
-    const { rateLimit, getRateLimitKey } = await import('@/lib/rate-limiter');
-    const limit = rateLimit(getRateLimitKey(user.userId, 'create_account'));
-    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
+    // ✅ Rate Limiting على GET
+    const ip = getClientIp(request)
+    const limit = rateLimit(getRateLimitKey(user.userId, 'api_call', ip), 'api_call')
+    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 })
 
     // 2. جلب الحسابات مع فلتر Soft Delete
     const accounts = await db.tradingAccount.findMany({

@@ -8,56 +8,19 @@ import { revalidateTag } from 'next/cache'
  * Protection:
  * - Session verification via getAuthUser()
  * - Soft delete filter (deletedAt: null)
- * - Rate limiting (5 requests per minute per user)
+ * - Rate limiting via centralized rate-limiter
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { Prisma } from '@prisma/client'
+import { rateLimit, getRateLimitKey, getClientIp } from '@/lib/rate-limiter'
 
 // Response helper for consistent JSON structure
 const jsonResponse = (success: boolean, data?: unknown, error?: string, status: number = 200) => {
   const response: Record<string, unknown> = { success }; if (data) response["data"] = data; if (error) response["error"] = error; return NextResponse.json(response, { status })
 }
-
-// ============================================
-// Rate Limiter - 5 requests per minute per user
-// ============================================
-const rateLimiter = new Map<string, { count: number; resetTime: number }>()
-
-const checkRateLimit = (userId: string): { allowed: boolean; remaining: number; resetIn: number } => {
-  const now = Date.now()
-  const windowMs = 60 * 1000 // 1 minute
-  const maxRequests = 5
-
-  const userLimit = rateLimiter.get(userId)
-
-  if (!userLimit || now > userLimit.resetTime) {
-    // نافذة جديدة
-    rateLimiter.set(userId, { count: 1, resetTime: now + windowMs })
-    return { allowed: true, remaining: maxRequests - 1, resetIn: windowMs }
-  }
-
-  if (userLimit.count >= maxRequests) {
-    // تجاوز الحد
-    return { allowed: false, remaining: 0, resetIn: userLimit.resetTime - now }
-  }
-
-  // زيادة العداد
-  userLimit.count++
-  return { allowed: true, remaining: maxRequests - userLimit.count, resetIn: userLimit.resetTime - now }
-}
-
-// تنظيف الذاكرة كل 5 دقائق
-setInterval(() => {
-  const now = Date.now()
-  for (const [key, value] of rateLimiter.entries()) {
-    if (now > value.resetTime) {
-      rateLimiter.delete(key)
-    }
-  }
-}, 5 * 60 * 1000)
 
 // ============================================
 // GET /api/playbooks
@@ -72,14 +35,10 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Rate Limiting
-    const rateLimit = checkRateLimit(user.userId)
-    if (!rateLimit.allowed) {
-      return jsonResponse(
-        false, 
-        null, 
-        `تم تجاوز حد الطلبات. حاول مرة أخرى بعد ${Math.ceil(rateLimit.resetIn / 1000)} ثواني`, 
-        429
-      )
+    const ip = getClientIp(request)
+    const rl = rateLimit(getRateLimitKey(user.userId, 'api_call', ip), 'api_call')
+    if (!rl.success) {
+      return jsonResponse(false, null, `تم تجاوز حد الطلبات. حاول مرة أخرى بعد ${rl.retryAfter} ثواني`, 429)
     }
 
     // 3. استخراج معاملات الفلترة
@@ -150,8 +109,8 @@ export async function GET(request: NextRequest) {
 
     // إضافة Rate Limit headers
     response.headers.set('X-RateLimit-Limit', '5')
-    response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString())
-    response.headers.set('X-RateLimit-Reset', rateLimit.resetIn.toString())
+    response.headers.set('X-RateLimit-Remaining', rl.remaining.toString())
+    response.headers.set('X-RateLimit-Reset', rl.resetAt.toString())
 
     return response
 
@@ -173,7 +132,14 @@ export async function POST(request: NextRequest) {
       return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
-    // 2. قراءة البيانات
+    // 2. Rate Limiting على إنشاء playbook
+    const ip = getClientIp(request)
+    const rl = rateLimit(getRateLimitKey(user.userId, 'create_playbook', ip), 'create_playbook')
+    if (!rl.success) {
+      return jsonResponse(false, null, `تم تجاوز حد الطلبات. حاول مرة أخرى بعد ${rl.retryAfter} ثواني`, 429)
+    }
+
+    // 3. قراءة البيانات
     const body = await request.json()
     const { 
       name, 
@@ -191,12 +157,12 @@ export async function POST(request: NextRequest) {
       isActive 
     } = body
 
-    // 3. التحقق من الاسم
+    // 4. التحقق من الاسم
     if (!name || !name.trim()) {
       return jsonResponse(false, undefined, 'اسم النموذج مطلوب', 400)
     }
 
-    // 4. إنشاء النموذج
+    // 5. إنشاء النموذج
     const playbook = await db.playbook.create({
       data: {
         userId: user.userId,
@@ -229,14 +195,14 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // 5. إرجاع النجاح
+    // 6. إرجاع النجاح
     return jsonResponse(true, { 
       id: playbook.id,
       name: playbook.name 
     }, undefined, 201)
 
   } catch (error) {
-    // 6. معالجة خطأ التكرار (P2002)
+    // 7. معالجة خطأ التكرار (P2002)
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         console.error('[API_ERR] POST /api/playbooks - Duplicate')
