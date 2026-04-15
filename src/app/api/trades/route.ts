@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ استخدام rateLimit بشكل صحيح
-    const rl1 = rateLimit(getRateLimitKey(user.userId, 'trade_create'), 10, 60000)
+    const rl1 = rateLimit(getRateLimitKey(user.userId, 'trade_create'), 'create_trade')
     if (!rl1.success) return NextResponse.json({ error: "Too many requests", retryAfter: rl1.retryAfter }, { status: 429 })
 
     const body = await request.json()

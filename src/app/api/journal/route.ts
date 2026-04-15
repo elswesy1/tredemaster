@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ استخدام rateLimit بشكل صحيح
-    const rl4 = rateLimit(getRateLimitKey(user.userId, 'journal_create'), 10, 60000)
+    const rl4 = rateLimit(getRateLimitKey(user.userId, 'journal_create'), 'journal_create')
     if (!rl4.success) return NextResponse.json({ error: "Too many requests", retryAfter: rl4.retryAfter }, { status: 429 })
 
     const body = await request.json()
