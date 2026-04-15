@@ -6,6 +6,7 @@ import { Toaster as Sonner } from "sonner";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { HydrationProvider } from "@/components/providers/hydration-provider";
+import { StorageMigration } from "@/components/providers/storage-migration";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -51,9 +52,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body className={`${inter.variable} antialiased bg-background text-foreground`}>
+      <body className={`${inter.variable} antialiased bg-background text-foreground`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <AuthProvider>
+            <StorageMigration />
             <HydrationProvider>
               {children}
             </HydrationProvider>

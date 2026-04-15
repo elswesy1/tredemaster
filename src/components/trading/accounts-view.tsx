@@ -493,7 +493,7 @@ export function AccountsView() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : accounts.length > 0 ? (
+      ) : Array.isArray(accounts) && accounts.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {accounts.map((account) => {
             const riskProfile = getRiskProfileForAccount(account.id)

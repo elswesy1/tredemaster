@@ -243,7 +243,7 @@ export function LoginHistoryView() {
           ) : (
             <ScrollArea className="h-[400px]">
               <div className="space-y-3">
-                {history.map((entry, index) => (
+                {Array.isArray(history) && history.map((entry, index) => (
                   <div
                     key={entry.id}
                     className={cn(

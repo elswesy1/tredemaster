@@ -540,7 +540,7 @@ export function PsychologyView() {
             </Card>
           ) : (
             <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-              {logs.map((log) => {
+              {Array.isArray(logs) && logs.map((log) => {
                 const emotionInfo = emotionLabels[log.emotion || ''] || { label: log.emotion || 'غير محدد', icon: Meh, color: 'text-muted-foreground' }
                 return (
                   <Card key={log.id} className="hover:shadow-md transition-shadow">
