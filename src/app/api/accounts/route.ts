@@ -29,13 +29,16 @@ export async function GET(request: NextRequest) {
   try {
     // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
-    // Rate limit check
-    const { rateLimit } = await import('@/lib/rate-limiter');
-    const limit = rateLimit(user.userId, 'create_account');
-    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
+    
+    // ✅ التحقق أولاً قبل استخدام user
     if (!user) {
       return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
+
+    // ✅ الآن user مضمون أنه ليس null
+    const { rateLimit, getRateLimitKey } = await import('@/lib/rate-limiter');
+    const limit = rateLimit(getRateLimitKey(user.userId, 'create_account'));
+    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
 
     // 2. جلب الحسابات مع فلتر Soft Delete
     const accounts = await db.tradingAccount.findMany({
@@ -88,13 +91,16 @@ export async function POST(request: NextRequest) {
   try {
     // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
-    // Rate limit check
-    const { rateLimit } = await import('@/lib/rate-limiter');
-    const limit = rateLimit(user.userId, 'create_account');
-    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
+    
+    // ✅ التحقق أولاً قبل استخدام user
     if (!user) {
       return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
+
+    // ✅ الآن user مضمون أنه ليس null
+    const { rateLimit, getRateLimitKey } = await import('@/lib/rate-limiter');
+    const limit = rateLimit(getRateLimitKey(user.userId, 'create_account'));
+    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
 
     // 2. قراءة البيانات
     const data = await request.json()
@@ -150,13 +156,16 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = await getAuthUser(request)
-    // Rate limit check
-    const { rateLimit } = await import('@/lib/rate-limiter');
-    const limit = rateLimit(user.userId, 'create_account');
-    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
+    
+    // ✅ التحقق أولاً قبل استخدام user
     if (!user) {
       return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
+
+    // ✅ الآن user مضمون أنه ليس null
+    const { rateLimit, getRateLimitKey } = await import('@/lib/rate-limiter');
+    const limit = rateLimit(getRateLimitKey(user.userId, 'create_account'));
+    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
 
     const data = await request.json()
 
@@ -209,13 +218,16 @@ export async function DELETE(request: NextRequest) {
   try {
     // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
-    // Rate limit check
-    const { rateLimit } = await import('@/lib/rate-limiter');
-    const limit = rateLimit(user.userId, 'create_account');
-    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
+    
+    // ✅ التحقق أولاً قبل استخدام user
     if (!user) {
       return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
+
+    // ✅ الآن user مضمون أنه ليس null
+    const { rateLimit, getRateLimitKey } = await import('@/lib/rate-limiter');
+    const limit = rateLimit(getRateLimitKey(user.userId, 'create_account'));
+    if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 });
 
     // 2. استخراج معرف الحساب
     const { searchParams } = new URL(request.url)

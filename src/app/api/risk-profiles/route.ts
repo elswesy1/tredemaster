@@ -2,6 +2,7 @@ import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limiter'
 
 // GET - Fetch risk profiles for authenticated user only
 export async function GET(request: NextRequest) {
@@ -49,6 +50,10 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
+
+    // ✅ استخدام rateLimit بشكل صحيح
+    const rl2 = rateLimit(getRateLimitKey(user.userId, 'risk_profile_create'), 10, 60000)
+    if (!rl2.success) return NextResponse.json({ error: "Too many requests", retryAfter: rl2.retryAfter }, { status: 429 })
 
     const body = await request.json()
     const {
