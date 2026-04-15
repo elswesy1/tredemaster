@@ -29,7 +29,13 @@ export default function ForgotPasswordPage() {
       if (res.ok) {
         setSent(true)
       } else {
-        setError(data.error || 'حدث خطأ')
+        // ✅ معالجة Rate Limiting (429)
+        if (res.status === 429) {
+          const retryAfter = data.retryAfter || 60
+          setError(`عدد محاولات كثيرة، يرجى الانتظار ${retryAfter} ثانية`)
+        } else {
+          setError(data.error || 'حدث خطأ')
+        }
       }
     } catch (err) {
       setError('حدث خطأ في الاتصال')
