@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useState, useEffect } from 'react'
 
 // Language type
 export type Language = 'ar' | 'en'
@@ -38,6 +39,7 @@ function replaceParams(text: string, params?: Record<string, string | number>): 
 interface I18nStore {
   language: Language
   direction: Direction
+  isHydrated: boolean
   setLanguage: (lang: Language) => void
   t: (key: string, params?: Record<string, string | number>) => string
 }
@@ -47,6 +49,7 @@ export const useI18n = create<I18nStore>()(
     (set, get) => ({
       language: 'ar',
       direction: 'rtl',
+      isHydrated: false,
       
       setLanguage: (lang: Language) => {
         const direction = lang === 'ar' ? 'rtl' : 'ltr'
@@ -79,9 +82,29 @@ export const useI18n = create<I18nStore>()(
         language: state.language,
         direction: state.direction,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.isHydrated = true
+        }
+      },
     }
   )
 )
+
+// Hook for safe i18n usage with hydration check
+export function useSafeI18n() {
+  const store = useI18n()
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  return {
+    ...store,
+    isHydrated: isClient || store.isHydrated,
+  }
+}
 
 // Export translations for direct access
 export { translations }

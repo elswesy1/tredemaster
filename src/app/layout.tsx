@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "sonner";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { HydrationProvider } from "@/components/providers/hydration-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -53,7 +54,9 @@ export default function RootLayout({
       <body className={`${inter.variable} antialiased bg-background text-foreground`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <AuthProvider>
-            {children}
+            <HydrationProvider>
+              {children}
+            </HydrationProvider>
           </AuthProvider>
           <Toaster />
           <Sonner />
