@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { loginUser, setAuthCookie, getClientIP, getUserAgent } from '@/lib/auth-simple'
-import { rateLimit, getRateLimitKey, getClientIp } from '@/lib/rate-limiter'
+import { rateLimit, getRateLimitKey, getClientIp, getRateLimitHeaders } from '@/lib/rate-limiter'
 
 export async function POST(request: NextRequest) {
   try {
     // ✅ Rate Limiting على تسجيل الدخول
     const ip = getClientIp(request)
     const rl = rateLimit(getRateLimitKey(null, 'login', ip), 'login')
+    
     if (!rl.success) {
       return NextResponse.json(
         { error: 'عدد محاولات كثيرة، حاول بعد ' + rl.retryAfter + ' ثانية' },
-        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+        { 
+          status: 429,
+          headers: getRateLimitHeaders(5, 0, rl.resetAt)
+        }
       )
     }
-
+    
     const body = await request.json()
     const { email, password } = body
 
@@ -46,6 +50,8 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'تم تسجيل الدخول بنجاح',
       user: result.user
+    }, {
+      headers: getRateLimitHeaders(5, rl.remaining, rl.resetAt)
     })
   } catch (error) {
     console.error('Login error:', error)

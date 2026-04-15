@@ -9,17 +9,32 @@ import { revalidateTag } from 'next/cache'
  * - Session verification via getAuthUser()
  * - Soft delete filter (deletedAt: null)
  * - Duplicate prevention (P2002 error handling)
+ * - Rate limiting with headers
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { Prisma } from '@prisma/client'
-import { rateLimit, getRateLimitKey, getClientIp } from '@/lib/rate-limiter'
+import { rateLimit, getRateLimitKey, getClientIp, getRateLimitHeaders } from '@/lib/rate-limiter'
 
-// Response helper for consistent JSON structure
-const jsonResponse = (success: boolean, data?: unknown, error?: string, status: number = 200) => {
-  const response: Record<string, unknown> = { success }; if (data) response["data"] = data; if (error) response["error"] = error; return NextResponse.json(response, { status })
+// Response helper for consistent JSON structure with rate limit headers
+const jsonResponse = (
+  success: boolean, 
+  data?: unknown, 
+  error?: string, 
+  status: number = 200,
+  rateLimitInfo?: { limit: number; remaining: number; resetAt: number }
+) => {
+  const response: Record<string, unknown> = { success }; 
+  if (data) response["data"] = data; 
+  if (error) response["error"] = error;
+  
+  const headers = rateLimitInfo 
+    ? getRateLimitHeaders(rateLimitInfo.limit, rateLimitInfo.remaining, rateLimitInfo.resetAt)
+    : undefined;
+  
+  return NextResponse.json(response, { status, headers })
 }
 
 // ============================================

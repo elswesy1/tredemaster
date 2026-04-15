@@ -147,3 +147,16 @@ export function getClientIp(request: Request): string | null {
   
   return null;
 }
+
+// Helper لإنشاء Rate Limit Headers
+export function getRateLimitHeaders(
+  limit: number,
+  remaining: number,
+  resetAt: number
+): Record<string, string> {
+  return {
+    'X-RateLimit-Limit': limit.toString(),
+    'X-RateLimit-Remaining': remaining.toString(),
+    'X-RateLimit-Reset': new Date(resetAt).toISOString(),
+  };
+}
