@@ -92,6 +92,7 @@ export function RiskView() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [profileToDelete, setProfileToDelete] = useState<RiskProfile | null>(null)
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
   
   // Form state - riskDegree and maxDrawdown are READ-ONLY calculated fields
   const [formData, setFormData] = useState({
@@ -117,6 +118,7 @@ export function RiskView() {
 
   // Fetch profiles and accounts
   useEffect(() => {
+    setMounted(true)
     const fetchData = async () => {
       try {
         const [profilesRes, accountsRes] = await Promise.all([
@@ -292,6 +294,15 @@ export function RiskView() {
     daily: profiles.reduce((sum, p) => sum + (p.maxDailyLoss || 0), 0),
     weekly: profiles.reduce((sum, p) => sum + (p.maxWeeklyLoss || 0), 0),
     monthly: profiles.reduce((sum, p) => sum + (p.maxMonthlyLoss || 0), 0),
+  }
+
+  // Prevent hydration mismatch by waiting for mount
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    )
   }
 
   return (
