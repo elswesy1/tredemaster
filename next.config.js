@@ -54,7 +54,9 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
   
+  // Force dynamic rendering for API routes
   experimental: {
+    serverComponentsExternalPackages: ['@prisma/client'],
     optimizePackageImports: [
       'lucide-react',
       'recharts',
@@ -62,8 +64,9 @@ const nextConfig = {
     ],
   },
   
-  reactStrictMode: true,
+  // Disable static optimization for API routes
   poweredByHeader: false,
+  reactStrictMode: true,
   
   eslint: {
     ignoreDuringBuilds: true,
