@@ -1,15 +1,26 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getAuthUser } from '@/lib/auth-middleware'
+import { logAudit, AuditAction } from '@/lib/audit'
 
 // GET - Fetch a single audit by ID
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
-    const audit = await db.audit.findUnique({
-      where: { id },
+    const audit = await db.audit.findFirst({
+      where: { 
+        id, 
+        userId: user.userId,
+        deletedAt: null 
+      },
     })
     
     if (!audit) {
@@ -18,17 +29,22 @@ export async function GET(
     
     return NextResponse.json(audit)
   } catch (error) {
-    console.error('Error fetching audit:', error)
+    console.error('[AUDIT_GET_BY_ID]', error)
     return NextResponse.json({ error: 'Failed to fetch audit' }, { status: 500 })
   }
 }
 
 // PUT - Update an audit
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
     const {
@@ -44,6 +60,15 @@ export async function PUT(
       status,
       score,
     } = body
+
+    // Check if audit exists and belongs to user
+    const existingAudit = await db.audit.findFirst({
+      where: { id, userId: user.userId, deletedAt: null },
+    })
+
+    if (!existingAudit) {
+      return NextResponse.json({ error: 'Audit not found' }, { status: 404 })
+    }
 
     const updateData: Record<string, unknown> = {}
     if (type !== undefined) updateData.type = type
@@ -67,28 +92,58 @@ export async function PUT(
       where: { id },
       data: updateData,
     })
+
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.SETTINGS_UPDATED,
+      details: { auditId: id, action: 'update' }
+    })
     
     return NextResponse.json(audit)
   } catch (error) {
-    console.error('Error updating audit:', error)
+    console.error('[AUDIT_PUT]', error)
     return NextResponse.json({ error: 'Failed to update audit' }, { status: 500 })
   }
 }
 
 // DELETE - Delete an audit
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
-    await db.audit.delete({
+
+    // Check if audit exists and belongs to user
+    const existingAudit = await db.audit.findFirst({
+      where: { id, userId: user.userId, deletedAt: null },
+    })
+
+    if (!existingAudit) {
+      return NextResponse.json({ error: 'Audit not found' }, { status: 404 })
+    }
+
+    await db.audit.update({
       where: { id },
+      data: { deletedAt: new Date() }
+    })
+
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.SETTINGS_UPDATED,
+      details: { auditId: id, action: 'soft-delete' }
     })
     
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting audit:', error)
+    console.error('[AUDIT_DELETE]', error)
     return NextResponse.json({ error: 'Failed to delete audit' }, { status: 500 })
   }
 }

@@ -14,9 +14,10 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { useI18n } from '@/lib/i18n'
+import { useTradingStore } from '@/lib/store'
 import { toast } from 'sonner'
-import { 
-  Plus, 
+import {
+  Plus,
   BookOpen, 
   Calendar,
   Clock,
@@ -50,7 +51,8 @@ import {
   AlertCircle,
   ThumbsUp,
   ThumbsDown,
-  Minus
+  Minus,
+  Wallet
 } from 'lucide-react'
 
 interface JournalEntry {
@@ -67,7 +69,7 @@ interface JournalEntry {
   expectedVolatility?: string
   economicEvents?: string
   tradingPlan?: string
-  strategiesToUse?: string
+  playbooksToUse?: string
   riskPlan?: string
   dailyGoal?: string
   maxTrades?: number
@@ -100,6 +102,7 @@ interface JournalEntry {
   whatNeedsImprovement?: string
   lessonsLearned?: string
   tomorrowPlan?: string
+  accountId?: string
 }
 
 interface FormData {
@@ -112,7 +115,7 @@ interface FormData {
   expectedVolatility: string
   economicEvents: string
   tradingPlan: string
-  strategiesToUse: string
+  playbooksToUse: string
   riskPlan: string
   dailyGoal: string
   maxTrades: number
@@ -145,6 +148,7 @@ interface FormData {
   whatNeedsImprovement: string
   lessonsLearned: string
   tomorrowPlan: string
+  accountId: string
 }
 
 const initialFormData: FormData = {
@@ -157,7 +161,7 @@ const initialFormData: FormData = {
   expectedVolatility: '',
   economicEvents: '',
   tradingPlan: '',
-  strategiesToUse: '',
+  playbooksToUse: '',
   riskPlan: '',
   dailyGoal: '',
   maxTrades: 3,
@@ -190,24 +194,79 @@ const initialFormData: FormData = {
   whatNeedsImprovement: '',
   lessonsLearned: '',
   tomorrowPlan: '',
+  accountId: 'none',
 }
 
 export function JournalView() {
   const { t, language } = useI18n()
   const isRTL = language === 'ar'
+  const { connectedAccounts, setConnectedAccounts } = useTradingStore()
   const [showAddForm, setShowAddForm] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [formData, setFormData] = useState<FormData>(initialFormData)
   const [entries, setEntries] = useState<JournalEntry[]>([])
+  const [playbooks, setPlaybooks] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('preMarket')
 
+  // Fetch accounts if store is empty
+  useEffect(() => {
+    if (connectedAccounts.length === 0) {
+      const fetchAccounts = async () => {
+        try {
+          const res = await fetch('/api/accounts')
+          if (res.ok) {
+            const data = await res.json()
+            setConnectedAccounts(data.map((a: any) => ({
+              id: a.id,
+              name: a.name,
+              type: a.accountType || 'broker',
+              currency: a.currency,
+              balance: a.balance,
+              status: a.isActive ? 'connected' : 'disconnected',
+              broker: a.broker,
+              accountNumber: a.accountNumber
+            })))
+          }
+        } catch (error) {
+          console.error('Error fetching accounts for journal:', error)
+        }
+      }
+      fetchAccounts()
+    }
+  }, [connectedAccounts.length, setConnectedAccounts])
+
   // Fetch entries on mount and when date changes
   useEffect(() => {
-    fetchEntries()
+    const fetchData = async () => {
+      try {
+        const [entriesRes, playbooksRes] = await Promise.all([
+          fetch(`/api/journal?date=${selectedDate}`),
+          fetch('/api/playbook')
+        ])
+        
+        if (entriesRes.ok) {
+          const data = await entriesRes.json()
+          setEntries(data)
+        }
+        
+        if (playbooksRes.ok) {
+          const data = await playbooksRes.json()
+          setPlaybooks(data)
+        }
+      } catch (error) {
+        console.error('Error fetching journal data:', error)
+      } finally {
+        setIsLoading(false)
+        setLoading(false)
+      }
+    }
+    
+    fetchData()
   }, [selectedDate])
 
   const fetchEntries = async () => {
@@ -278,7 +337,7 @@ export function JournalView() {
       expectedVolatility: entry.expectedVolatility || '',
       economicEvents: entry.economicEvents || '',
       tradingPlan: entry.tradingPlan || '',
-      strategiesToUse: entry.strategiesToUse || '',
+      playbooksToUse: entry.playbooksToUse || '',
       riskPlan: entry.riskPlan || '',
       dailyGoal: entry.dailyGoal || '',
       maxTrades: entry.maxTrades || 3,
@@ -307,6 +366,7 @@ export function JournalView() {
       whatNeedsImprovement: entry.whatNeedsImprovement || '',
       lessonsLearned: entry.lessonsLearned || '',
       tomorrowPlan: entry.tomorrowPlan || '',
+      accountId: entry.accountId || '',
     })
     setShowAddForm(true)
   }
@@ -472,14 +532,41 @@ export function JournalView() {
               <ScrollArea className="h-[500px] pr-4">
                 {/* ============ PRE-MARKET SECTION ============ */}
                 <TabsContent value="preMarket" className="space-y-6 mt-0">
-                  {/* Section Header */}
-                  <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
-                    <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <Clock className="h-5 w-5 text-blue-500" />
+                  {/* Section Title & Account Selection */}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-muted/30 border">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                        <BookOpen className="h-5 w-5 text-amber-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">{t('journal.preMarket.title')}</h3>
+                        <p className="text-sm text-muted-foreground">{t('journal.preMarket.subtitle')}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-lg">{t('journal.preMarket.title')}</h3>
-                      <p className="text-sm text-muted-foreground">{t('journal.preMarket.subtitle')}</p>
+                    
+                    <div className="flex items-center gap-2 min-w-[240px]">
+                      <Label className="whitespace-nowrap flex items-center gap-2">
+                        <Wallet className="h-4 w-4 text-cyan-500" />
+                        {isRTL ? 'الحساب:' : 'Account:'}
+                      </Label>
+                      <Select
+                        value={formData.accountId}
+                        onValueChange={(value) => setFormData({ ...formData, accountId: value })}
+                      >
+                        <SelectTrigger className="bg-background border-cyan-500/30">
+                          <SelectValue placeholder={isRTL ? 'اختر الحساب' : 'Select Account'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">
+                            {isRTL ? 'عام / بدون حساب' : 'General / No Account'}
+                          </SelectItem>
+                          {connectedAccounts.map((acc) => (
+                            <SelectItem key={acc.id} value={acc.id}>
+                              {acc.name} ({acc.currency})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -614,14 +701,22 @@ export function JournalView() {
                       <div className="space-y-2">
                         <Label className="flex items-center gap-2">
                           <CandlestickChart className="h-4 w-4 text-purple-500" />
-                          {t('journal.preMarket.plan.strategiesToUse')}
+                          {isRTL ? 'نماذج التداول المستخدمة' : 'Playbooks to Use'}
                         </Label>
-                        <Textarea
-                          value={formData.strategiesToUse}
-                          onChange={(e) => setFormData({ ...formData, strategiesToUse: e.target.value })}
-                          placeholder={t('journal.preMarket.plan.strategiesToUsePlaceholder')}
-                          rows={3}
-                        />
+                        <Select 
+                          value={formData.playbooksToUse} 
+                          onValueChange={(v) => setFormData({ ...formData, playbooksToUse: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={isRTL ? 'اختر نموذج...' : 'Select playbook...'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">{isRTL ? 'بدون نموذج محدد' : 'No specific playbook'}</SelectItem>
+                            {playbooks.map(p => (
+                              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -766,12 +861,27 @@ export function JournalView() {
                           <Target className="h-4 w-4 text-amber-500" />
                           {t('journal.marketIn.execution.entrySetups')}
                         </Label>
-                        <Textarea
+                        <Select
                           value={formData.entrySetups}
-                          onChange={(e) => setFormData({ ...formData, entrySetups: e.target.value })}
-                          placeholder={t('journal.marketIn.execution.entrySetupsPlaceholder')}
-                          rows={4}
-                        />
+                          onValueChange={(value) => setFormData({ ...formData, entrySetups: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('journal.marketIn.execution.entrySetupsPlaceholder')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {playbooks.length > 0 ? (
+                              playbooks.map((pb) => (
+                                <SelectItem key={pb.id} value={pb.name}>
+                                  {pb.name} {pb.setupName ? `(${pb.setupName})` : ''}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="none" disabled>
+                                {isRTL ? 'لا توجد نماذج تداول' : 'No trading models'}
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="space-y-2">

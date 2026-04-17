@@ -92,12 +92,12 @@ interface RiskCheckResult {
 }
 
 const symbols = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'GBP/JPY', 'XAU/USD', 'BTC/USD', 'ETH/USD', 'USD/CHF', 'AUD/USD', 'NZD/USD']
-const strategies = ['Breakout', 'Mean Reversion', 'Support Bounce', 'News Trading', 'Trend Following', 'Scalping', 'Swing Trading']
 
 export function LogTradeView() {
   const { language } = useI18n()
   const isRTL = language === 'ar'
   const [trades, setTrades] = useState<Trade[]>([])
+  const [playbooks, setPlaybooks] = useState<any[]>([])
   const [riskProfiles, setRiskProfiles] = useState<RiskProfile[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -124,11 +124,21 @@ export function LogTradeView() {
     accountBalance: '10000',
   })
 
-  // Fetch trades and risk profiles
+  // Fetch trades, playbooks and risk profiles
   useEffect(() => {
     fetchTrades()
+    fetchPlaybooks()
     fetchRiskProfiles()
   }, [])
+
+  const fetchPlaybooks = async () => {
+    try {
+      const data = await apiGet<any[]>('/api/playbook')
+      setPlaybooks(data)
+    } catch (error) {
+      console.error('Error fetching playbooks:', error)
+    }
+  }
 
   const fetchTrades = async () => {
     try {
@@ -766,15 +776,18 @@ export function LogTradeView() {
             )}
 
             <div className="space-y-2">
-              <Label>{isRTL ? 'الاستراتيجية' : 'Strategy'}</Label>
+              <Label>{isRTL ? 'كتيب القواعد (Setup)' : 'Playbook Setup'}</Label>
               <Select value={newTrade.strategy} onValueChange={(v) => setNewTrade({ ...newTrade, strategy: v })}>
                 <SelectTrigger>
-                  <SelectValue placeholder={isRTL ? 'اختر...' : 'Select...'} />
+                  <SelectValue placeholder={isRTL ? 'اختر النموذج...' : 'Select setup...'} />
                 </SelectTrigger>
                 <SelectContent>
-                  {strategies.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  {playbooks.map((pb) => (
+                    <SelectItem key={pb.id} value={pb.name}>{pb.name}</SelectItem>
                   ))}
+                  {playbooks.length === 0 && (
+                    <SelectItem value="none" disabled>{isRTL ? 'لا توجد نماذج' : 'No setups found'}</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>

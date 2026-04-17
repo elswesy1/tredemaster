@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useI18n } from '@/lib/i18n'
+import { useToast } from '@/hooks/use-toast'
 import { 
   Plus, 
   Link2, 
@@ -31,6 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useTradingStore } from '@/lib/store'
 
 interface Account {
   id: string
@@ -62,10 +64,13 @@ interface RiskProfile {
 
 export function AccountsView() {
   const { t, language } = useI18n()
+  const { toast } = useToast()
+  const { setConnectedAccounts, addConnectedAccount, removeConnectedAccount } = useTradingStore()
   const [showAddForm, setShowAddForm] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [riskProfiles, setRiskProfiles] = useState<RiskProfile[]>([])
   const [loading, setLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
   const [syncingId, setSyncingId] = useState<string | null>(null)
 
   // Form state for new account
@@ -94,6 +99,18 @@ export function AccountsView() {
         if (accountsRes.ok) {
           const accountsData = await accountsRes.json()
           setAccounts(accountsData)
+          
+          // Sync with global store
+          setConnectedAccounts(accountsData.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            type: a.accountType || 'broker',
+            currency: a.currency,
+            balance: a.balance,
+            status: a.isActive ? 'connected' : 'disconnected',
+            broker: a.broker,
+            accountNumber: a.accountNumber
+          })))
         }
         
         if (profilesRes.ok) {
@@ -111,7 +128,10 @@ export function AccountsView() {
   }, [])
 
   const handleCreateAccount = async () => {
+    if (!formData.name || isCreating) return
+
     try {
+      setIsCreating(true)
       const response = await fetch('/api/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -128,6 +148,19 @@ export function AccountsView() {
       if (response.ok) {
         const newAccount = await response.json()
         setAccounts([newAccount, ...accounts])
+        
+        // Update global store
+        addConnectedAccount({
+          id: newAccount.id,
+          name: newAccount.name,
+          type: newAccount.accountType || 'broker',
+          currency: newAccount.currency,
+          balance: newAccount.balance,
+          status: 'connected',
+          broker: newAccount.broker,
+          accountNumber: newAccount.accountNumber
+        })
+        
         setShowAddForm(false)
         setFormData({
           name: '',
@@ -139,9 +172,26 @@ export function AccountsView() {
           balance: '',
           currency: 'USD',
         })
+        toast({
+          title: language === 'ar' ? 'تم الربط بنجاح' : 'Connected Successfully',
+          description: language === 'ar' ? 'تمت إضافة حساب التداول بنجاح' : 'Trading account added successfully',
+        })
+      } else {
+        toast({
+          title: language === 'ar' ? 'خطأ في الربط' : 'Connection Error',
+          description: language === 'ar' ? 'فشل في إضافة الحساب' : 'Failed to add account',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Error creating account:', error)
+      toast({
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'حدث خطأ غير متوقع' : 'An unexpected error occurred',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsCreating(false)
     }
   }
 
@@ -153,9 +203,25 @@ export function AccountsView() {
       
       if (response.ok) {
         setAccounts(accounts.filter(a => a.id !== accountId))
+        removeConnectedAccount(accountId)
+        toast({
+          title: language === 'ar' ? 'تم الحذف' : 'Deleted',
+          description: language === 'ar' ? 'تم حذف الحساب بنجاح' : 'Account deleted successfully',
+        })
+      } else {
+        toast({
+          title: language === 'ar' ? 'خطأ' : 'Error',
+          description: language === 'ar' ? 'فشل في حذف الحساب' : 'Failed to delete account',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Error deleting account:', error)
+      toast({
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' ? 'حدث خطأ أثناء الحذف' : 'An error occurred during deletion',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -321,8 +387,11 @@ export function AccountsView() {
               <Button 
                 onClick={handleCreateAccount}
                 className="bg-gradient-to-r from-cyan-500 to-blue-600"
-                disabled={!formData.name}
+                disabled={!formData.name || isCreating}
               >
+                {isCreating ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : null}
                 {t('accounts.connect')}
               </Button>
               <Button variant="outline" onClick={() => setShowAddForm(false)}>

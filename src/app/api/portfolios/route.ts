@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
+import { logAudit, AuditAction } from '@/lib/audit'
 
 // GET - Fetch portfolios for authenticated user only
 export async function GET(request: NextRequest) {
@@ -16,7 +17,10 @@ export async function GET(request: NextRequest) {
 
     // جلب محافظ المستخدم فقط
     const portfolios = await db.portfolio.findMany({
-      where: { userId: user.userId },
+      where: { 
+        userId: user.userId,
+        deletedAt: null
+      },
       include: {
         tradingAccounts: true,
         trades: true,
@@ -25,7 +29,7 @@ export async function GET(request: NextRequest) {
     })
     return NextResponse.json(portfolios)
   } catch (error) {
-    console.error('Error fetching portfolios:', error)
+    console.error('[PORTFOLIO_GET]', error)
     return NextResponse.json({ error: 'Failed to fetch portfolios' }, { status: 500 })
   }
 }
@@ -53,9 +57,17 @@ export async function POST(request: NextRequest) {
         userId: user.userId, // ربط بالمستخدم الحالي
       },
     })
+
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.PORTFOLIO_CREATED,
+      details: { portfolioId: portfolio.id, name: portfolio.name }
+    })
+
     return NextResponse.json(portfolio, { status: 201 })
   } catch (error) {
-    console.error('Error creating portfolio:', error)
+    console.error('[PORTFOLIO_POST]', error)
     return NextResponse.json({ error: 'Failed to create portfolio' }, { status: 500 })
   }
 }

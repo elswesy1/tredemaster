@@ -1,15 +1,26 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getAuthUser } from '@/lib/auth-middleware'
+import { logAudit, AuditAction } from '@/lib/audit'
 
 // GET - Fetch a single risk profile by ID
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
-    const profile = await db.riskProfile.findUnique({
-      where: { id },
+    const profile = await db.riskProfile.findFirst({
+      where: { 
+        id, 
+        userId: user.userId,
+        deletedAt: null 
+      },
     })
     
     if (!profile) {
@@ -18,17 +29,22 @@ export async function GET(
     
     return NextResponse.json(profile)
   } catch (error) {
-    console.error('Error fetching risk profile:', error)
+    console.error('[RISK_PROFILE_GET_BY_ID]', error)
     return NextResponse.json({ error: 'Failed to fetch risk profile' }, { status: 500 })
   }
 }
 
 // PUT - Update a risk profile
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
     const {
@@ -50,6 +66,15 @@ export async function PUT(
       isConfigured,
       isActive,
     } = body
+
+    // Check ownership
+    const existing = await db.riskProfile.findFirst({
+      where: { id, userId: user.userId, deletedAt: null }
+    })
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Risk profile not found' }, { status: 404 })
+    }
 
     const profile = await db.riskProfile.update({
       where: { id },
@@ -73,28 +98,58 @@ export async function PUT(
         isActive,
       },
     })
+
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.SETTINGS_UPDATED,
+      details: { profileId: id, action: 'update' }
+    })
     
     return NextResponse.json(profile)
   } catch (error) {
-    console.error('Error updating risk profile:', error)
+    console.error('[RISK_PROFILE_PUT]', error)
     return NextResponse.json({ error: 'Failed to update risk profile' }, { status: 500 })
   }
 }
 
 // DELETE - Delete a risk profile
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
-    await db.riskProfile.delete({
+
+    // Check ownership
+    const existing = await db.riskProfile.findFirst({
+      where: { id, userId: user.userId, deletedAt: null }
+    })
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Risk profile not found' }, { status: 404 })
+    }
+
+    await db.riskProfile.update({
       where: { id },
+      data: { deletedAt: new Date() }
+    })
+
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.SETTINGS_UPDATED,
+      details: { profileId: id, action: 'soft-delete' }
     })
     
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting risk profile:', error)
+    console.error('[RISK_PROFILE_DELETE]', error)
     return NextResponse.json({ error: 'Failed to delete risk profile' }, { status: 500 })
   }
 }

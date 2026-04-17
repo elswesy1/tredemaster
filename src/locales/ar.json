@@ -13,7 +13,7 @@
     "rules": "قواعد التداول",
     "aiAssistant": "المساعد الذكي",
     "tradingHub": "مركز التداول",
-    "strategies": "الاستراتيجيات",
+    "playbook": "نماذج التداول",
     "logTrade": "تسجيل صفقة",
     "zenMode": "وضع ZEN",
     "pricing": "الأسعار"
@@ -192,8 +192,8 @@
         "title": "خطة التداول",
         "tradingPlan": "خطة التداول",
         "tradingPlanPlaceholder": "حدد خطتك لليوم: الأهداف، الاستراتيجيات...",
-        "strategiesToUse": "الاستراتيجيات المستخدمة",
-        "strategiesToUsePlaceholder": "الاستراتيجيات والنماذج التي ستستخدمها...",
+        "strategiesToUse": "نماذج التداول",
+        "strategiesToUsePlaceholder": "نماذج التداول التي ستستخدمها...",
         "dailyGoal": "الهدف اليومي",
         "dailyGoalPlaceholder": "مثال: 2% أو $200",
         "maxTrades": "الحد الأقصى للصفقات"
@@ -231,8 +231,8 @@
       
       "execution": {
         "title": "تنفيذ الصفقات",
-        "entrySetups": "نماذج الدخول",
-        "entrySetupsPlaceholder": "سجل نماذج الدخول التي ظهرت لك...",
+        "entrySetups": "نماذج الدخول (نماذج التداول)",
+        "entrySetupsPlaceholder": "اختر أو صف نماذج الدخول من نماذج تداولك...",
         "priceActionObs": "ملاحظات حركة السعر",
         "priceActionObsPlaceholder": "صف حركة السعر وسلوك السوق...",
         "marketBehavior": "سلوك السوق",

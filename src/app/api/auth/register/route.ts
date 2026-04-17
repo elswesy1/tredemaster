@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { SignJWT } from 'jose'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit } from '@/lib/rate-limiter'
 
 // التحقق من صحة البريد الإلكتروني
 function isValidEmail(email: string): boolean {

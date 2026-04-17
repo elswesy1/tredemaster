@@ -30,9 +30,10 @@ export async function GET(request: NextRequest) {
       where: { userId },
       include: {
         tradingAccounts: {
+          where: { deletedAt: null },
           include: {
             trades: {
-              where: { status: 'closed' },
+              where: { status: 'closed', deletedAt: null },
               select: {
                 profitLoss: true,
                 openedAt: true,
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
               },
             },
             riskProfiles: {
-              where: { isActive: true },
+              where: { isActive: true, deletedAt: null },
               select: {
                 id: true,
                 name: true,
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
           },
         },
         trades: {
-          where: { status: 'closed' },
+          where: { status: 'closed', deletedAt: null },
           select: {
             profitLoss: true,
             openedAt: true,
@@ -62,13 +63,13 @@ export async function GET(request: NextRequest) {
 
     // 2️⃣ جلب الحسابات بشكل منفصل للحصول على تفاصيل أكثر
     const tradingAccounts = await db.tradingAccount.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       include: {
         _count: {
-          select: { trades: true },
+          select: { trades: { where: { deletedAt: null } } },
         },
         riskProfiles: {
-          where: { isActive: true },
+          where: { isActive: true, deletedAt: null },
           select: {
             id: true,
             name: true,
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     // 3️⃣ جلب الصفقات المفتوحة والمغلقة
     const openTrades = await db.trade.findMany({
-      where: { userId, status: 'open' },
+      where: { userId, status: 'open', deletedAt: null },
       include: {
         account: {
           select: { id: true, name: true, accountType: true }
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
     })
 
     const closedTrades = await db.trade.findMany({
-      where: { userId, status: 'closed' },
+      where: { userId, status: 'closed', deletedAt: null },
       orderBy: { closedAt: 'desc' },
       take: 100,
       include: {
@@ -375,6 +376,7 @@ async function calculateMaxDrawdown(userId: string): Promise<number> {
     where: {
       userId,
       status: 'closed',
+      deletedAt: null,
     },
     orderBy: { closedAt: 'asc' },
     select: {

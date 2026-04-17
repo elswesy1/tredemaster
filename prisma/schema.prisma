@@ -46,7 +46,7 @@ model User {
   psychologyLogs    PsychologyLog[]
   audits            Audit[]
   subscription      Subscription?
-  strategies        Strategy[]
+  playbooks        Playbook[]
   zenStates         ZenState[]
   tradingRules      TradingRule[]
   riskUsages        RiskUsage[]
@@ -82,6 +82,7 @@ model Portfolio {
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
   
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   tradingAccounts TradingAccount[]
@@ -103,7 +104,8 @@ model TradingAccount {
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  
+  deletedAt      DateTime?
+
   // Broker Fields (MT4/MT5)
   broker          String?
   platform        String?  // "MT4" | "MT5"
@@ -166,6 +168,7 @@ model TradingAccount {
   dailySyncLogs   DailySyncLog[]
   webhooks        TradingViewWebhook[]
 
+  @@unique([userId, platform, name])
   @@index([userId])
   @@index([portfolioId])
   @@index([accountType])
@@ -260,10 +263,13 @@ model Trade {
   closedAt         DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  playbookId       String?
   
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   portfolio Portfolio?       @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
   account   TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  playbook  Playbook?       @relation(fields: [playbookId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([symbol])
@@ -289,6 +295,7 @@ model TradingPlan {
   endDate     DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -315,6 +322,7 @@ model Setup {
   notes            String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -348,6 +356,7 @@ model RiskProfile {
   isActive             Boolean   @default(true)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?
   
   user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   account TradingAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
@@ -426,6 +435,7 @@ model TradingJournal {
   attachments          String?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?
   
   user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   account TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
@@ -460,6 +470,7 @@ model SessionReview {
   rating          Int?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -491,6 +502,7 @@ model PsychologyLog {
   notes            String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
   
   user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   account TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
@@ -519,6 +531,7 @@ model Audit {
   completedAt     DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -569,31 +582,37 @@ model Usage {
   @@index([type])
 }
 
-// الاستراتيجيات
-model Strategy {
-  id            String    @id @default(cuid())
-  userId        String
-  name          String
-  description   String?
-  category      String?
-  timeframe     String?
-  entryRules    String?
-  exitRules     String?
-  riskRules     String?
-  totalTrades   Int       @default(0)
-  winningTrades Int       @default(0)
-  losingTrades  Int       @default(0)
-  profitLoss    Float     @default(0)
-  winRate       Float?
-  avgRRR        Float?
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+// كتيب القواعد (Playbook)
+model Playbook {
+  id                 String    @id @default(cuid())
+  userId             String
+  name               String
+  description        String?
+  category           String?
+  timeframe          String?
+  entryRules         String?
+  exitRules          String?
+  riskRules          String?
+  setupName          String?
+  rulesChecklist     String?   // JSON array of checklist items
+  setupScreenshotUrl String?
+  totalTrades        Int       @default(0)
+  winningTrades      Int       @default(0)
+  losingTrades       Int       @default(0)
+  profitLoss         Float     @default(0)
+  winRate            Float?
+  avgRRR             Float?
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
   
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades Trade[]
 
   @@index([userId])
   @@index([category])
+  @@map("strategies")
 }
 
 // حالات ZEN
@@ -631,6 +650,7 @@ model TradingRule {
   active         Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -685,6 +705,7 @@ model RiskAlert {
   tradeId        String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

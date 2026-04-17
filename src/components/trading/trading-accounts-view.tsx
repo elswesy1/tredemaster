@@ -81,6 +81,7 @@ import {
   Gauge
 } from 'lucide-react'
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts'
+import { useTradingStore } from '@/lib/store'
 
 // Types
 interface TradingAccount {
@@ -217,6 +218,7 @@ const COLORS = ['#22C55E', '#3B82F6', '#A855F7', '#F59E0B', '#EF4444', '#06B6D4'
 export function TradingAccountsView() {
   const { t, language } = useI18n()
   const { toast } = useToast()
+  const { setConnectedAccounts, addConnectedAccount, removeConnectedAccount } = useTradingStore()
   const isRTL = language === 'ar'
   
   // State
@@ -236,9 +238,21 @@ export function TradingAccountsView() {
     try {
       setLoading(true)
       const response = await fetch('/api/trading-accounts')
-      if (response.ok) {
-        const data = await response.json()
-        setAccounts(data)
+        if (response.ok) {
+          const data = await response.json()
+          setAccounts(data)
+          
+          // Sync global store
+          setConnectedAccounts(data.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            type: a.accountType || 'broker',
+            currency: a.currency,
+            balance: a.balance,
+            status: a.isActive ? 'connected' : 'disconnected',
+            broker: a.broker,
+            accountNumber: a.accountNumber
+          })))
         
         // Fetch stats for each account
         data.forEach((account: TradingAccount) => {
@@ -341,14 +355,28 @@ export function TradingAccountsView() {
         })
       })
 
-      if (response.ok) {
-        toast({
-          title: t('portfolio.messages.accountAdded')
-        })
-        setShowAddDialog(false)
-        setFormData(initialFormData)
-        fetchAccounts()
-      } else {
+        if (response.ok) {
+          const newAccount = await response.json()
+          toast({
+            title: t('portfolio.messages.accountAdded')
+          })
+          
+          // Update global store
+          addConnectedAccount({
+            id: newAccount.id,
+            name: newAccount.name,
+            type: newAccount.accountType || 'broker',
+            currency: newAccount.currency,
+            balance: newAccount.balance,
+            status: 'connected',
+            broker: newAccount.broker,
+            accountNumber: newAccount.accountNumber
+          })
+          
+          setShowAddDialog(false)
+          setFormData(initialFormData)
+          fetchAccounts()
+        } else {
         throw new Error('Failed to add account')
       }
     } catch (error) {
@@ -425,6 +453,7 @@ export function TradingAccountsView() {
         toast({
           title: t('portfolio.messages.accountDeleted')
         })
+        removeConnectedAccount(selectedAccount.id)
         setShowDeleteDialog(false)
         setSelectedAccount(null)
         fetchAccounts()

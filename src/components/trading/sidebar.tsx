@@ -38,6 +38,7 @@ const coreFeatures: { id: ActiveSection; labelKey: string; icon: React.ElementTy
   { id: 'portfolio', labelKey: 'sidebar.portfolio', icon: Wallet },
   { id: 'risk', labelKey: 'sidebar.risk', icon: Shield },
   { id: 'trading', labelKey: 'sidebar.trading', icon: LineChart },
+  { id: 'playbook', labelKey: 'sidebar.playbook', icon: ClipboardCheck },
   { id: 'journal', labelKey: 'sidebar.journal', icon: BookOpen },
 ]
 

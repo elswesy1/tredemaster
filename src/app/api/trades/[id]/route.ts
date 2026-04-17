@@ -1,15 +1,26 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getAuthUser } from '@/lib/auth-middleware'
+import { logAudit, AuditAction } from '@/lib/audit'
 
-// GET - Fetch a single trade
+// GET - Fetch a single trade for authenticated user
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
-    const trade = await db.trade.findUnique({
-      where: { id },
+    const trade = await db.trade.findFirst({
+      where: { 
+        id, 
+        userId: user.userId,
+        deletedAt: null 
+      },
     })
 
     if (!trade) {
@@ -18,17 +29,22 @@ export async function GET(
 
     return NextResponse.json(trade)
   } catch (error) {
-    console.error('Error fetching trade:', error)
+    console.error('[TRADE_GET_BY_ID]', error)
     return NextResponse.json({ error: 'Failed to fetch trade' }, { status: 500 })
   }
 }
 
 // PUT - Update a trade
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
     const {
@@ -41,9 +57,18 @@ export async function PUT(
       stopLoss,
       takeProfit,
       notes,
-      strategy,
+      playbookId,
       profitLoss,
     } = body
+
+    // Check ownership
+    const existing = await db.trade.findFirst({
+      where: { id, userId: user.userId, deletedAt: null }
+    })
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Trade not found' }, { status: 404 })
+    }
 
     const updateData: Record<string, unknown> = {}
     if (symbol !== undefined) updateData.symbol = symbol
@@ -55,7 +80,7 @@ export async function PUT(
     if (stopLoss !== undefined) updateData.stopLoss = stopLoss
     if (takeProfit !== undefined) updateData.takeProfit = takeProfit
     if (notes !== undefined) updateData.notes = notes
-    if (strategy !== undefined) updateData.strategy = strategy
+    if (playbookId !== undefined) updateData.playbookId = playbookId
     if (profitLoss !== undefined) updateData.profitLoss = profitLoss
     
     // If closing the trade, set closedAt
@@ -68,26 +93,57 @@ export async function PUT(
       data: updateData,
     })
 
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.SETTINGS_UPDATED,
+      details: { tradeId: id, action: 'update' }
+    })
+
     return NextResponse.json(trade)
   } catch (error) {
-    console.error('Error updating trade:', error)
+    console.error('[TRADE_PUT]', error)
     return NextResponse.json({ error: 'Failed to update trade' }, { status: 500 })
   }
 }
 
 // DELETE - Delete a trade
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
-    await db.trade.delete({
-      where: { id },
+
+    // Check ownership
+    const existing = await db.trade.findFirst({
+      where: { id, userId: user.userId, deletedAt: null }
     })
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Trade not found' }, { status: 404 })
+    }
+
+    await db.trade.update({
+      where: { id },
+      data: { deletedAt: new Date() }
+    })
+
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.SETTINGS_UPDATED,
+      details: { tradeId: id, action: 'soft-delete' }
+    })
+
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting trade:', error)
+    console.error('[TRADE_DELETE]', error)
     return NextResponse.json({ error: 'Failed to delete trade' }, { status: 500 })
   }
 }

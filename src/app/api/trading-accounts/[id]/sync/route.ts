@@ -5,8 +5,9 @@ import { getAuthUser } from '@/lib/auth-middleware'
 // POST /api/trading-accounts/[id]/sync - مزامنة حساب
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const user = await getAuthUser(request)
     
@@ -20,7 +21,7 @@ export async function POST(
     // التحقق من ملكية الحساب
     const account = await prisma.tradingAccount.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.userId
       }
     })
@@ -31,7 +32,7 @@ export async function POST(
 
     // تحديث حالة الاتصال إلى "syncing"
     await prisma.tradingAccount.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         connectionStatus: 'syncing',  // ✅ تم الإصلاح: connectionStatus بدلاً من status
         lastSync: new Date()
@@ -50,7 +51,7 @@ export async function POST(
     await prisma.dailySyncLog.create({
       data: {
         userId: user.userId,
-        accountId: params.id,
+        accountId: id,
         syncDate: new Date(),
         balanceBefore: account.balance,
         balanceAfter: syncData.balance,
@@ -63,7 +64,7 @@ export async function POST(
 
     // تحديث الحساب بالبيانات الجديدة
     const updatedAccount = await prisma.tradingAccount.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         balance: syncData.balance,
         equity: syncData.equity,
@@ -83,7 +84,7 @@ export async function POST(
     // تحديث حالة الخطأ
     try {
       await prisma.tradingAccount.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           connectionStatus: 'error'  // ✅ تم الإصلاح
         }
@@ -102,8 +103,9 @@ export async function POST(
 // GET /api/trading-accounts/[id]/sync - جلب سجل المزامنة
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const user = await getAuthUser(request)
     
@@ -117,7 +119,7 @@ export async function GET(
     // التحقق من ملكية الحساب
     const account = await prisma.tradingAccount.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.userId
       }
     })
@@ -128,7 +130,7 @@ export async function GET(
 
     // جلب سجل المزامنة
     const syncLogs = await prisma.dailySyncLog.findMany({
-      where: { accountId: params.id },
+      where: { accountId: id },
       orderBy: { syncDate: 'desc' },  // ✅ تم الإصلاح
       take: 30
     })

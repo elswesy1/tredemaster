@@ -10,8 +10,9 @@ import { DashboardView } from '@/components/trading/dashboard-view'
 import { PortfolioView } from '@/components/trading/portfolio-view'
 import { RiskView } from '@/components/trading/risk-view'
 import { TradingView } from '@/components/trading/trading-view'
+import { PlaybookView } from '@/components/trading/playbook-view'
+import { TradingAccountsView } from '@/components/trading/trading-accounts-view'
 import { JournalView } from '@/components/trading/journal-view'
-import { AccountsView } from '@/components/trading/accounts-view'
 import { LandingPage } from '@/components/trading/landing-page'
 import { SignupPage } from '@/components/trading/signup-page'
 import { LoginPage } from '@/components/trading/login-page'
@@ -200,13 +201,15 @@ export default function Home() {
       case 'dashboard':
         return <DashboardView />
       case 'accounts':
-        return <AccountsView />
+        return <TradingAccountsView />
       case 'portfolio':
         return <PortfolioView />
       case 'risk':
         return <RiskView />
       case 'trading':
         return <TradingView />
+      case 'playbook':
+        return <PlaybookView />
       case 'journal':
         return <JournalView />
       case 'psychology':
@@ -230,7 +233,6 @@ export default function Home() {
       case 'login-history':
         return <LoginHistoryView />
       // Redirect old sections to new unified trading view
-      case 'strategies':
       case 'log-trade':
         return <TradingView />
       default:
@@ -252,7 +254,7 @@ export default function Home() {
     audits: t('sidebar.audits'),
     psychology: t('sidebar.psychology'),
     'trading-hub': t('sidebar.tradingHub'),
-    strategies: t('sidebar.strategies'),
+    playbook: t('sidebar.playbook'),
     'log-trade': t('sidebar.logTrade'),
     'zen-mode': t('sidebar.zenMode'),
     pricing: t('sidebar.pricing'),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
+import { logAudit, AuditAction } from '@/lib/audit'
 
 // GET - Fetch trades for authenticated user only
 export async function GET(request: NextRequest) {
@@ -19,7 +20,10 @@ export async function GET(request: NextRequest) {
     const symbol = searchParams.get('symbol')
 
     // فلترة حسب المستخدم فقط - لا يمكن رؤية صفقات مستخدم آخر
-    const where: Record<string, unknown> = { userId: user.userId }
+    const where: Record<string, unknown> = { 
+      userId: user.userId,
+      deletedAt: null 
+    }
     if (status) where.status = status
     if (symbol) where.symbol = symbol
 
@@ -70,12 +74,21 @@ export async function POST(request: NextRequest) {
         stopLoss,
         takeProfit,
         notes,
-        strategy,
-        userId: user.userId, // استخدام userId من التوكن
+        strategy, // Legacy string field
+        playbookId: strategy, // Assuming the strategy ID is passed
+        userId: user.userId,
         portfolioId,
         accountId,
       },
     })
+
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.TRADE_CREATED,
+      details: { tradeId: trade.id, symbol: trade.symbol }
+    })
+
     return NextResponse.json(trade, { status: 201 })
   } catch (error) {
     console.error('Error creating trade:', error)
@@ -119,9 +132,18 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    await db.trade.delete({
+    await db.trade.update({
       where: { id },
+      data: { deletedAt: new Date() }
     })
+
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.TRADE_DELETED,
+      details: { tradeId: id }
+    })
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting trade:', error)

@@ -74,3 +74,4 @@ DATABASE_URL="postgresql://..."  # Neon PostgreSQL
 NEXTAUTH_SECRET="your-secret-key"  # مفتاح سري للتشفير
 NEXTAUTH_URL="https://your-domain.vercel.app"  # URL الموقع
 ```
+TM-Gemma-Analyst: Expert in Technical Analysis, SMC trading and psychological analysis

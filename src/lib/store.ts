@@ -90,15 +90,17 @@ export interface Audit {
 
 export interface ConnectedAccount {
   id: string
-  type: 'metaquotes' | 'tradingview'
+  name: string
+  type: string // "broker" | "propfirm" | "indices" | "stocks"
+  accountType?: 'demo' | 'live'
   platform?: string
   server?: string
-  login?: string
+  accountNumber?: string
   broker?: string
-  accountType?: 'demo' | 'live'
-  status: 'connected' | 'disconnected' | 'syncing' | 'error'
-  lastSync: string
+  currency: string
   balance: number
+  status: 'connected' | 'disconnected' | 'syncing' | 'error'
+  lastSync?: string
 }
 
 export interface TradingRule {
@@ -140,7 +142,7 @@ export type ActiveSection =
   | 'rules'
   | 'ai-assistant'
   | 'trading-hub'
-  | 'strategies'
+  | 'playbook'
   | 'log-trade'
   | 'zen-mode'
   | 'pricing'

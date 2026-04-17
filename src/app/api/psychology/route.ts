@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
+import { logAudit, AuditAction } from '@/lib/audit'
 
 // GET - Fetch psychology logs for authenticated user
 export async function GET(request: NextRequest) {
@@ -8,7 +9,7 @@ export async function GET(request: NextRequest) {
     const user = await getAuthUser(request)
     if (!user) {
       return NextResponse.json(
-        { error: 'غير مصارح - يجب تسجيل الدخول' },
+        { error: 'غير مصرح - يجب تسجيل الدخول' },
         { status: 401 }
       )
     }
@@ -17,7 +18,9 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type')
     const accountId = searchParams.get('accountId')
 
-    const where: Record<string, unknown> = { userId: user.userId }
+    const where: Record<string, unknown> = { 
+      userId: user.userId,
+    }
     if (type) where.type = type
     if (accountId) where.accountId = accountId
 
@@ -36,7 +39,7 @@ export async function GET(request: NextRequest) {
     })
     return NextResponse.json(logs)
   } catch (error) {
-    console.error('Error fetching psychology logs:', error)
+    console.error('[PSYCHOLOGY_GET]', error)
     return NextResponse.json({ error: 'Failed to fetch psychology logs' }, { status: 500 })
   }
 }
@@ -115,9 +118,17 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.PSYCHOLOGY_ENTRY_CREATED,
+      details: { logId: log.id, emotion: log.emotion }
+    })
+
     return NextResponse.json(log, { status: 201 })
   } catch (error) {
-    console.error('Error creating psychology log:', error)
+    console.error('[PSYCHOLOGY_POST]', error)
     return NextResponse.json({ error: 'Failed to create psychology log' }, { status: 500 })
   }
 }

@@ -63,7 +63,7 @@ const mockResponses: Record<string, string> = {
    - Avg R:R: 1:1.5
    - Best pairs: EUR/GBP, NZD/USD
 
-**Recommendation:** Consider allocating more capital to your breakout strategy as it shows the best risk-adjusted returns.`,
+**Recommendation:** Consider allocating more capital to your breakout setup in the Playbook as it shows the best risk-adjusted returns.`,
 
   mistakes: `Based on your trading history, here are your common mistakes:
 

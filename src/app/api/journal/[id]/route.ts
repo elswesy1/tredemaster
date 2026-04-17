@@ -1,45 +1,68 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getAuthUser } from '@/lib/auth-middleware'
+import { logAudit, AuditAction } from '@/lib/audit'
 
 // DELETE - Delete a journal entry by ID
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
 
-    // Check if entry exists
-    const existingEntry = await db.tradingJournal.findUnique({
-      where: { id },
+    // Check if entry exists and belongs to user
+    const existingEntry = await db.tradingJournal.findFirst({
+      where: { id, userId: user.userId },
     })
 
     if (!existingEntry) {
       return NextResponse.json({ error: 'Journal entry not found' }, { status: 404 })
     }
 
-    // Delete the entry
-    await db.tradingJournal.delete({
+    // Soft delete the entry
+    await db.tradingJournal.update({
       where: { id },
+      data: { deletedAt: new Date() }
+    })
+
+    // Log the audit action
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.JOURNAL_ENTRY_UPDATED, // Use UPDATED or DELETED if added
+      details: { entryId: id, action: 'soft-delete' }
     })
 
     return NextResponse.json({ success: true, message: 'Journal entry deleted successfully' })
   } catch (error) {
-    console.error('Error deleting journal entry:', error)
+    console.error('[JOURNAL_DELETE]', error)
     return NextResponse.json({ error: 'Failed to delete journal entry' }, { status: 500 })
   }
 }
 
 // GET - Fetch a single journal entry by ID
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
 
-    const entry = await db.tradingJournal.findUnique({
-      where: { id },
+    const entry = await db.tradingJournal.findFirst({
+      where: { 
+        id, 
+        userId: user.userId,
+      },
     })
 
     if (!entry) {
@@ -48,23 +71,28 @@ export async function GET(
 
     return NextResponse.json(entry)
   } catch (error) {
-    console.error('Error fetching journal entry:', error)
+    console.error('[JOURNAL_GET_BY_ID]', error)
     return NextResponse.json({ error: 'Failed to fetch journal entry' }, { status: 500 })
   }
 }
 
 // PUT - Update a journal entry by ID
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
 
-    // Check if entry exists
-    const existingEntry = await db.tradingJournal.findUnique({
-      where: { id },
+    // Check if entry exists and belongs to user
+    const existingEntry = await db.tradingJournal.findFirst({
+      where: { id, userId: user.userId },
     })
 
     if (!existingEntry) {
@@ -89,7 +117,7 @@ export async function PUT(
         
         // Pre-market - Trading Plan
         tradingPlan: body.tradingPlan,
-        strategiesToUse: body.strategiesToUse,
+        strategiesToUse: body.playbooksToUse || body.strategiesToUse,
         riskPlan: body.riskPlan,
         dailyGoal: body.dailyGoal,
         maxTrades: body.maxTrades ? parseInt(body.maxTrades) : undefined,
@@ -146,9 +174,16 @@ export async function PUT(
       },
     })
 
+    // Log the audit action
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.JOURNAL_ENTRY_UPDATED,
+      details: { entryId: id }
+    })
+
     return NextResponse.json(updatedEntry)
   } catch (error) {
-    console.error('Error updating journal entry:', error)
+    console.error('[JOURNAL_PUT]', error)
     return NextResponse.json({ error: 'Failed to update journal entry' }, { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
+import { logAudit, AuditAction } from '@/lib/audit'
 
 // GET - Fetch journal entries for authenticated user only
 export async function GET(request: NextRequest) {
@@ -20,7 +21,9 @@ export async function GET(request: NextRequest) {
     const accountId = searchParams.get('accountId')
 
     // فلترة حسب المستخدم
-    const where: Record<string, unknown> = { userId: user.userId }
+    const where: Record<string, unknown> = { 
+      userId: user.userId,
+    }
     if (type) where.type = type
     if (accountId) where.accountId = accountId
     if (date) {
@@ -50,7 +53,7 @@ export async function GET(request: NextRequest) {
     })
     return NextResponse.json(entries)
   } catch (error) {
-    console.error('Error fetching journal entries:', error)
+    console.error('[JOURNAL_GET]', error)
     return NextResponse.json({ error: 'Failed to fetch journal entries' }, { status: 500 })
   }
 }
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
         expectedVolatility: body.expectedVolatility,
         economicEvents: body.economicEvents,
         tradingPlan: body.tradingPlan,
-        strategiesToUse: body.strategiesToUse,
+        strategiesToUse: body.playbooksToUse || body.strategiesToUse,
         riskPlan: body.riskPlan,
         dailyGoal: body.dailyGoal,
         maxTrades: body.maxTrades ? parseInt(body.maxTrades) : 3,
@@ -147,9 +150,17 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.JOURNAL_ENTRY_CREATED,
+      details: { entryId: entry.id, type: entry.type }
+    })
+
     return NextResponse.json(entry, { status: 201 })
   } catch (error) {
-    console.error('Error creating journal entry:', error)
+    console.error('[JOURNAL_POST]', error)
     return NextResponse.json({ error: 'Failed to create journal entry' }, { status: 500 })
   }
 }

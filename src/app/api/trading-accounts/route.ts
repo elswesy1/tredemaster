@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth-middleware'
+import { logAudit, AuditAction } from '@/lib/audit'
+import { Prisma } from '@prisma/client'
 
 // GET /api/trading-accounts - جلب جميع الحسابات
 export async function GET(request: NextRequest) {
@@ -15,7 +17,10 @@ export async function GET(request: NextRequest) {
     }
 
     const accounts = await prisma.tradingAccount.findMany({
-      where: { userId: user.userId },
+      where: { 
+        userId: user.userId,
+        deletedAt: null 
+      },
       include: {
         _count: {
           select: { trades: true }
@@ -108,9 +113,28 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // تسجيل في سجل التدقيق
+    await logAudit(request, {
+      userId: user.userId,
+      action: AuditAction.ACCOUNT_CREATED,
+      details: { accountId: account.id, name: account.name }
+    })
+
     return NextResponse.json(account, { status: 201 })
   } catch (error) {
-    console.error('Error creating account:', error)
+    console.error('[TRADING_ACCOUNT_POST]', error)
+    
+    // معالجة خطأ القيد الفريد (حساب مكرر)
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return NextResponse.json(
+        { 
+          error: 'Conflict', 
+          message: 'يوجد حساب بنفس الاسم والمنصة لهذا المستخدم بالفعل' 
+        },
+        { status: 409 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Failed to create account' },
       { status: 500 }

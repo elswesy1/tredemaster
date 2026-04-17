@@ -92,7 +92,7 @@ interface Trade {
   closedAt?: string
 }
 
-interface Strategy {
+interface Playbook {
   id: string
   name: string
   description: string | null
@@ -147,15 +147,15 @@ export function TradingView() {
   // States
   const [activeTab, setActiveTab] = useState('overview')
   const [trades, setTrades] = useState<Trade[]>([])
-  const [strategies, setStrategies] = useState<Strategy[]>([])
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([])
   const [riskProfiles, setRiskProfiles] = useState<RiskProfile[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isAddTradeOpen, setIsAddTradeOpen] = useState(false)
-  const [isAddStrategyOpen, setIsAddStrategyOpen] = useState(false)
+  const [isAddPlaybookOpen, setIsAddPlaybookOpen] = useState(false)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null)
-  const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null)
+  const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null)
   const [tradeFilter, setTradeFilter] = useState<'all' | 'open' | 'closed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [quickMode, setQuickMode] = useState(true)
@@ -182,8 +182,8 @@ export function TradingView() {
     accountBalance: '10000',
   })
 
-  // New Strategy Form
-  const [newStrategy, setNewStrategy] = useState({
+  // New Playbook Form
+  const [newPlaybook, setNewPlaybook] = useState({
     name: '',
     description: '',
     category: 'technical',
@@ -196,13 +196,13 @@ export function TradingView() {
   const fetchData = useCallback(async () => {
     setIsLoading(true)
     try {
-      const [tradesData, strategiesData, profilesData] = await Promise.all([
+      const [tradesData, playbooksData, profilesData] = await Promise.all([
         apiGet<Trade[]>('/api/trades').catch(() => []),
-        apiGet<Strategy[]>('/api/strategies').catch(() => []),
+        apiGet<Playbook[]>('/api/playbook').catch(() => []),
         apiGet<RiskProfile[]>('/api/risk-profiles').catch(() => []),
       ])
       setTrades(tradesData)
-      setStrategies(strategiesData)
+      setPlaybooks(playbooksData)
       setRiskProfiles(profilesData)
       if (profilesData.length > 0) {
         setNewTrade(prev => ({ ...prev, riskProfileId: profilesData[0].id }))
@@ -276,8 +276,8 @@ export function TradingView() {
         lotSize: parseFloat(newTrade.lotSize),
         stopLoss: newTrade.stopLoss ? parseFloat(newTrade.stopLoss) : null,
         takeProfit: newTrade.takeProfit ? parseFloat(newTrade.takeProfit) : null,
-        strategy: strategies.find(s => s.id === newTrade.strategyId)?.name,
-        strategyId: newTrade.strategyId,
+        playbook: playbooks.find(p => p.id === newTrade.strategyId)?.name,
+        playbookId: newTrade.strategyId,
         notes: newTrade.notes,
         emotions: newTrade.emotions,
         confidence: newTrade.confidence,
@@ -296,6 +296,7 @@ export function TradingView() {
         description: isRTL ? 'تم إضافة الصفقة بنجاح' : 'Trade added successfully',
       })
     } catch (error) {
+      console.error('[TRADING_VIEW_ADD_TRADE]', error)
       toast({
         title: isRTL ? 'خطأ' : 'Error',
         description: isRTL ? 'فشل في إضافة الصفقة' : 'Failed to add trade',
@@ -306,24 +307,25 @@ export function TradingView() {
     }
   }
 
-  const handleAddStrategy = async () => {
-    if (!newStrategy.name) return
+  const handleAddPlaybook = async () => {
+    if (!newPlaybook.name) return
 
     setIsSaving(true)
     try {
-      const saved = await apiPost<Strategy>('/api/strategies', newStrategy)
-      setStrategies([saved, ...strategies])
-      setIsAddStrategyOpen(false)
-      resetStrategyForm()
+      const saved = await apiPost<Playbook>('/api/playbook', newPlaybook)
+      setPlaybooks([saved, ...playbooks])
+      setIsAddPlaybookOpen(false)
+      resetPlaybookForm()
 
       toast({
         title: isRTL ? 'تم بنجاح' : 'Success',
-        description: isRTL ? 'تم إضافة الاستراتيجية' : 'Strategy added',
+        description: isRTL ? 'تم إضافة الكتيب' : 'Playbook added',
       })
     } catch (error) {
+      console.error('[TRADING_VIEW_ADD_PLAYBOOK]', error)
       toast({
         title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? 'فشل في إضافة الاستراتيجية' : 'Failed to add strategy',
+        description: isRTL ? 'فشل في إضافة الكتيب' : 'Failed to add playbook',
         variant: 'destructive',
       })
     } finally {
@@ -432,8 +434,8 @@ export function TradingView() {
     setQuickMode(true)
   }
 
-  const resetStrategyForm = () => {
-    setNewStrategy({
+  const resetPlaybookForm = () => {
+    setNewPlaybook({
       name: '',
       description: '',
       category: 'technical',
@@ -527,8 +529,8 @@ export function TradingView() {
             <div className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-orange-500" />
               <div>
-                <div className="text-2xl font-bold">{strategies.length}</div>
-                <div className="text-xs text-muted-foreground">{isRTL ? 'استراتيجية' : 'Strategies'}</div>
+                <div className="text-2xl font-bold">{playbooks.length}</div>
+                <div className="text-xs text-muted-foreground">{isRTL ? 'كتيب القواعد' : 'Playbook'}</div>
               </div>
             </div>
           </CardContent>
@@ -546,9 +548,9 @@ export function TradingView() {
             <Target className="h-4 w-4" />
             {isRTL ? 'الصفقات' : 'Trades'}
           </TabsTrigger>
-          <TabsTrigger value="strategies" className="gap-2">
+          <TabsTrigger value="playbook" className="gap-2">
             <Lightbulb className="h-4 w-4" />
-            {isRTL ? 'الاستراتيجيات' : 'Strategies'}
+            {isRTL ? 'كتيب القواعد' : 'Playbook'}
           </TabsTrigger>
         </TabsList>
 
@@ -671,48 +673,48 @@ export function TradingView() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {strategies.length === 0 ? (
+              {playbooks.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Lightbulb className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>{isRTL ? 'لا توجد استراتيجيات' : 'No strategies yet'}</p>
+                  <p>{isRTL ? 'لا توجد كتيبات قواعد' : 'No playbooks yet'}</p>
                   <Button
                     variant="outline"
                     size="sm"
                     className="mt-2"
-                    onClick={() => setIsAddStrategyOpen(true)}
+                    onClick={() => setIsAddPlaybookOpen(true)}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    {isRTL ? 'إضافة استراتيجية' : 'Add Strategy'}
+                    {isRTL ? 'إضافة كتيب' : 'Add Playbook'}
                   </Button>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-3 gap-4">
-                  {strategies.slice(0, 3).map(strategy => (
+                  {playbooks.slice(0, 3).map(playbook => (
                     <Card
-                      key={strategy.id}
+                      key={playbook.id}
                       className="cursor-pointer hover:border-green-500/30"
-                      onClick={() => setSelectedStrategy(strategy)}
+                      onClick={() => setSelectedPlaybook(playbook)}
                     >
                       <CardContent className="pt-4">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium">{strategy.name}</span>
-                          <Badge variant="outline">{strategy.winRate?.toFixed(0) || 0}%</Badge>
+                          <span className="font-medium">{playbook.name}</span>
+                          <Badge variant="outline">{playbook.winRate?.toFixed(0) || 0}%</Badge>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-center text-sm">
                           <div>
-                            <div className="font-semibold">{strategy.totalTrades}</div>
+                            <div className="font-semibold">{playbook.totalTrades}</div>
                             <div className="text-xs text-muted-foreground">{isRTL ? 'صفقات' : 'Trades'}</div>
                           </div>
                           <div>
-                            <div className="font-semibold text-green-500">{strategy.winningTrades}</div>
+                            <div className="font-semibold text-green-500">{playbook.winningTrades}</div>
                             <div className="text-xs text-muted-foreground">{isRTL ? 'رابحة' : 'Win'}</div>
                           </div>
                           <div>
                             <div className={cn(
                               "font-semibold",
-                              strategy.profitLoss >= 0 ? "text-green-500" : "text-red-500"
+                              playbook.profitLoss >= 0 ? "text-green-500" : "text-red-500"
                             )}>
-                              ${Math.abs(strategy.profitLoss).toFixed(0)}
+                              ${Math.abs(playbook.profitLoss).toFixed(0)}
                             </div>
                             <div className="text-xs text-muted-foreground">{isRTL ? 'ربح' : 'P/L'}</div>
                           </div>
@@ -843,19 +845,19 @@ export function TradingView() {
           )}
         </TabsContent>
 
-        {/* Strategies Tab */}
-        <TabsContent value="strategies" className="space-y-4">
+        {/* Playbook Tab */}
+        <TabsContent value="playbook" className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">
-              {isRTL ? 'استراتيجيات التداول' : 'Trading Strategies'}
+              {isRTL ? 'نماذج التداول' : 'Trading Playbooks'}
             </h3>
-            <Button onClick={() => setIsAddStrategyOpen(true)} className="bg-green-500">
+            <Button onClick={() => setIsAddPlaybookOpen(true)} className="bg-green-500">
               <Plus className="h-4 w-4 mr-2" />
-              {isRTL ? 'إضافة استراتيجية' : 'Add Strategy'}
+              {isRTL ? 'إضافة نموذج' : 'Add Playbook'}
             </Button>
           </div>
 
-          {strategies.length === 0 ? (
+          {playbooks.length === 0 ? (
             <Card>
               <CardContent className="py-12 flex flex-col items-center justify-center">
                 <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
@@ -865,7 +867,7 @@ export function TradingView() {
                 <p className="text-muted-foreground mb-4">
                   {isRTL ? 'أضف استراتيجيتك الأولى لتتبع أدائها' : 'Add your first strategy to track its performance'}
                 </p>
-                <Button onClick={() => setIsAddStrategyOpen(true)} className="bg-green-500">
+                <Button onClick={() => setIsAddPlaybookOpen(true)} className="bg-green-500">
                   <Plus className="h-4 w-4 mr-2" />
                   {isRTL ? 'إضافة استراتيجية' : 'Add Strategy'}
                 </Button>
@@ -873,41 +875,41 @@ export function TradingView() {
             </Card>
           ) : (
             <div className="grid md:grid-cols-2 gap-4">
-              {strategies.map(strategy => (
+              {playbooks.map(playbook => (
                 <Card
-                  key={strategy.id}
+                  key={playbook.id}
                   className="cursor-pointer hover:border-green-500/30"
-                  onClick={() => setSelectedStrategy(strategy)}
+                  onClick={() => setSelectedPlaybook(playbook)}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{strategy.name}</CardTitle>
+                      <CardTitle className="text-lg">{playbook.name}</CardTitle>
                       <div className="flex gap-2">
-                        <Badge variant="outline">{strategy.timeframe}</Badge>
-                        <Badge className={strategy.category === 'technical' ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'}>
-                          {strategy.category}
+                        <Badge variant="outline">{playbook.timeframe}</Badge>
+                        <Badge className={playbook.category === 'technical' ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'}>
+                          {playbook.category}
                         </Badge>
                       </div>
                     </div>
-                    <CardDescription>{strategy.description || (isRTL ? 'لا يوجد وصف' : 'No description')}</CardDescription>
+                    <CardDescription>{playbook.description || (isRTL ? 'لا يوجد وصف' : 'No description')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-4 gap-2 text-center text-sm">
                       <div>
-                        <div className="font-semibold">{strategy.totalTrades}</div>
+                        <div className="font-semibold">{playbook.totalTrades}</div>
                         <div className="text-xs text-muted-foreground">{isRTL ? 'صفقات' : 'Trades'}</div>
                       </div>
                       <div>
-                        <div className="font-semibold text-green-500">{strategy.winningTrades}</div>
+                        <div className="font-semibold text-green-500">{playbook.winningTrades}</div>
                         <div className="text-xs text-muted-foreground">{isRTL ? 'رابحة' : 'Wins'}</div>
                       </div>
                       <div>
-                        <div className="font-semibold">{strategy.winRate?.toFixed(0) || 0}%</div>
+                        <div className="font-semibold">{playbook.winRate?.toFixed(0) || 0}%</div>
                         <div className="text-xs text-muted-foreground">{isRTL ? 'فوز' : 'Win%'}</div>
                       </div>
                       <div>
-                        <div className={cn("font-semibold", strategy.profitLoss >= 0 ? "text-green-500" : "text-red-500")}>
-                          ${Math.abs(strategy.profitLoss).toFixed(0)}
+                        <div className={cn("font-semibold", playbook.profitLoss >= 0 ? "text-green-500" : "text-red-500")}>
+                          ${Math.abs(playbook.profitLoss).toFixed(0)}
                         </div>
                         <div className="text-xs text-muted-foreground">{isRTL ? 'ربح' : 'P/L'}</div>
                       </div>
@@ -1052,15 +1054,15 @@ export function TradingView() {
 
             {/* Strategy Selection */}
             <div className="space-y-2">
-              <Label>{isRTL ? 'الاستراتيجية' : 'Strategy'}</Label>
+              <Label>{isRTL ? 'كتيب القواعد' : 'Playbook'}</Label>
               <Select value={newTrade.strategyId} onValueChange={(v) => setNewTrade({ ...newTrade, strategyId: v })}>
                 <SelectTrigger>
-                  <SelectValue placeholder={isRTL ? 'اختر استراتيجية...' : 'Select strategy...'} />
+                  <SelectValue placeholder={isRTL ? 'اختر نموذج...' : 'Select playbook...'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{isRTL ? 'بدون استراتيجية' : 'No strategy'}</SelectItem>
-                  {strategies.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  <SelectItem value="">{isRTL ? 'بدون نموذج' : 'No playbook'}</SelectItem>
+                  {playbooks.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1205,29 +1207,29 @@ export function TradingView() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Strategy Dialog */}
-      <Dialog open={isAddStrategyOpen} onOpenChange={setIsAddStrategyOpen}>
+      {/* Add Playbook Dialog */}
+      <Dialog open={isAddPlaybookOpen} onOpenChange={setIsAddPlaybookOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{isRTL ? 'إضافة استراتيجية جديدة' : 'Add New Strategy'}</DialogTitle>
+            <DialogTitle>{isRTL ? 'إضافة نموذج تداول جديد' : 'Add New Playbook'}</DialogTitle>
             <DialogDescription>
-              {isRTL ? 'حدد تفاصيل استراتيجيتك' : 'Define your strategy details'}
+              {isRTL ? 'حدد تفاصيل نموذج التداول الخاص بك' : 'Define your trading playbook details'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>{isRTL ? 'اسم الاستراتيجية' : 'Strategy Name'} *</Label>
+              <Label>{isRTL ? 'اسم النموذج' : 'Playbook Name'} *</Label>
               <Input
-                value={newStrategy.name}
-                onChange={(e) => setNewStrategy({ ...newStrategy, name: e.target.value })}
-                placeholder={isRTL ? 'مثال: استراتيجية الاختراق' : 'e.g., Breakout Strategy'}
+                value={newPlaybook.name}
+                onChange={(e) => setNewPlaybook({ ...newPlaybook, name: e.target.value })}
+                placeholder={isRTL ? 'مثال: نموذج الاختراق' : 'e.g., Breakout Setup'}
               />
             </div>
             <div className="space-y-2">
               <Label>{isRTL ? 'الوصف' : 'Description'}</Label>
               <Textarea
-                value={newStrategy.description}
-                onChange={(e) => setNewStrategy({ ...newStrategy, description: e.target.value })}
+                value={newPlaybook.description}
+                onChange={(e) => setNewPlaybook({ ...newPlaybook, description: e.target.value })}
                 placeholder={isRTL ? 'وصف مختصر' : 'Brief description'}
                 rows={2}
               />
@@ -1235,7 +1237,7 @@ export function TradingView() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{isRTL ? 'الفئة' : 'Category'}</Label>
-                <Select value={newStrategy.category} onValueChange={(v) => setNewStrategy({ ...newStrategy, category: v })}>
+                <Select value={newPlaybook.category} onValueChange={(v) => setNewPlaybook({ ...newPlaybook, category: v })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -1248,7 +1250,7 @@ export function TradingView() {
               </div>
               <div className="space-y-2">
                 <Label>{isRTL ? 'الإطار الزمني' : 'Timeframe'}</Label>
-                <Select value={newStrategy.timeframe} onValueChange={(v) => setNewStrategy({ ...newStrategy, timeframe: v })}>
+                <Select value={newPlaybook.timeframe} onValueChange={(v) => setNewPlaybook({ ...newPlaybook, timeframe: v })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -1261,8 +1263,8 @@ export function TradingView() {
             <div className="space-y-2">
               <Label>{isRTL ? 'قواعد الدخول' : 'Entry Rules'}</Label>
               <Textarea
-                value={newStrategy.entryRules}
-                onChange={(e) => setNewStrategy({ ...newStrategy, entryRules: e.target.value })}
+                value={newPlaybook.entryRules}
+                onChange={(e) => setNewPlaybook({ ...newPlaybook, entryRules: e.target.value })}
                 placeholder={isRTL ? 'متى تدخل؟' : 'When to enter?'}
                 rows={2}
               />
@@ -1270,21 +1272,21 @@ export function TradingView() {
             <div className="space-y-2">
               <Label>{isRTL ? 'قواعد الخروج' : 'Exit Rules'}</Label>
               <Textarea
-                value={newStrategy.exitRules}
-                onChange={(e) => setNewStrategy({ ...newStrategy, exitRules: e.target.value })}
+                value={newPlaybook.exitRules}
+                onChange={(e) => setNewPlaybook({ ...newPlaybook, exitRules: e.target.value })}
                 placeholder={isRTL ? 'متى تخرج؟' : 'When to exit?'}
                 rows={2}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddStrategyOpen(false)} disabled={isSaving}>
+            <Button variant="outline" onClick={() => setIsAddPlaybookOpen(false)} disabled={isSaving}>
               {isRTL ? 'إلغاء' : 'Cancel'}
             </Button>
             <Button
-              onClick={handleAddStrategy}
+              onClick={handleAddPlaybook}
               className="bg-green-500"
-              disabled={isSaving || !newStrategy.name}
+              disabled={isSaving || !newPlaybook.name}
             >
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {isRTL ? 'إضافة' : 'Add'}
@@ -1416,48 +1418,48 @@ export function TradingView() {
         </DialogContent>
       </Dialog>
 
-      {/* Strategy Detail Dialog */}
-      <Dialog open={!!selectedStrategy && !isAddStrategyOpen} onOpenChange={() => setSelectedStrategy(null)}>
+      {/* Playbook Detail Dialog */}
+      <Dialog open={!!selectedPlaybook && !isAddPlaybookOpen} onOpenChange={() => setSelectedPlaybook(null)}>
         <DialogContent className="max-w-2xl">
-          {selectedStrategy && (
+          {selectedPlaybook && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  {selectedStrategy.name}
-                  <Badge variant="outline">{selectedStrategy.timeframe}</Badge>
+                  {selectedPlaybook.name}
+                  <Badge variant="outline">{selectedPlaybook.timeframe}</Badge>
                 </DialogTitle>
-                <DialogDescription>{selectedStrategy.description}</DialogDescription>
+                <DialogDescription>{selectedPlaybook.description}</DialogDescription>
               </DialogHeader>
               <div className="grid grid-cols-3 gap-4 py-4">
                 <div className="bg-muted/50 rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold">{selectedStrategy.totalTrades}</div>
+                  <div className="text-2xl font-bold">{selectedPlaybook.totalTrades}</div>
                   <div className="text-sm text-muted-foreground">{isRTL ? 'صفقات' : 'Trades'}</div>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-green-500">{selectedStrategy.winRate?.toFixed(0) || 0}%</div>
+                  <div className="text-2xl font-bold text-green-500">{selectedPlaybook.winRate?.toFixed(0) || 0}%</div>
                   <div className="text-sm text-muted-foreground">{isRTL ? 'نسبة الفوز' : 'Win Rate'}</div>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4 text-center">
-                  <div className={cn("text-2xl font-bold", selectedStrategy.profitLoss >= 0 ? "text-green-500" : "text-red-500")}>
-                    ${selectedStrategy.profitLoss.toFixed(0)}
+                  <div className={cn("text-2xl font-bold", selectedPlaybook.profitLoss >= 0 ? "text-green-500" : "text-red-500")}>
+                    ${selectedPlaybook.profitLoss.toFixed(0)}
                   </div>
                   <div className="text-sm text-muted-foreground">{isRTL ? 'ربح/خسارة' : 'P/L'}</div>
                 </div>
               </div>
-              {selectedStrategy.entryRules && (
+              {selectedPlaybook.entryRules && (
                 <div className="bg-muted/50 rounded-lg p-4">
                   <div className="text-sm font-medium mb-2">{isRTL ? 'قواعد الدخول' : 'Entry Rules'}</div>
-                  <div className="text-sm text-muted-foreground">{selectedStrategy.entryRules}</div>
+                  <div className="text-sm text-muted-foreground">{selectedPlaybook.entryRules}</div>
                 </div>
               )}
-              {selectedStrategy.exitRules && (
+              {selectedPlaybook.exitRules && (
                 <div className="bg-muted/50 rounded-lg p-4">
                   <div className="text-sm font-medium mb-2">{isRTL ? 'قواعد الخروج' : 'Exit Rules'}</div>
-                  <div className="text-sm text-muted-foreground">{selectedStrategy.exitRules}</div>
+                  <div className="text-sm text-muted-foreground">{selectedPlaybook.exitRules}</div>
                 </div>
               )}
               <DialogFooter>
-                <Button onClick={() => setSelectedStrategy(null)} className="bg-green-500">
+                <Button onClick={() => setSelectedPlaybook(null)} className="bg-green-500">
                   {isRTL ? 'إغلاق' : 'Close'}
                 </Button>
               </DialogFooter>

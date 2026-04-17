@@ -1,0 +1,220 @@
+.next/dev/types/validator.ts(117,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/accounts/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/accounts/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ name: string; id: string; isActive: boolean; createdAt: Date; updatedAt: Date; userId: string; currency: string; ... 37 more ...; sparklineData: string | null; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(144,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/audits/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/audits/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ id: string; createdAt: Date; updatedAt: Date; userId: string; description: string | null; type: string; ... 9 more ...; completedAt: Date | null; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(315,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/journal/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/journal/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ result: string | null; id: string; createdAt: Date; ... 64 more ...; attachments: string | null; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(360,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/psychology/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/psychology/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ id: string; createdAt: Date; updatedAt: Date; ... 17 more ...; patience: number | null; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(396,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/risk-profiles/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/risk-profiles/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ name: string; id: string; isActive: boolean; createdAt: Date; ... 19 more ...; isConfigured: boolean; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(486,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/trades/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/trades/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ symbol: string; id: string; createdAt: Date; updatedAt: Date; userId: string; profitLoss: number; ... 21 more ...; closedAt: Date | null; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(504,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/trading-accounts/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/trading-accounts/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ name: string; id: string; isActive: boolean; createdAt: Date; updatedAt: Date; userId: string; currency: string; ... 37 more ...; sparklineData: string | null; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(513,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/trading-accounts/[id]/states/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/trading-accounts/[id]/states">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ totalTrades: number; winningTrades: number; losingTrades: number; ... 6 more ...; profitLoss: number; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(522,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/trading-accounts/[id]/sync/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/trading-accounts/[id]/sync">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ account: { id: string; name: string; balance: number; equity: number; connectionStatus: string | null; lastSync: Date | null; }; syncLogs: { ...; }[]; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(90,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/accounts/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/accounts/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ name: string; id: string; isActive: boolean; createdAt: Date; updatedAt: Date; userId: string; currency: string; ... 37 more ...; sparklineData: string | null; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(116,39): error TS2307: Cannot find module '../../src/app/api/assets/[id]/route.js' or its corresponding type declarations.
+.next/types/validator.ts(125,39): error TS2307: Cannot find module '../../src/app/api/assets/route.js' or its corresponding type declarations.
+.next/types/validator.ts(135,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/audits/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/audits/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ id: string; createdAt: Date; updatedAt: Date; userId: string; description: string | null; type: string; ... 9 more ...; completedAt: Date | null; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(297,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/journal/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/journal/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ result: string | null; id: string; createdAt: Date; ... 64 more ...; attachments: string | null; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(333,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/psychology/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/psychology/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ id: string; createdAt: Date; updatedAt: Date; ... 17 more ...; patience: number | null; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(369,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/risk-profiles/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/risk-profiles/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ name: string; id: string; isActive: boolean; createdAt: Date; ... 19 more ...; isConfigured: boolean; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(459,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/trades/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/trades/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ symbol: string; id: string; createdAt: Date; updatedAt: Date; userId: string; profitLoss: number; ... 21 more ...; closedAt: Date | null; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(477,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/trading-accounts/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/trading-accounts/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ name: string; id: string; isActive: boolean; createdAt: Date; updatedAt: Date; userId: string; currency: string; ... 37 more ...; sparklineData: string | null; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(486,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/trading-accounts/[id]/states/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/trading-accounts/[id]/states">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ totalTrades: number; winningTrades: number; losingTrades: number; ... 6 more ...; profitLoss: number; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(495,31): error TS2344: Type 'typeof import("C:/Users/ATG/tredemaster/src/app/api/trading-accounts/[id]/sync/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/trading-accounts/[id]/sync">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ account: { id: string; name: string; balance: number; equity: number; connectionStatus: string | null; lastSync: Date | null; }; syncLogs: { ...; }[]; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+src/app/api/accounts/[id]/route.ts(23,9): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingAccountWhereInput'.
+src/app/api/accounts/[id]/route.ts(62,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingAccountWhereInput'.
+src/app/api/accounts/[id]/route.ts(111,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingAccountWhereInput'.
+src/app/api/accounts/[id]/route.ts(120,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<TradingAccountUpdateInput, TradingAccountUncheckedUpdateInput> & TradingAccountUncheckedUpdateInput) | (Without<...> & TradingAccountUpdateInput)'.
+src/app/api/accounts/route.ts(18,9): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingAccountWhereInput'.
+src/app/api/accounts/route.ts(98,50): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingAccountWhereInput'.
+src/app/api/accounts/route.ts(147,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingAccountWhereInput'.
+src/app/api/accounts/route.ts(156,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<TradingAccountUpdateInput, TradingAccountUncheckedUpdateInput> & TradingAccountUncheckedUpdateInput) | (Without<...> & TradingAccountUpdateInput)'.
+src/app/api/audits/[id]/route.ts(22,9): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'AuditWhereInput'.
+src/app/api/audits/[id]/route.ts(66,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'AuditWhereInput'.
+src/app/api/audits/[id]/route.ts(125,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'AuditWhereInput'.
+src/app/api/audits/[id]/route.ts(134,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<AuditUpdateInput, AuditUncheckedUpdateInput> & AuditUncheckedUpdateInput) | (Without<...> & AuditUpdateInput)'.
+src/app/api/dashboard/route.ts(33,20): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingAccountWhereInput'.
+src/app/api/dashboard/route.ts(36,42): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradeWhereInput'.
+src/app/api/dashboard/route.ts(44,40): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'RiskProfileWhereInput'.
+src/app/api/dashboard/route.ts(55,38): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradeWhereInput'.
+src/app/api/dashboard/route.ts(66,24): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingAccountWhereInput'.
+src/app/api/dashboard/route.ts(69,40): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradeWhereInput'.
+src/app/api/dashboard/route.ts(72,36): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'RiskProfileWhereInput'.
+src/app/api/dashboard/route.ts(85,40): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradeWhereInput'.
+src/app/api/dashboard/route.ts(94,42): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradeWhereInput'.
+src/app/api/dashboard/route.ts(273,26): error TS2339: Property 'tradingAccounts' does not exist on type '{ name: string; id: string; isActive: boolean; createdAt: Date; updatedAt: Date; userId: string; description: string | null; totalValue: number; cashBalance: number; investedAmount: number; profitLoss: number; profitLossPercent: number; currency: string; }'.
+src/app/api/dashboard/route.ts(285,24): error TS2339: Property '_count' does not exist on type '{ name: string; id: string; isActive: boolean; createdAt: Date; updatedAt: Date; userId: string; currency: string; portfolioId: string | null; accountType: string; balance: number; ... 34 more ...; sparklineData: string | null; }'.
+src/app/api/dashboard/route.ts(286,24): error TS2339: Property 'riskProfiles' does not exist on type '{ name: string; id: string; isActive: boolean; createdAt: Date; updatedAt: Date; userId: string; currency: string; portfolioId: string | null; accountType: string; balance: number; ... 34 more ...; sparklineData: string | null; }'.
+src/app/api/dashboard/route.ts(296,20): error TS2551: Property 'account' does not exist on type '{ symbol: string; id: string; createdAt: Date; updatedAt: Date; userId: string; profitLoss: number; portfolioId: string | null; lotSize: number; accountId: string | null; type: string; ... 17 more ...; closedAt: Date | null; }'. Did you mean 'accountId'?
+src/app/api/dashboard/route.ts(379,7): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradeWhereInput'.
+src/app/api/journal/[id]/route.ts(31,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<TradingJournalUpdateInput, TradingJournalUncheckedUpdateInput> & TradingJournalUncheckedUpdateInput) | (Without<...> & TradingJournalUpdateInput)'.
+src/app/api/playbook/route.ts(201,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<PlaybookUpdateInput, PlaybookUncheckedUpdateInput> & PlaybookUncheckedUpdateInput) | (Without<...> & PlaybookUpdateInput)'.
+src/app/api/playbook/route.ts(208,49): error TS2339: Property 'name' does not exist on type '{ userId: string; }'.
+src/app/api/portfolios/route.ts(22,9): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'PortfolioWhereInput'.
+src/app/api/psychology/[id]/route.ts(135,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<PsychologyLogUpdateInput, PsychologyLogUncheckedUpdateInput> & PsychologyLogUncheckedUpdateInput) | (Without<...> & PsychologyLogUpdateInput)'.
+src/app/api/risk-alerts/route.ts(59,50): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'RiskAlertWhereInput'.
+src/app/api/risk-alerts/route.ts(106,50): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'RiskAlertWhereInput'.
+src/app/api/risk-alerts/route.ts(115,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<RiskAlertUpdateInput, RiskAlertUncheckedUpdateInput> & RiskAlertUncheckedUpdateInput) | (Without<...> & RiskAlertUpdateInput)'.
+src/app/api/risk-profiles/[id]/route.ts(22,9): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'RiskProfileWhereInput'.
+src/app/api/risk-profiles/[id]/route.ts(72,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'RiskProfileWhereInput'.
+src/app/api/risk-profiles/[id]/route.ts(131,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'RiskProfileWhereInput'.
+src/app/api/risk-profiles/[id]/route.ts(140,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<RiskProfileUpdateInput, RiskProfileUncheckedUpdateInput> & RiskProfileUncheckedUpdateInput) | (Without<...> & RiskProfileUpdateInput)'.
+src/app/api/rules/route.ts(91,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingRuleWhereInput'.
+src/app/api/rules/route.ts(134,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingRuleWhereInput'.
+src/app/api/rules/route.ts(143,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<TradingRuleUpdateInput, TradingRuleUncheckedUpdateInput> & TradingRuleUncheckedUpdateInput) | (Without<...> & TradingRuleUpdateInput)'.
+src/app/api/sessions/route.ts(95,50): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'SessionReviewWhereInput'.
+src/app/api/sessions/route.ts(148,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'SessionReviewWhereInput'.
+src/app/api/sessions/route.ts(157,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<SessionReviewUpdateInput, SessionReviewUncheckedUpdateInput> & SessionReviewUncheckedUpdateInput) | (Without<...> & SessionReviewUpdateInput)'.
+src/app/api/strategies/route.ts(105,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'PlaybookWhereInput'.
+src/app/api/strategies/route.ts(148,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'PlaybookWhereInput'.
+src/app/api/strategies/route.ts(157,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<PlaybookUpdateInput, PlaybookUncheckedUpdateInput> & PlaybookUncheckedUpdateInput) | (Without<...> & PlaybookUpdateInput)'.
+src/app/api/trades/[id]/route.ts(22,9): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradeWhereInput'.
+src/app/api/trades/[id]/route.ts(66,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradeWhereInput'.
+src/app/api/trades/[id]/route.ts(99,27): error TS2339: Property 'TRADE_LOGGED' does not exist on type 'typeof AuditAction'.
+src/app/api/trades/[id]/route.ts(125,41): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradeWhereInput'.
+src/app/api/trades/[id]/route.ts(134,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<TradeUpdateInput, TradeUncheckedUpdateInput> & TradeUncheckedUpdateInput) | (Without<...> & TradeUpdateInput)'.
+src/app/api/trades/[id]/route.ts(140,27): error TS2339: Property 'TRADE_LOGGED' does not exist on type 'typeof AuditAction'.
+src/app/api/trades/route.ts(78,9): error TS2353: Object literal may only specify known properties, and 'playbookId' does not exist in type 'Without<TradeCreateInput, TradeUncheckedCreateInput> & TradeUncheckedCreateInput'.
+src/app/api/trades/route.ts(137,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<TradeUpdateInput, TradeUncheckedUpdateInput> & TradeUncheckedUpdateInput) | (Without<...> & TradeUpdateInput)'.
+src/app/api/trading-accounts/[id]/route.ts(25,9): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingAccountWhereInput'.
+src/app/api/trading-accounts/[id]/route.ts(137,15): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type '(Without<TradingAccountUpdateInput, TradingAccountUncheckedUpdateInput> & TradingAccountUncheckedUpdateInput) | (Without<...> & TradingAccountUpdateInput)'.
+src/app/api/trading-accounts/route.ts(22,9): error TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'TradingAccountWhereInput'.
+src/app/page.tsx(236,12): error TS2678: Type '"strategies"' is not comparable to type 'ActiveSection'.
+src/components/trading/journal-view.tsx(202,55): error TS2304: Cannot find name 'useTradingStore'.
+src/components/trading/playbook-view.tsx(520,45): error TS2322: Type '{ checked: true; readOnly: true; }' is not assignable to type 'IntrinsicAttributes & CheckboxProps & RefAttributes<HTMLButtonElement>'.
+  Property 'readOnly' does not exist on type 'IntrinsicAttributes & CheckboxProps & RefAttributes<HTMLButtonElement>'.
+src/components/trading/trading-view.tsx(860,12): error TS2304: Cannot find name 'strategies'.
+src/components/trading/trading-view.tsx(870,40): error TS2552: Cannot find name 'setIsAddStrategyOpen'. Did you mean 'setIsAddTradeOpen'?
+src/components/trading/trading-view.tsx(878,16): error TS2304: Cannot find name 'strategies'.
+src/components/trading/trading-view.tsx(882,34): error TS2552: Cannot find name 'setSelectedStrategy'. Did you mean 'setSelectedTrade'?
+src/components/trading/trading-view.tsx(1240,32): error TS2304: Cannot find name 'newStrategy'.
+src/components/trading/trading-view.tsx(1240,76): error TS2304: Cannot find name 'setNewStrategy'.
+src/components/trading/trading-view.tsx(1240,96): error TS2304: Cannot find name 'newStrategy'.
+src/components/trading/trading-view.tsx(1253,32): error TS2304: Cannot find name 'newStrategy'.
+src/components/trading/trading-view.tsx(1253,77): error TS2304: Cannot find name 'setNewStrategy'.
+src/components/trading/trading-view.tsx(1253,97): error TS2304: Cannot find name 'newStrategy'.
+src/components/trading/trading-view.tsx(1266,24): error TS2304: Cannot find name 'newStrategy'.
+src/components/trading/trading-view.tsx(1267,34): error TS2552: Cannot find name 'setNewStrategy'. Did you mean 'setNewTrade'?
+src/components/trading/trading-view.tsx(1267,54): error TS2304: Cannot find name 'newStrategy'.
+src/components/trading/trading-view.tsx(1275,24): error TS2304: Cannot find name 'newStrategy'.
+src/components/trading/trading-view.tsx(1276,34): error TS2304: Cannot find name 'setNewStrategy'.
+src/components/trading/trading-view.tsx(1276,54): error TS2304: Cannot find name 'newStrategy'.
+src/components/trading/trading-view.tsx(1283,54): error TS2552: Cannot find name 'setIsAddStrategyOpen'. Did you mean 'setIsAddTradeOpen'?
+src/components/trading/trading-view.tsx(1287,24): error TS2552: Cannot find name 'handleAddStrategy'. Did you mean 'handleAddTrade'?
+src/components/trading/trading-view.tsx(1289,38): error TS2304: Cannot find name 'newStrategy'.
+src/components/ui/resizable.tsx(5,10): error TS2305: Module '"react-resizable-panels"' has no exported member 'Group'.
+src/components/ui/resizable.tsx(5,24): error TS2305: Module '"react-resizable-panels"' has no exported member 'Separator'.
+tredemaster/src/app/api/strategies/route.ts(24,33): error TS2339: Property 'strategy' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+tredemaster/src/app/api/strategies/route.ts(62,31): error TS2339: Property 'strategy' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+tredemaster/src/app/api/strategies/route.ts(105,39): error TS2339: Property 'strategy' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+tredemaster/src/app/api/strategies/route.ts(121,31): error TS2339: Property 'strategy' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+tredemaster/src/app/api/strategies/route.ts(152,39): error TS2339: Property 'strategy' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+tredemaster/src/app/api/strategies/route.ts(168,14): error TS2339: Property 'strategy' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+tredemaster/src/app/page.tsx(233,12): error TS2678: Type '"strategies"' is not comparable to type 'ActiveSection'.
+tredemaster/src/components/ui/resizable.tsx(5,10): error TS2305: Module '"react-resizable-panels"' has no exported member 'Group'.
+tredemaster/src/components/ui/resizable.tsx(5,24): error TS2305: Module '"react-resizable-panels"' has no exported member 'Separator'.

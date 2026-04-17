@@ -5,8 +5,9 @@ import { getAuthUser } from '@/lib/auth-middleware'
 // GET /api/trading-accounts/[id]/stats - إحصائيات حساب
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const user = await getAuthUser(request)
     
@@ -20,7 +21,7 @@ export async function GET(
     // التحقق من ملكية الحساب
     const account = await prisma.tradingAccount.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.userId
       }
     })
@@ -32,7 +33,7 @@ export async function GET(
     // جلب إحصائيات الحساب
     const trades = await prisma.trade.findMany({
       where: {
-        accountId: params.id,
+        accountId: id,
         status: 'closed'
       },
       select: {
