@@ -1,3 +1,8 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'

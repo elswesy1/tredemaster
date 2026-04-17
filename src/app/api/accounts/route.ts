@@ -1,3 +1,8 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+
 import { revalidateTag } from 'next/cache'
 /**
  * Accounts API Route - GET & POST
