@@ -144,10 +144,6 @@ export function TradingView() {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Debugging
-  useEffect(() => {
-    console.log(' [TRADING_VIEW_STATE]: isAddTradeOpen =', isAddTradeOpen);
-  }, [isAddTradeOpen]);
 
   // States
   const [activeTab, setActiveTab] = useState('overview')
@@ -163,6 +159,11 @@ export function TradingView() {
   const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null)
   const [tradeFilter, setTradeFilter] = useState<'all' | 'open' | 'closed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Debugging
+  useEffect(() => {
+    console.log(' [TRADING_VIEW_STATE]: isAddTradeOpen =', isAddTradeOpen);
+  }, [isAddTradeOpen]);
   const [quickMode, setQuickMode] = useState(true)
 
   // New Trade Form
