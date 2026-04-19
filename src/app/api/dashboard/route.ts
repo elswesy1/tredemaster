@@ -321,14 +321,24 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(dashboardData)
-  } catch (error) {
-    console.error('Error fetching dashboard data:', error)
+  } catch (error: any) {
+    console.error(' [DASHBOARD_ERROR]:', error)
+    
+    // Check for specific Prisma/DB errors
+    const errorMessage = error.message || 'Unknown error'
+    const isDbError = errorMessage.includes('database') || errorMessage.includes('Prisma') || error.code?.startsWith('P')
+    
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard data' },
+      { 
+        error: isDbError ? 'Database Connection Error' : 'Failed to fetch dashboard data',
+        message: errorMessage,
+        suggestion: isDbError ? 'Please check your database connectivity or run migrations.' : undefined
+      },
       { status: 500 }
     )
   }
 }
+
 
 // ========== Helper Functions ==========
 

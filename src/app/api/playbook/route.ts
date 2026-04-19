@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   // 1. تحقق من Rate Limit أولاً
   const limit = checkRateLimit(request, {
     windowMs: 60 * 1000,
-    maxRequests: 5,
+    maxRequests: 30,
     message: 'لقد تجاوزت حد الطلبات المسموح به (5 طلبات في الدقيقة)'
   });
 

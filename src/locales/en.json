@@ -13,7 +13,7 @@
     "rules": "Trading Rules",
     "aiAssistant": "AI Assistant",
     "tradingHub": "Trading Hub",
-    "playbook": "Trading Models",
+    "playbook": "Playbook",
     "logTrade": "Log Trade",
     "zenMode": "ZEN Mode",
     "pricing": "Pricing"
@@ -192,8 +192,8 @@
         "title": "Trading Plan",
         "tradingPlan": "Trading Plan",
         "tradingPlanPlaceholder": "Define your plan for today: goals, strategies...",
-        "strategiesToUse": "Trading Models",
-        "strategiesToUsePlaceholder": "Trading models you will use...",
+        "strategiesToUse": "Playbook Setups",
+        "strategiesToUsePlaceholder": "Playbook setups you will use...",
         "dailyGoal": "Daily Goal",
         "dailyGoalPlaceholder": "e.g., 2% or $200",
         "maxTrades": "Max Trades"

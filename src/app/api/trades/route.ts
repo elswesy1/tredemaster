@@ -77,8 +77,8 @@ export async function POST(request: NextRequest) {
         stopLoss,
         takeProfit,
         notes,
-        strategy, // Legacy string field
-        playbookId: strategy, // Assuming the strategy ID is passed
+        strategy: (strategy && !String(strategy).includes('-')) ? strategy : null,
+        playbookId: (strategy && String(strategy).includes('-')) ? strategy : null,
         userId: user.userId,
         portfolioId,
         accountId,

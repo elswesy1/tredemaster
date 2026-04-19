@@ -135,15 +135,18 @@ export function PlaybookView() {
         headers: getApiHeaders(),
       })
       
-      if (!response.ok) throw new Error('Failed to fetch playbooks')
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch playbooks');
+      }
       
       const data = await response.json()
       setPlaybooks(data)
-    } catch (error) {
-      console.error('Error fetching playbooks:', error)
+    } catch (error: any) {
+      console.error(' [PLAYBOOK_VIEW_ERROR]:', error)
       toast({
         title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? 'فشل في تحميل كتيب القواعد' : 'Failed to load playbook',
+        description: isRTL ? 'فشل في تحميل كتيب القواعد (Playbook)' : 'Failed to load playbook',
         variant: 'destructive',
       })
     } finally {
@@ -302,7 +305,7 @@ export function PlaybookView() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <ListChecks className="w-6 h-6 text-green-500" />
-            {isRTL ? 'نماذج التداول' : 'Trading Models'}
+            {isRTL ? 'كتيب القواعد (Playbook)' : 'Playbook'}
           </h2>
           <p className="text-muted-foreground">
             {isRTL ? 'وثق نماذج دخولك وقواعدك بوضوح' : 'Document your setups and rules clearly'}
@@ -560,7 +563,7 @@ export function PlaybookView() {
               disabled={isSaving}
             >
               {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isEditDialogOpen ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ النموذج' : 'Save Trading Model')}
+              {isEditDialogOpen ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ كتيب القواعد' : 'Save Playbook')}
             </Button>
           </DialogFooter>
         </DialogContent>

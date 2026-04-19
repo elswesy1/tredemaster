@@ -144,6 +144,11 @@ export function TradingView() {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Debugging
+  useEffect(() => {
+    console.log(' [TRADING_VIEW_STATE]: isAddTradeOpen =', isAddTradeOpen);
+  }, [isAddTradeOpen]);
+
   // States
   const [activeTab, setActiveTab] = useState('overview')
   const [trades, setTrades] = useState<Trade[]>([])
@@ -285,6 +290,9 @@ export function TradingView() {
         exitReason: newTrade.exitReason,
         status: newTrade.exitPrice ? 'closed' : 'open',
       }
+      
+      console.log(' [TRADING_VIEW]: Submitting trade data:', tradeData);
+
 
       const saved = await apiPost<Trade>('/api/trades', tradeData)
       setTrades([saved, ...trades])
@@ -530,7 +538,7 @@ export function TradingView() {
               <Lightbulb className="h-5 w-5 text-orange-500" />
               <div>
                 <div className="text-2xl font-bold">{playbooks.length}</div>
-                <div className="text-xs text-muted-foreground">{isRTL ? 'كتيب القواعد' : 'Playbook'}</div>
+                <div className="text-xs text-muted-foreground">{isRTL ? 'كتيبات القواعد' : 'Playbooks'}</div>
               </div>
             </div>
           </CardContent>
@@ -849,7 +857,7 @@ export function TradingView() {
         <TabsContent value="playbook" className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">
-              {isRTL ? 'نماذج التداول' : 'Trading Playbooks'}
+              {isRTL ? 'كتيبات القواعد' : 'Playbooks'}
             </h3>
             <Button onClick={() => setIsAddPlaybookOpen(true)} className="bg-green-500">
               <Plus className="h-4 w-4 mr-2" />

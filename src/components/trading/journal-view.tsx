@@ -877,7 +877,7 @@ export function JournalView() {
                               ))
                             ) : (
                               <SelectItem value="none" disabled>
-                                {isRTL ? 'لا توجد نماذج تداول' : 'No trading models'}
+                                {isRTL ? 'لا توجد قواعد في الكتيب' : 'No playbooks found'}
                               </SelectItem>
                             )}
                           </SelectContent>
