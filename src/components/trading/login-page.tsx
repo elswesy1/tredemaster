@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useI18n } from '@/lib/i18n'
-import { TrendingUp, ArrowLeft, Loader2, Eye, EyeOff, Mail } from 'lucide-react'
+import { TrendingUp, ArrowLeft, Loader2, Eye, EyeOff, Mail, Shield } from 'lucide-react'
 import Link from 'next/link'
 
 interface LoginPageProps {
@@ -144,7 +144,7 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-        <CardContent>
+
           {!show2FA ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && !requiresVerification && (
