@@ -5,6 +5,9 @@ import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { SignJWT } from 'jose'
 import { checkRateLimit } from '@/lib/rate-limiter'
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 // التحقق من صحة البريد الإلكتروني
 function isValidEmail(email: string): boolean {

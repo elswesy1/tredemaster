@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 // GET - Fetch login history for authenticated user
 export async function GET(request: NextRequest) {

@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { logAudit, AuditAction } from '@/lib/audit'
 import { Prisma } from '@prisma/client'
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 // GET /api/trading-accounts - جلب جميع الحسابات
 export async function GET(request: NextRequest) {

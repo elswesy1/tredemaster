@@ -3,6 +3,9 @@ import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { logAudit, AuditAction } from '@/lib/audit'
 import { checkRateLimit } from '@/lib/rate-limiter'
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 // GET - Fetch playbooks for authenticated user
 async function getPlaybooksHandler(request: NextRequest) {

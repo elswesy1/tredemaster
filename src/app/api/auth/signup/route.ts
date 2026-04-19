@@ -3,6 +3,9 @@ import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { randomBytes } from 'crypto'
 import nodemailer from 'nodemailer'
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 // إعدادات البريد الإلكتروني
 function getEmailTransporter() {

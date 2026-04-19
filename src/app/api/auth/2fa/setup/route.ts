@@ -3,6 +3,9 @@ import { TOTP, generateSecret } from "otplib";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 // إعداد 2FA - إنشاء سر جديد وQR Code
 export async function POST(request: NextRequest) {
