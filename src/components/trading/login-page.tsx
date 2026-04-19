@@ -24,6 +24,9 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null)
   const [resendingEmail, setResendingEmail] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [show2FA, setShow2FA] = useState(false)
+  const [tempToken, setTempToken] = useState<string | null>(null)
+  const [twoFactorCode, setTwoFactorCode] = useState('')
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -52,9 +55,45 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
         setIsLoading(false)
         return
       }
+
+      // التحقق من 2FA
+      if (data.twoFactorRequired) {
+        setShow2FA(true)
+        setTempToken(data.tempToken)
+        setIsLoading(false)
+        return
+      }
       
       setRequiresVerification(false)
       setVerifyEmail(null)
+      await onLogin(formData)
+    } catch (err) {
+      setError(language === 'ar' ? 'حدث خطأ في الاتصال' : 'Connection error')
+    }
+
+    setIsLoading(false)
+  }
+
+  const handle2FASubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('/api/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: twoFactorCode, tempToken })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || (language === 'ar' ? 'كود التحقق غير صحيح' : 'Invalid 2FA code'))
+        setIsLoading(false)
+        return
+      }
+
       await onLogin(formData)
     } catch (err) {
       setError(language === 'ar' ? 'حدث خطأ في الاتصال' : 'Connection error')
@@ -105,102 +144,162 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && !requiresVerification && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
-                {error}
-              </div>
-            )}
-            
-            {requiresVerification && !emailSent && (
-              <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-sm">
-                <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-medium mb-2">
-                      {language === 'ar' ? 'يرجى تأكيد بريدك الإلكتروني' : 'Please verify your email'}
-                    </p>
-                    <p className="mb-3">
-                      {language === 'ar' 
-                        ? 'تم إرسال رابط التأكيد إلى بريدك الإلكتروني.'
-                        : 'A verification link was sent to your email.'}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleResendVerification}
-                      disabled={resendingEmail}
-                    >
-                      {resendingEmail ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : language === 'ar' ? 'إعادة إرسال' : 'Resend'}
-                    </Button>
+        <CardContent>
+          {!show2FA ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && !requiresVerification && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
+                  {error}
+                </div>
+              )}
+              
+              {requiresVerification && !emailSent && (
+                <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-sm">
+                  <div className="flex items-start gap-3">
+                    <Mail className="h-5 w-5 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-medium mb-2">
+                        {language === 'ar' ? 'يرجى تأكيد بريدك الإلكتروني' : 'Please verify your email'}
+                      </p>
+                      <p className="mb-3">
+                        {language === 'ar' 
+                          ? 'تم إرسال رابط التأكيد إلى بريدك الإلكتروني.'
+                          : 'A verification link was sent to your email.'}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResendVerification}
+                        disabled={resendingEmail}
+                      >
+                        {resendingEmail ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : language === 'ar' ? 'إعادة إرسال' : 'Resend'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
-            {emailSent && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 text-sm">
-                {language === 'ar' 
-                  ? 'تم إرسال رابط التأكيد بنجاح!'
-                  : 'Verification link sent successfully!'}
-              </div>
-            )}
+              )}
+              
+              {emailSent && (
+                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 text-sm">
+                  {language === 'ar' 
+                    ? 'تم إرسال رابط التأكيد بنجاح!'
+                    : 'Verification link sent successfully!'}
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <Label>{t('auth.email')}</Label>
-              <Input
-                type="email"
-                placeholder="email@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t('auth.password')}</Label>
-              <div className="relative">
+              <div className="space-y-2">
+                <Label>{t('auth.email')}</Label>
                 <Input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="********"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  type="email"
+                  placeholder="email@example.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                 />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-600"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                language === 'ar' ? 'دخول' : 'Login'
-              )}
-            </Button>
-            
-            <div className="text-center">
-              <Link 
-                href="/forgot-password" 
-                className="text-sm text-cyan-400 hover:text-cyan-300 transition"
+              <div className="space-y-2">
+                <Label>{t('auth.password')}</Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="********"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600"
+                disabled={isLoading}
               >
-                {language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
-              </Link>
-            </div>
-          </form>
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  language === 'ar' ? 'دخول' : 'Login'
+                )}
+              </Button>
+              
+              <div className="text-center">
+                <Link 
+                  href="/forgot-password" 
+                  className="text-sm text-cyan-400 hover:text-cyan-300 transition"
+                >
+                  {language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+                </Link>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handle2FASubmit} className="space-y-6">
+              <div className="text-center space-y-2">
+                <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto">
+                  <Shield className="h-6 w-6 text-yellow-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">
+                  {language === 'ar' ? 'المصادقة الثنائية' : 'Two-Factor Authentication'}
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  {language === 'ar' 
+                    ? 'يرجى إدخال الكود المكون من 6 أرقام من تطبيق المصادقة الخاص بك.' 
+                    : 'Please enter the 6-digit code from your authenticator app.'}
+                </p>
+              </div>
+
+              {error && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm text-center">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Input
+                  type="text"
+                  placeholder="000000"
+                  maxLength={6}
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
+                  className="text-center text-2xl tracking-[0.5em] font-mono h-14 bg-white/5 border-white/10"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div className="space-y-3">
+                <Button
+                  type="submit"
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black py-6"
+                  disabled={isLoading || twoFactorCode.length !== 6}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    language === 'ar' ? 'تحقق ودخول' : 'Verify & Login'
+                  )}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full text-zinc-500"
+                  onClick={() => setShow2FA(false)}
+                >
+                  {language === 'ar' ? 'العودة لتسجيل الدخول' : 'Back to Login'}
+                </Button>
+              </div>
+            </form>
+          )}
 
           <div className="mt-4 text-center">
             <p className="text-sm text-muted-foreground">

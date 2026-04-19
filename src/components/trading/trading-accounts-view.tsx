@@ -232,6 +232,11 @@ export function TradingAccountsView() {
   const [showPassword, setShowPassword] = useState(false)
   const [saving, setSaving] = useState(false)
   const [stats, setStats] = useState<Record<string, AccountStats>>({})
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   // Fetch accounts
   const fetchAccounts = useCallback(async () => {
@@ -1088,7 +1093,7 @@ export function TradingAccountsView() {
           <div className="flex items-center justify-between pt-3 border-t border-gray-800">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="w-3 h-3" />
-              {account.lastSync 
+              {mounted && account.lastSync 
                 ? new Date(account.lastSync).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')
                 : (language === 'ar' ? 'لم تتم المزامنة' : 'Not synced')
               }

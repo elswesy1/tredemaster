@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { loginUser, setAuthCookie, getClientIP, getUserAgent } from '@/lib/auth-simple'
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
@@ -29,6 +30,16 @@ export async function POST(request: NextRequest) {
         { error: result.error },
         { status: 401 }
       )
+    }
+
+    // التحقق من تفعيل 2FA
+    if (result.twoFactorRequired) {
+      return NextResponse.json({
+        success: true,
+        twoFactorRequired: true,
+        tempToken: result.tempToken,
+        message: 'يجب إدخال كود المصادقة الثنائية'
+      })
     }
 
     // تعيين cookie للمصادقة

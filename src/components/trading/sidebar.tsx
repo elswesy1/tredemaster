@@ -44,6 +44,7 @@ const coreFeatures: { id: ActiveSection; labelKey: string; icon: React.ElementTy
 
 const tradingTools: { id: ActiveSection; labelKey: string; icon: React.ElementType }[] = [
   { id: 'accounts', labelKey: 'sidebar.accounts', icon: Link2 },
+  { id: 'security', labelKey: 'sidebar.security', icon: Shield },
 ]
 
 const analyticsFeatures: { id: ActiveSection; labelKey: string; icon: React.ElementType }[] = [

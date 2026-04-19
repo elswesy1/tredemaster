@@ -147,6 +147,7 @@ export type ActiveSection =
   | 'zen-mode'
   | 'pricing'
   | 'login-history'
+  | 'security'
 
 // Store State
 interface TradingStore {

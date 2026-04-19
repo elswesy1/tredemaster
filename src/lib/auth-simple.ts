@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
+import { TOTP } from 'otplib'
 
 const secretKey = process.env.NEXTAUTH_SECRET || 'trademaster-super-secret-key-2024'
 const key = new TextEncoder().encode(secretKey)
@@ -15,11 +16,20 @@ export async function createToken(payload: { userId: string; email: string }) {
     .sign(key)
 }
 
+// إنشاء Token مؤقت للمصادقة الثنائية
+export async function create2FAToken(payload: { userId: string }) {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('10m') // صلاحية 10 دقائق فقط
+    .sign(key)
+}
+
 // التحقق من JWT Token
 export async function verifyToken(token: string) {
   try {
     const { payload } = await jwtVerify(token, key)
-    return payload as { userId: string; email: string }
+    return payload as { userId: string; email: string; is2FA?: boolean }
   } catch {
     return null
   }
@@ -58,7 +68,10 @@ export async function loginUser(
   // البحث عن المستخدم
   const user = await prisma.user.findUnique({
     where: { email },
-    include: { subscription: true }
+    include: { 
+      subscription: true,
+      twoFactorAuth: true 
+    }
   })
 
   if (!user || !user.password) {
@@ -86,6 +99,15 @@ if (!user.emailVerified) {
     return { error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' }
   }
 
+  // التحقق مما إذا كان 2FA مفعلاً
+  if (user.twoFactorAuth?.enabled) {
+    const tempToken = await create2FAToken({ userId: user.id })
+    return {
+      twoFactorRequired: true,
+      tempToken
+    }
+  }
+
   // تحديث آخر تسجيل دخول
   await prisma.user.update({
     where: { id: user.id },
@@ -107,6 +129,32 @@ if (!user.emailVerified) {
     },
     token
   }
+}
+
+// التحقق من كود 2FA
+export async function verify2FACode(userId: string, code: string) {
+  const twoFactorAuth = await prisma.twoFactorAuth.findUnique({
+    where: { userId }
+  })
+
+  if (!twoFactorAuth || !twoFactorAuth.enabled) {
+    return { error: 'المصادقة الثنائية غير مفعلة لهذا المستخدم' }
+  }
+
+  const totp = new TOTP({ secret: twoFactorAuth.secret })
+  const isValid = totp.verify(code)
+
+  if (!isValid) {
+    return { error: 'كود التحقق غير صحيح' }
+  }
+
+  // تحديث وقت الاستخدام
+  await prisma.twoFactorAuth.update({
+    where: { userId },
+    data: { lastUsedAt: new Date() }
+  })
+
+  return { success: true }
 }
 
 // تسجيل مستخدم جديد

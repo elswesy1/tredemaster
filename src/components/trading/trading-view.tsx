@@ -159,6 +159,11 @@ export function TradingView() {
   const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null)
   const [tradeFilter, setTradeFilter] = useState<'all' | 'open' | 'closed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Debugging
   useEffect(() => {
@@ -282,8 +287,8 @@ export function TradingView() {
         lotSize: parseFloat(newTrade.lotSize),
         stopLoss: newTrade.stopLoss ? parseFloat(newTrade.stopLoss) : null,
         takeProfit: newTrade.takeProfit ? parseFloat(newTrade.takeProfit) : null,
-        playbook: playbooks.find(p => p.id === newTrade.strategyId)?.name,
-        playbookId: newTrade.strategyId,
+        playbook: newTrade.strategyId === 'none' ? null : playbooks.find(p => p.id === newTrade.strategyId)?.name,
+        playbookId: newTrade.strategyId === 'none' ? null : newTrade.strategyId,
         notes: newTrade.notes,
         emotions: newTrade.emotions,
         confidence: newTrade.confidence,
@@ -650,7 +655,9 @@ export function TradingView() {
                           <div>
                             <div className="font-medium">{trade.symbol}</div>
                             <div className="text-xs text-muted-foreground">
-                              {new Date(trade.closedAt || trade.openedAt).toLocaleDateString()}
+                              {mounted && (trade.closedAt || trade.openedAt) ? 
+                                new Date(trade.closedAt || trade.openedAt).toLocaleDateString() : 
+                                '...'}
                             </div>
                           </div>
                         </div>
@@ -843,7 +850,7 @@ export function TradingView() {
                           )}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {new Date(trade.openedAt).toLocaleDateString()}
+                          {mounted ? new Date(trade.openedAt).toLocaleDateString() : '...'}
                         </div>
                       </div>
                     </div>
@@ -1069,7 +1076,7 @@ export function TradingView() {
                   <SelectValue placeholder={isRTL ? 'اختر نموذج...' : 'Select playbook...'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{isRTL ? 'بدون نموذج' : 'No playbook'}</SelectItem>
+                  <SelectItem value="none">{isRTL ? 'بدون نموذج' : 'No playbook'}</SelectItem>
                   {playbooks.map(p => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
