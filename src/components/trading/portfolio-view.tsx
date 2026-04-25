@@ -28,6 +28,7 @@ import {
   Loader2,
   RefreshCw
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 // Account Types Configuration
 const ACCOUNT_TYPES = {
@@ -391,6 +392,21 @@ function PropFirmCard({ account, language }: { account: TradingAccount; language
 
 export function PortfolioView() {
   const { t, language } = useI18n()
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+  
+  const router = useRouter()
   const isRTL = language === 'ar'
   const [activeTab, setActiveTab] = useState('broker')
   const [accounts, setAccounts] = useState<TradingAccount[]>([])

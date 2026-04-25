@@ -109,7 +109,7 @@ export function TradingHubView() {
           </div>
           <div>
             <h2 className="text-2xl font-bold">{isRTL ? 'مركز التداول' : 'Trading Hub'}</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground" suppressHydrationWarning>
               {isRTL ? `آخر تحديث: ${lastUpdate.toLocaleTimeString('ar')}` : `Last update: ${lastUpdate.toLocaleTimeString()}`}
             </p>
           </div>

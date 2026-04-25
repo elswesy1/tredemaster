@@ -170,6 +170,20 @@ function DeleteAccountButton({
 
 export function AccountsView() {
   const { t, language } = useI18n()
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+  
   const router = useRouter()
   const [showAddForm, setShowAddForm] = useState(false)
   const [accounts, setAccounts] = useState<TradingAccount[]>([])
