@@ -772,7 +772,7 @@ export function TradingView() {
                 </p>
                 <Button onClick={() => setIsAddTradeOpen(true)} className="bg-green-500">
                   <Plus className="h-4 w-4 mr-2" />
-                  {isRTL ? ' صفحة جديدة' : 'New Trade'}
+                  {isRTL ? 'صفحة جديدة' : 'New Trade'}
                 </Button>
               </CardContent>
             </Card>
@@ -1058,7 +1058,7 @@ export function TradingView() {
                   <SelectValue placeholder={isRTL ? 'اختر استراتيجية...' : 'Select strategy...'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{isRTL ? 'بدون استراتيجية' : 'No strategy'}</SelectItem>
+                  <SelectItem value="none">{isRTL ? 'بدون استراتيجية' : 'No strategy'}</SelectItem>
                   {strategies.map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
