@@ -391,8 +391,13 @@ function PropFirmCard({ account, language }: { account: TradingAccount; language
 }
 
 export function PortfolioView() {
+  const router = useRouter()
   const { t, language } = useI18n()
+  const isRTL = language === 'ar'
   const [mounted, setMounted] = useState(false)
+  const [activeTab, setActiveTab] = useState('broker')
+  const [accounts, setAccounts] = useState<TradingAccount[]>([])
+  const [loading, setLoading] = useState(true)
   
   useEffect(() => {
     setMounted(true)
@@ -406,12 +411,6 @@ export function PortfolioView() {
     )
   }
   
-  const router = useRouter()
-  const isRTL = language === 'ar'
-  const [activeTab, setActiveTab] = useState('broker')
-  const [accounts, setAccounts] = useState<TradingAccount[]>([])
-  const [loading, setLoading] = useState(true)
-
   // Fetch accounts from API
   const fetchAccounts = useCallback(async () => {
     try {

@@ -169,8 +169,28 @@ function DeleteAccountButton({
 }
 
 export function AccountsView() {
+  const router = useRouter()
   const { t, language } = useI18n()
+  const isRTL = language === 'ar'
   const [mounted, setMounted] = useState(false)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [accounts, setAccounts] = useState<TradingAccount[]>([])
+  const [riskProfiles, setRiskProfiles] = useState<RiskProfile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Form state for new account
+  const [formData, setFormData] = useState({
+    name: '',
+    platform: 'MT4',
+    server: '',
+    accountNumber: '',
+    password: '',
+    type: 'live',
+    balance: '',
+    currency: 'USD',
+  })
   
   useEffect(() => {
     setMounted(true)
@@ -184,28 +204,6 @@ export function AccountsView() {
     )
   }
   
-  const router = useRouter()
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [accounts, setAccounts] = useState<TradingAccount[]>([])
-  const [riskProfiles, setRiskProfiles] = useState<RiskProfile[]>([])
-  const [loading, setLoading] = useState(true)
-  const [syncingId, setSyncingId] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // Form state for new account
-  const [formData, setFormData] = useState({
-    name: '',
-    platform: 'MT4',
-    server: '',
-    accountNumber: '',
-    password: '',
-    type: 'live',
-    balance: '',
-    currency: 'USD',
-  })
-
-  const isRTL = language === 'ar'
-
   // Fetch accounts with AbortController and proper dependencies
   const fetchAccounts = useCallback(async (signal?: AbortSignal) => {
     try {
