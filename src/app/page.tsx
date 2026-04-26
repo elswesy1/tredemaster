@@ -69,7 +69,8 @@ async function fetchCurrentUser(): Promise<User | null> {
   }
 }
 
-export default function Home() {
+// Separate component to handle auth initialization
+function HomeContent() {
   const { activeSection, setActiveSection, sidebarCollapsed } = useTradingStore()
   const { direction, language, t } = useI18n()
   
@@ -120,8 +121,7 @@ export default function Home() {
         }
       }
     }
-    // Use queueMicrotask to defer setState outside effect body
-    queueMicrotask(initializeState)
+    initializeState()
   }, [])
 
   // Apply direction on mount and language change
@@ -559,4 +559,8 @@ export default function Home() {
       <Toaster />
     </div>
   )
+}
+
+export default function Home() {
+  return <HomeContent />
 }
