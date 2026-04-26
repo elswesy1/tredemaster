@@ -1,8 +1,9 @@
 'use client'
+
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useI18n } from '@/lib/i18n'
-import { useState } from 'react'
 import {
   TrendingUp,
   Shield,
@@ -797,6 +798,20 @@ function LiveDemo({ lng }: { lng: string }) {
 // ============================================
 export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
   const { t, language } = useI18n()
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-cyan-950/30 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full border-4 border-green-500 border-t-transparent animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-950">
