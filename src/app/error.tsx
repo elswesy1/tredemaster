@@ -5,13 +5,13 @@ export default function GlobalError({
   reset 
 }: { 
   error: Error & { digest?: string }; 
-  reset: () => void;
+  reset: () => void; 
 }) {
   console.error('[Error Boundary]', error);
 
   return (
-    <html>
-      <body className="flex items-center justify-center min-h-screen bg-background">
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
+      <body className="flex items-center justify-center min-h-screen bg-background" suppressHydrationWarning>
         <div className="text-center p-8 border rounded-lg bg-card max-w-md">
           <h2 className="text-2xl font-bold text-destructive mb-4">
             حدث خطأ غير متوقع
