@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth-middleware'
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
 
 // POST /api/trading-accounts/[id]/sync - مزامنة حساب
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
   try {
+    const { id } = await params
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'غير مصرح', message: 'يجب تسجيل الدخول للوصول للبيانات' },
+        { status: 401 }
+      )
     }
 
     // التحقق من ملكية الحساب
@@ -37,15 +34,14 @@ export async function POST(
     await prisma.tradingAccount.update({
       where: { id },
       data: {
-        connectionStatus: 'syncing',  // ✅ تم الإصلاح: connectionStatus بدلاً من status
+        connectionStatus: 'syncing',
         lastSync: new Date()
       }
     })
 
     // محاكاة عملية المزامنة (في الإنتاج، ستتصل بـ MetaAPI أو TradingView)
-    // في الواقع، ستقوم بجلب البيانات من الـ broker
     const syncData = {
-      balance: account.balance + Math.random() * 100 - 50, // محاكاة
+      balance: account.balance + Math.random() * 100 - 50,
       equity: account.equity + Math.random() * 100 - 50,
       timestamp: new Date()
     }
@@ -61,7 +57,7 @@ export async function POST(
         equityBefore: account.equity,
         equityAfter: syncData.equity,
         tradesSynced: 0,
-        syncStatus: 'success'  // ✅ تم الإصلاح: syncStatus بدلاً من status
+        syncStatus: 'success'
       }
     })
 
@@ -71,7 +67,7 @@ export async function POST(
       data: {
         balance: syncData.balance,
         equity: syncData.equity,
-        connectionStatus: 'connected',  // ✅ تم الإصلاح
+        connectionStatus: 'connected',
         lastSync: new Date()
       }
     })
@@ -86,16 +82,17 @@ export async function POST(
     
     // تحديث حالة الخطأ
     try {
+      const { id } = await params
       await prisma.tradingAccount.update({
         where: { id },
         data: {
-          connectionStatus: 'error'  // ✅ تم الإصلاح
+          connectionStatus: 'error'
         }
       })
     } catch (e) {
       console.error('Error updating error status:', e)
     }
-    
+
     return NextResponse.json(
       { error: 'Failed to sync account' },
       { status: 500 }
@@ -108,15 +105,15 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
   try {
+    const { id } = await params
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'غير مصرح', message: 'يجب تسجيل الدخول للوصول للبيانات' },
+        { status: 401 }
+      )
     }
 
     // التحقق من ملكية الحساب
@@ -134,7 +131,7 @@ export async function GET(
     // جلب سجل المزامنة
     const syncLogs = await prisma.dailySyncLog.findMany({
       where: { accountId: id },
-      orderBy: { syncDate: 'desc' },  // ✅ تم الإصلاح
+      orderBy: { syncDate: 'desc' },
       take: 30
     })
 

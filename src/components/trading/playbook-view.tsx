@@ -6,9 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -24,87 +22,110 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useI18n } from '@/lib/i18n'
-import { getApiHeaders } from '@/lib/api'
-import { useToast } from '@/hooks/use-toast'
+import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 import {
   Plus,
-  TrendingUp,
-  TrendingDown,
   Target,
   Edit,
   Trash2,
-  BarChart3,
   Clock,
   Loader2,
   RefreshCw,
-  ListChecks,
-  ImageIcon,
+  BookOpen,
+  Image as ImageIcon,
+  CheckCircle,
+  Upload,
   X,
-  CheckCircle2
+  Globe
 } from 'lucide-react'
 
+// Playbook Interface
 interface Playbook {
   id: string
   name: string
   description: string | null
+  setupName: string | null
+  imageUrl: string | null
+  confluences: string | null  // JSON string from database
+  killZones: string | null    // JSON string from database
+  hardRules: string
   category: string | null
   timeframe: string | null
   entryRules: string | null
   exitRules: string | null
-  riskRules: string | null
-  setupName: string | null
-  rulesChecklist: string | null // Stringified JSON
-  setupScreenshotUrl: string | null
   totalTrades: number
   winningTrades: number
   losingTrades: number
   profitLoss: number
-  winRate: number | null
-  avgRRR: number | null
   isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-interface ChecklistItem {
-  id: string
-  text: string
-  required: boolean
 }
 
 interface PlaybookFormData {
   name: string
   description: string
+  setupName: string
+  imageUrl: string
+  confluences: string[]
+  killZones: string[]
+  hardRules: string
   category: string
   timeframe: string
   entryRules: string
   exitRules: string
-  riskRules: string
-  setupName: string
-  rulesChecklist: ChecklistItem[]
-  setupScreenshotUrl: string
 }
 
 const initialFormData: PlaybookFormData = {
   name: '',
   description: '',
-  category: 'technical',
+  setupName: '',
+  imageUrl: '',
+  confluences: [],
+  killZones: [],
+  hardRules: '',
+  category: 'smc',
   timeframe: 'H1',
   entryRules: '',
-  exitRules: '',
-  riskRules: '',
-  setupName: '',
-  rulesChecklist: [],
-  setupScreenshotUrl: ''
+  exitRules: ''
 }
+
+// Core Checklist Items (Permanent Pillars)
+const CORE_CHECK_ITEMS = [
+  { value: 'key_levels', key: 'core_check_key_levels' },
+  { value: 'liquidity', key: 'core_check_liquidity' },
+  { value: 'fvg', key: 'core_check_fvg' },
+  { value: 'trend', key: 'core_check_trend' },
+  { value: 'sr', key: 'core_check_sr' },
+  { value: 'bos', key: 'core_check_bos' },
+]
+
+// Additional Confluence Options
+const CONFLUENCE_OPTIONS = [
+  { value: 'liquidity_swept', label: { ar: 'اكتساح السيولة', en: 'Liquidity Swept' } },
+  { value: 'choch', label: { ar: 'ChoCH (تغيير الاتجاه)', en: 'ChoCH (Change of Character)' } },
+  { value: 'bos_extra', label: { ar: 'BOS إضافي', en: 'Extra BOS' } },
+  { value: 'fvg_extra', label: { ar: 'FVG إضافي', en: 'Extra FVG' } },
+  { value: 'ob', label: { ar: 'Order Block', en: 'Order Block' } },
+  { value: 'pd_array', label: { ar: 'Premium/Discount Array', en: 'Premium/Discount Array' } },
+  { value: 'equilibrium', label: { ar: 'نقطة التوازن', en: 'Equilibrium' } },
+  { value: 'optimal_entry', label: { ar: 'دخول مثالي', en: 'Optimal Entry' } },
+  { value: 'snr', label: { ar: 'دعم/مقاومة قوية', en: 'Strong Support/Resistance' } },
+]
+
+// Kill Zones (Trading Sessions)
+const KILL_ZONE_OPTIONS = [
+  { value: 'asia', label: { ar: 'آسيا', en: 'Asia' }, time: '00:00 - 08:00 UTC' },
+  { value: 'london', label: { ar: 'لندن', en: 'London' }, time: '08:00 - 16:00 UTC' },
+  { value: 'ny_am', label: { ar: 'نيويورك صباحاً', en: 'NY AM' }, time: '13:30 - 16:00 UTC' },
+  { value: 'ny_pm', label: { ar: 'نيويورك مساءً', en: 'NY PM' }, time: '16:00 - 21:00 UTC' },
+]
 
 export function PlaybookView() {
   const { t, language } = useI18n()
   const isRTL = language === 'ar'
-  const { toast } = useToast()
-  
+
   // States
   const [playbooks, setPlaybooks] = useState<Playbook[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -113,15 +134,22 @@ export function PlaybookView() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null)
   const [playbookToDelete, setPlaybookToDelete] = useState<Playbook | null>(null)
-  const [formData, setFormData] = useState<PlaybookFormData>(initialFormData)
-  const [newChecklistItem, setNewChecklistItem] = useState('')
+  const [newPlaybook, setNewPlaybook] = useState<PlaybookFormData>(initialFormData)
+  const [editPlaybook, setEditPlaybook] = useState<PlaybookFormData>(initialFormData)
+
+  // File Upload State
+  const [isDragging, setIsDragging] = useState(false)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string>('')
+
+  // Custom Rule State
+  const [newCustomRule, setNewCustomRule] = useState('')
 
   const categories = [
-    { value: 'technical', label: isRTL ? 'تحليل فني' : 'Technical' },
-    { value: 'fundamental', label: isRTL ? 'تحليل أساسي' : 'Fundamental' },
-    { value: 'smc', label: isRTL ? 'SMC/ICT' : 'SMC/ICT' },
-    { value: 'price-action', label: isRTL ? 'برايس أكشن' : 'Price Action' },
-    { value: 'hybrid', label: isRTL ? 'مختلط' : 'Hybrid' }
+    { value: 'smc', label: 'SMC (Smart Money)' },
+    { value: 'technical', label: 'Technical' },
+    { value: 'fundamental', label: 'Fundamental' },
+    { value: 'hybrid', label: 'Hybrid' }
   ]
 
   const timeframes = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1']
@@ -130,466 +158,461 @@ export function PlaybookView() {
   const fetchPlaybooks = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/playbook', {
+      const response = await fetch('/api/playbooks', {
         method: 'GET',
-        headers: getApiHeaders(),
+        credentials: 'include',
       })
-      
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to fetch playbooks');
+        throw new Error('Failed to fetch playbooks')
       }
-      
+
       const data = await response.json()
-      setPlaybooks(data)
-    } catch (error: any) {
-      console.error(' [PLAYBOOK_VIEW_ERROR]:', error)
-      toast({
-        title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? 'فشل في تحميل كتيب القواعد (Playbook)' : 'Failed to load playbook',
-        variant: 'destructive',
-      })
+      setPlaybooks(data || [])
+    } catch (error) {
+      console.error('Error fetching playbooks:', error)
+      toast.error(t('playbook.failed_to_load'))
     } finally {
       setIsLoading(false)
     }
-  }, [toast, isRTL])
+  }, [t])
 
   useEffect(() => {
     fetchPlaybooks()
   }, [fetchPlaybooks])
 
-  // Checklist Handlers
-  const addChecklistItem = () => {
-    if (!newChecklistItem.trim()) return
-    const newItem: ChecklistItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      text: newChecklistItem.trim(),
-      required: true
+  // File Upload Handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    const files = e.dataTransfer.files
+    if (files && files[0]) {
+      handleFileSelect(files[0])
     }
-    setFormData({
-      ...formData,
-      rulesChecklist: [...formData.rulesChecklist, newItem]
-    })
-    setNewChecklistItem('')
   }
 
-  const removeChecklistItem = (id: string) => {
-    setFormData({
-      ...formData,
-      rulesChecklist: formData.rulesChecklist.filter(item => item.id !== id)
-    })
+  const handleFileSelect = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('playbook.select_image_file'))
+      return
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      toast.error(t('playbook.file_size_limit'))
+      return
+    }
+    
+    setUploadedFile(file)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setPreviewUrl(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
   }
 
-  // Create Playbook
-  const handleSavePlaybook = async (isUpdate = false) => {
-    if (!formData.name.trim()) {
-      toast({
-        title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? 'يرجى إدخال اسم الكتيب' : 'Please enter a name',
-        variant: 'destructive',
-      })
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files[0]) {
+      handleFileSelect(files[0])
+    }
+  }
+
+  const clearUploadedFile = () => {
+    setUploadedFile(null)
+    setPreviewUrl('')
+  }
+
+  // Confluence Handlers
+  const toggleConfluence = (value: string, isEdit: boolean = false) => {
+    const formData = isEdit ? editPlaybook : newPlaybook
+    const setFormData = isEdit ? setEditPlaybook : setNewPlaybook
+    
+    const current = formData.confluences
+    const updated = current.includes(value)
+      ? current.filter(c => c !== value)
+      : [...current, value]
+    
+    setFormData({ ...formData, confluences: updated })
+  }
+
+  // Kill Zone Handlers
+  const toggleKillZone = (value: string, isEdit: boolean = false) => {
+    const formData = isEdit ? editPlaybook : newPlaybook
+    const setFormData = isEdit ? setEditPlaybook : setNewPlaybook
+    
+    const current = formData.killZones
+    const updated = current.includes(value)
+      ? current.filter(k => k !== value)
+      : [...current, value]
+    
+    setFormData({ ...formData, killZones: updated })
+  }
+
+  // Create/Update Playbook
+  const handleAddPlaybook = async () => {
+    if (!newPlaybook.name.trim()) {
+      toast.error(t('playbook.enter_model_name'))
       return
     }
 
     try {
       setIsSaving(true)
-      const url = '/api/playbook'
-      const method = isUpdate ? 'PUT' : 'POST'
-      
-      const payload = {
-        ...formData,
-        id: isUpdate ? selectedPlaybook?.id : undefined,
-      }
-
-      const response = await fetch(url, {
-        method,
-        headers: getApiHeaders(),
-        body: JSON.stringify(payload),
+      const response = await fetch('/api/playbooks', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newPlaybook,
+          confluences: JSON.stringify(newPlaybook.confluences),
+          killZones: JSON.stringify(newPlaybook.killZones),
+        }),
       })
       
-      if (!response.ok) throw new Error('Failed to save playbook')
+      if (!response.ok) throw new Error('Failed to create playbook')
       
-      const saved = await response.json()
-      
-      if (isUpdate) {
-        setPlaybooks(playbooks.map(p => p.id === saved.id ? saved : p))
-        setIsEditDialogOpen(false)
-      } else {
-        setPlaybooks([saved, ...playbooks])
-        setIsAddDialogOpen(false)
-      }
-      
-      setFormData(initialFormData)
-      toast({
-        title: isRTL ? 'نجاح' : 'Success',
-        description: isRTL ? 'تم حفظ كتيب القواعد بنجاح' : 'Playbook saved successfully',
-      })
+      const createdPlaybook = await response.json()
+      setPlaybooks([createdPlaybook, ...playbooks])
+      setIsAddDialogOpen(false)
+      setNewPlaybook(initialFormData)
+      clearUploadedFile()
+      toast.success(t('playbook.added_successfully'))
     } catch (error) {
-      toast({
-        title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? 'فشل في الحفظ' : 'Failed to save',
-        variant: 'destructive',
-      })
+      console.error('Error creating playbook:', error)
+      toast.error(t('playbook.failed_to_add'))
     } finally {
       setIsSaving(false)
     }
   }
 
-  const handleDeletePlaybook = async (id: string) => {
+  const handleUpdatePlaybook = async () => {
+    if (!selectedPlaybook || !editPlaybook.name.trim()) {
+      toast.error(t('playbook.enter_model_name'))
+      return
+    }
+
     try {
       setIsSaving(true)
-      const response = await fetch(`/api/playbook?id=${id}`, {
+      const response = await fetch(`/api/playbooks/${selectedPlaybook.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...editPlaybook,
+          confluences: JSON.stringify(editPlaybook.confluences),
+          killZones: JSON.stringify(editPlaybook.killZones),
+        }),
+      })
+      
+      if (!response.ok) throw new Error('Failed to update playbook')
+      
+      const updatedPlaybook = await response.json()
+      setPlaybooks(playbooks.map(p => p.id === selectedPlaybook.id ? updatedPlaybook : p))
+      setIsEditDialogOpen(false)
+      setSelectedPlaybook(null)
+      setEditPlaybook(initialFormData)
+      toast.success(t('playbook.updated_successfully'))
+    } catch (error) {
+      console.error('Error updating playbook:', error)
+      toast.error(t('playbook.failed_to_update'))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeletePlaybook = async () => {
+    if (!playbookToDelete) return
+
+    try {
+      const response = await fetch(`/api/playbooks/${playbookToDelete.id}`, {
         method: 'DELETE',
-        headers: getApiHeaders(),
+        credentials: 'include',
       })
       
       if (!response.ok) throw new Error('Failed to delete')
       
-      setPlaybooks(playbooks.filter(p => p.id !== id))
+      setPlaybooks(playbooks.filter(p => p.id !== playbookToDelete.id))
       setPlaybookToDelete(null)
-      setSelectedPlaybook(null)
-      
-      toast({
-        title: isRTL ? 'نجاح' : 'Success',
-        description: isRTL ? 'تم الحذف بنجاح' : 'Deleted successfully',
-      })
+      toast.success(t('playbook.deleted_successfully'))
     } catch (error) {
-      toast({
-        title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? 'فشل في الحذف' : 'Failed to delete',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsSaving(false)
+      console.error('Error deleting playbook:', error)
+      toast.error(t('playbook.failed_to_delete'))
     }
   }
 
   const openEditDialog = (playbook: Playbook) => {
     setSelectedPlaybook(playbook)
-    setFormData({
+    setEditPlaybook({
       name: playbook.name,
       description: playbook.description || '',
-      category: playbook.category || 'technical',
+      setupName: playbook.setupName || '',
+      imageUrl: playbook.imageUrl || '',
+      confluences: playbook.confluences ? JSON.parse(playbook.confluences) : [],
+      killZones: playbook.killZones ? JSON.parse(playbook.killZones) : [],
+      hardRules: playbook.hardRules || '',
+      category: playbook.category || 'smc',
       timeframe: playbook.timeframe || 'H1',
       entryRules: playbook.entryRules || '',
       exitRules: playbook.exitRules || '',
-      riskRules: playbook.riskRules || '',
-      setupName: playbook.setupName || '',
-      rulesChecklist: playbook.rulesChecklist ? JSON.parse(playbook.rulesChecklist) : [],
-      setupScreenshotUrl: playbook.setupScreenshotUrl || ''
     })
     setIsEditDialogOpen(true)
   }
 
-  const getCategoryBadge = (category: string | null) => {
-    const cat = category || 'technical'
-    const colors: Record<string, string> = {
-      technical: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-      fundamental: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-      smc: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-      'price-action': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-      hybrid: 'bg-orange-500/10 text-orange-500 border-orange-500/20'
-    }
-    const filtered = categories.find(c => c.value === cat)
-    return (
-      <Badge variant="outline" className={colors[cat]}>
-        {filtered?.label || cat}
-      </Badge>
-    )
+  const addCustomRule = (isEdit: boolean = false) => {
+    if (!newCustomRule.trim()) return
+    const formData = isEdit ? editPlaybook : newPlaybook
+    const setFormData = isEdit ? setEditPlaybook : setNewPlaybook
+    const customValue = `custom_${Date.now()}`
+    const updated = [...formData.confluences, customValue]
+    setFormData({ ...formData, confluences: updated })
+    setNewCustomRule('')
+    toast.success(isRTL ? 'تم إضافة القاعدة المخصصة' : 'Custom rule added')
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <ListChecks className="w-6 h-6 text-green-500" />
-            {isRTL ? 'كتيب القواعد (Playbook)' : 'Playbook'}
-          </h2>
-          <p className="text-muted-foreground">
-            {isRTL ? 'وثق نماذج دخولك وقواعدك بوضوح' : 'Document your setups and rules clearly'}
-          </p>
+  const PlaybookForm = ({ formData, setFormData, isEdit = false }: { 
+    formData: PlaybookFormData
+    setFormData: React.Dispatch<React.SetStateAction<PlaybookFormData>>
+    isEdit?: boolean 
+  }) => (
+    <div className="space-y-6 max-h-[60vh] overflow-y-auto px-1">
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>{t('playbook.model_name')} *</Label>
+            <Input 
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder={t('playbook.model_name_placeholder')}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>{t('playbook.setup_name')}</Label>
+            <Input 
+              value={formData.setupName}
+              onChange={(e) => setFormData({ ...formData, setupName: e.target.value })}
+              placeholder={t('playbook.setup_name_placeholder')}
+            />
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={fetchPlaybooks} disabled={isLoading}>
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button 
-            onClick={() => {
-              setFormData(initialFormData)
-              setIsAddDialogOpen(true)
-            }} 
-            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-lg hover:shadow-green-500/20 transition-all font-medium"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {isRTL ? 'إضافة نموذج' : 'Add Setup'}
-          </Button>
+        <div className="space-y-2">
+          <Label>{t('playbook.description')}</Label>
+          <Textarea 
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            placeholder={t('playbook.description_placeholder')}
+            rows={2}
+          />
         </div>
       </div>
 
-      {/* Stats Cards */}
+      <div className="space-y-2">
+        <Label>{t('playbook.reference_chart')}</Label>
+        {!previewUrl ? (
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={cn(
+              "border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer",
+              isDragging ? "border-cyan-500 bg-cyan-500/10" : "border-gray-700 hover:border-gray-600"
+            )}
+          >
+            <input type="file" accept="image/*" onChange={handleFileInputChange} className="hidden" id="file-upload" />
+            <label htmlFor="file-upload" className="cursor-pointer">
+              <Upload className="h-10 w-10 mx-auto text-gray-400 mb-3" />
+              <p className="text-sm text-gray-400">{t('playbook.drag_and_drop_image')}</p>
+            </label>
+          </div>
+        ) : (
+          <div className="relative rounded-lg overflow-hidden border border-gray-700">
+            <img src={previewUrl} alt="Preview" className="w-full h-48 object-cover" />
+            <Button variant="destructive" size="sm" className="absolute top-2 right-2" onClick={clearUploadedFile}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        <Label className="flex items-center gap-2">
+          {t('playbook.confluence_checklist')}
+          <Badge variant="outline" className="text-xs">{isRTL ? 'اختر الشروط المطلوبة' : 'Select required conditions'}</Badge>
+        </Label>
+        <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-muted/20 border border-border">
+          {CORE_CHECK_ITEMS.map((item) => (
+            <label key={item.value} className="flex items-center gap-2 cursor-pointer hover:bg-muted/30 p-2 rounded transition-colors group">
+              <Checkbox checked={formData.confluences.includes(item.value)} onCheckedChange={() => toggleConfluence(item.value, isEdit)} className="border-gold/50 data-[state=checked]:bg-gold data-[state=checked]:text-navy-dark" />
+              <span className="text-sm text-gold group-hover:text-gold-light transition-colors font-medium">{t(`playbook.${item.key}`)}</span>
+            </label>
+          ))}
+          {CONFLUENCE_OPTIONS.map((option) => (
+            <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-muted/30 p-2 rounded transition-colors">
+              <Checkbox checked={formData.confluences.includes(option.value)} onCheckedChange={() => toggleConfluence(option.value, isEdit)} />
+              <span className="text-sm">{isRTL ? option.label.ar : option.label.en}</span>
+            </label>
+          ))}
+          <div className="col-span-2 flex gap-2 pt-2 border-t border-border mt-2">
+            <Input placeholder={t('playbook.custom_rule_placeholder')} className="flex-1 text-sm" value={newCustomRule} onChange={(e) => setNewCustomRule(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addCustomRule(isEdit)} />
+            <Button variant="outline" size="icon" className="shrink-0" onClick={() => addCustomRule(isEdit)} disabled={!newCustomRule.trim()}><Plus className="h-4 w-4" /></Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <Label>{t('playbook.kill_zones')}</Label>
+        <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-muted/30 border border-border">
+          {KILL_ZONE_OPTIONS.map((zone) => (
+            <label key={zone.value} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors">
+              <Checkbox checked={formData.killZones.includes(zone.value)} onCheckedChange={() => toggleKillZone(zone.value, isEdit)} />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{isRTL ? zone.label.ar : zone.label.en}</span>
+                <span className="text-xs text-muted-foreground">{zone.time}</span>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>{t('playbook.execution_rules')}</Label>
+        <Textarea value={formData.hardRules} onChange={(e) => setFormData({ ...formData, hardRules: e.target.value })} placeholder={t('playbook.execution_rules_placeholder')} rows={4} className="font-mono text-sm" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>{t('playbook.category')}</Label>
+          <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>{t('playbook.timeframe')}</Label>
+          <Select value={formData.timeframe} onValueChange={(v) => setFormData({ ...formData, timeframe: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {timeframes.map((tf) => <SelectItem key={tf} value={tf}>{tf}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <BookOpen className="h-6 w-6 text-cyan-500" />
+            {t('sidebar.playbook')}
+          </h2>
+          <p className="text-muted-foreground mt-1">{t('playbook.create_and_manage')}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={fetchPlaybooks} disabled={isLoading}><RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} /></Button>
+          <Button className="bg-gradient-to-r from-cyan-500 to-emerald-500 text-black" onClick={() => { setNewPlaybook(initialFormData); clearUploadedFile(); setIsAddDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />{t('playbook.create_model')}</Button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 border-green-500/20">
+        <Card className="bg-gradient-to-br from-cyan-500/10 to-emerald-500/5 border-cyan-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/20">
-                <Target className="w-6 h-6 text-white" />
-              </div>
+              <div className="w-12 h-12 rounded-2xl bg-cyan-700 flex items-center justify-center shadow-lg shadow-cyan-500/20"><Globe className="w-6 h-6 text-white" /></div>
               <div>
                 <div className="text-2xl font-bold">{playbooks.length}</div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
-                  {isRTL ? 'إجمالي النماذج' : 'Total Setups'}
-                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t('playbook.total_models') || (isRTL ? 'إجمالي النماذج' : 'Total Models')}</div>
               </div>
             </div>
           </CardContent>
         </Card>
-        {/* ... Other stats could go here ... */}
       </div>
 
-      {/* Grid List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {playbooks.map((playbook) => (
-          <Card 
-            key={playbook.id} 
-            className="group hover:border-green-500/30 transition-all duration-300 bg-card/50 backdrop-blur-sm relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="flex gap-1">
-                <Button variant="ghost" size="icon" onClick={() => openEditDialog(playbook)} className="h-8 w-8">
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setPlaybookToDelete(playbook)} className="h-8 w-8 text-red-500">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-            
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center border border-green-500/20">
-                  <CheckCircle2 className="h-7 w-7 text-green-500" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-lg leading-tight">{playbook.name}</CardTitle>
-                    {getCategoryBadge(playbook.category)}
-                  </div>
-                  <CardDescription className="line-clamp-1">{playbook.setupName || playbook.description || 'No description'}</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm bg-muted/30 p-3 rounded-xl">
-                  <div>
-                    <span className="text-muted-foreground block text-xs">{isRTL ? 'الإطار الزمني' : 'Timeframe'}</span>
-                    <span className="font-semibold">{playbook.timeframe || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-xs">{isRTL ? 'الربح الإجمالي' : 'Total Profit'}</span>
-                    <span className={playbook.profitLoss >= 0 ? 'text-green-500' : 'text-red-500'}>
-                      ${Math.abs(playbook.profitLoss).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                {playbook.rulesChecklist && (
-                  <div className="space-y-1.5">
-                    <span className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-1.5">
-                      <ListChecks className="w-3.5 h-3.5" />
-                      {isRTL ? 'قائمة القواعد' : 'Rule Checklist'}
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {JSON.parse(playbook.rulesChecklist).slice(0, 3).map((item: any) => (
-                        <Badge key={item.id} variant="secondary" className="px-2 py-0 text-[10px] bg-background">
-                          {item.text}
-                        </Badge>
-                      ))}
-                      {JSON.parse(playbook.rulesChecklist).length > 3 && (
-                        <Badge variant="outline" className="text-[10px] border-dashed">
-                          +{JSON.parse(playbook.rulesChecklist).length - 3}
-                        </Badge>
-                      )}
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+      ) : playbooks.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Target className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">{t('playbook.no_models_yet')}</p>
+            <Button className="mt-4 bg-gradient-to-r from-cyan-500 to-emerald-500 text-black" onClick={() => setIsAddDialogOpen(true)}><Plus className="h-4 w-4 mr-2" />{t('playbook.create_model')}</Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {playbooks.map((playbook) => {
+            const winRate = playbook.totalTrades > 0 ? (playbook.winningTrades / playbook.totalTrades) * 100 : 0
+            const confluences = playbook.confluences ? JSON.parse(playbook.confluences) : []
+            const killZones = playbook.killZones ? JSON.parse(playbook.killZones) : []
+            return (
+              <Card key={playbook.id} className="hover:border-cyan-500/50 transition-colors">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{playbook.name}</CardTitle>
+                      {playbook.setupName && <CardDescription className="text-cyan-400">{playbook.setupName}</CardDescription>}
                     </div>
+                    <Badge variant={playbook.isActive ? "default" : "secondary"}>{playbook.category?.toUpperCase() || 'SMC'}</Badge>
                   </div>
-                )}
-                
-                {playbook.setupScreenshotUrl && (
-                  <Button 
-                    variant="link" 
-                    className="p-0 h-auto text-xs text-green-500"
-                    onClick={() => window.open(playbook.setupScreenshotUrl!, '_blank')}
-                  >
-                    <ImageIcon className="w-3.5 h-3.5 mr-1" />
-                    {isRTL ? 'عرض صورة النموذج' : 'View Setup Screenshot'}
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Add/Edit Dialog */}
-      <Dialog 
-        open={isAddDialogOpen || isEditDialogOpen} 
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsAddDialogOpen(false)
-            setIsEditDialogOpen(false)
-          }
-        }}
-      >
-        <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>
-              {isEditDialogOpen ? (isRTL ? 'تعديل النموذج' : 'Edit Setup') : (isRTL ? 'إضافة نموذج جديد' : 'New Playbook Setup')}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{isRTL ? 'اسم النموذج العام' : 'Setup Name'} *</Label>
-                <Input 
-                  value={formData.name} 
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  placeholder="e.g. MSS + FVG"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{isRTL ? 'اسم النموذج التفصيلي' : 'Entry Setup Name'}</Label>
-                <Input 
-                  value={formData.setupName} 
-                  onChange={e => setFormData({...formData, setupName: e.target.value})}
-                  placeholder="e.g. Bearish Breaker"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{isRTL ? 'الفئة' : 'Category'}</Label>
-                  <Select value={formData.category} onValueChange={v => setFormData({...formData, category: v})}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>{isRTL ? 'الإطار الزمني' : 'Timeframe'}</Label>
-                  <Select value={formData.timeframe} onValueChange={v => setFormData({...formData, timeframe: v})}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {timeframes.map(tf => <SelectItem key={tf} value={tf}>{tf}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>{isRTL ? 'رابط صورة النموذج' : 'Setup Screenshot URL'}</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    value={formData.setupScreenshotUrl} 
-                    onChange={e => setFormData({...formData, setupScreenshotUrl: e.target.value})}
-                    placeholder="https://..."
-                  />
-                  <Button size="icon" variant="outline"><ImageIcon className="h-4 w-4"/></Button>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="flex items-center justify-between">
-                  <span>{isRTL ? 'قائمة التحقق (Checklist)' : 'Rule Checklist'}</span>
-                  <Badge variant="secondary" className="text-[10px]">{formData.rulesChecklist.length}</Badge>
-                </Label>
-                <div className="flex gap-2">
-                  <Input 
-                    value={newChecklistItem} 
-                    onChange={e => setNewChecklistItem(e.target.value)}
-                    placeholder={isRTL ? 'أضف قاعدة جديدة...' : 'Add a rule...'}
-                    onKeyDown={e => e.key === 'Enter' && addChecklistItem()}
-                  />
-                  <Button size="icon" onClick={addChecklistItem}><Plus className="h-4 w-4"/></Button>
-                </div>
-                <ScrollArea className="h-[200px] border rounded-lg p-3 bg-muted/20">
-                  <div className="space-y-2">
-                    {formData.rulesChecklist.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between group bg-card p-2 rounded-md border shadow-sm">
-                        <div className="flex items-center gap-2">
-                          <Checkbox checked disabled />
-                          <span className="text-sm">{item.text}</span>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500"
-                          onClick={() => removeChecklistItem(item.id)}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ))}
-                    {formData.rulesChecklist.length === 0 && (
-                      <div className="text-center py-10 text-muted-foreground text-xs italic">
-                        No rules added yet
-                      </div>
-                    )}
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="p-2 rounded-lg bg-muted/30"><p className="text-xs text-muted-foreground">{t('playbook.trades')}</p><p className="font-bold">{playbook.totalTrades}</p></div>
+                    <div className="p-2 rounded-lg bg-muted/30"><p className="text-xs text-muted-foreground">{t('playbook.win_rate')}</p><p className={cn("font-bold", winRate >= 60 ? "text-green-500" : winRate >= 40 ? "text-yellow-500" : "text-red-500")}>{winRate.toFixed(0)}%</p></div>
+                    <div className="p-2 rounded-lg bg-muted/30"><p className="text-xs text-muted-foreground">{t('playbook.p_l')}</p><p className={cn("font-bold", playbook.profitLoss >= 0 ? "text-green-500" : "text-red-500")}>${playbook.profitLoss.toFixed(0)}</p></div>
                   </div>
-                </ScrollArea>
-              </div>
-            </div>
-          </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(playbook)}><Edit className="h-4 w-4 mr-1" />{t('playbook.edit')}</Button>
+                    <Button variant="outline" size="sm" className="text-red-500 hover:text-red-400" onClick={() => setPlaybookToDelete(playbook)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
 
-          <div className="space-y-2 py-2">
-            <Label>{isRTL ? 'وصف أو ملاحظات' : 'Description/Notes'}</Label>
-            <Textarea 
-              value={formData.description} 
-              onChange={e => setFormData({...formData, description: e.target.value})}
-              rows={3}
-            />
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setIsEditDialogOpen(false); }}>
-              {isRTL ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button 
-              onClick={() => handleSavePlaybook(isEditDialogOpen)} 
-              className="bg-green-500"
-              disabled={isSaving}
-            >
-              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isEditDialogOpen ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ كتيب القواعد' : 'Save Playbook')}
-            </Button>
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>{t('playbook.create_new_model')}</DialogTitle></DialogHeader>
+          <PlaybookForm formData={newPlaybook} setFormData={setNewPlaybook} />
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>{t('playbook.cancel')}</Button>
+            <Button className="bg-gradient-to-r from-cyan-500 to-emerald-500 text-black" onClick={handleAddPlaybook} disabled={isSaving}>{isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}{t('playbook.create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>{t('playbook.edit_model')}</DialogTitle></DialogHeader>
+          <PlaybookForm formData={editPlaybook} setFormData={setEditPlaybook} isEdit />
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>{t('playbook.cancel')}</Button>
+            <Button className="bg-gradient-to-r from-cyan-500 to-emerald-500 text-black" onClick={handleUpdatePlaybook} disabled={isSaving}>{isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}{t('playbook.save_changes')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!playbookToDelete} onOpenChange={() => setPlaybookToDelete(null)}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isRTL ? 'تأكيد الحذف' : 'Confirm Delete'}</DialogTitle>
-            <DialogDescription>
-              {isRTL ? 'هل أنت متأكد من حذف هذا النموذج؟' : 'Are you sure you want to delete this setup?'}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPlaybookToDelete(null)}>
-              {isRTL ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={() => playbookToDelete && handleDeletePlaybook(playbookToDelete.id)}
-              disabled={isSaving}
-            >
-              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isRTL ? 'حذف نهائي' : 'Delete Permanent'}
-            </Button>
+          <DialogHeader><DialogTitle className="text-red-500">{t('playbook.confirm_delete')}</DialogTitle><DialogDescription>{isRTL ? `هل أنت متأكد من حذف "${playbookToDelete?.name}"؟` : `Are you sure you want to delete "${playbookToDelete?.name}"?`}</DialogDescription></DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPlaybookToDelete(null)}>{t('playbook.cancel')}</Button>
+            <Button variant="destructive" onClick={handleDeletePlaybook}><Trash2 className="h-4 w-4 mr-2" />{t('playbook.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

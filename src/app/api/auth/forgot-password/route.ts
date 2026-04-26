@@ -1,11 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
+
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { rateLimit, getRateLimitKey, getClientIp, getRateLimitHeaders } from '@/lib/rate-limiter'
+
 export async function POST(request: NextRequest) {
   try {
+    // ✅ Rate Limiting على forgot-password
+    const ip = getClientIp(request)
+    const rl = rateLimit(getRateLimitKey(null, 'password_reset', ip), 'password_reset')
+    
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'Too many password reset requests', retryAfter: rl.retryAfter },
+        { 
+          status: 429,
+          headers: getRateLimitHeaders(3, 0, rl.resetAt)
+        }
+      )
+    }
+    
     const { email } = await request.json()
     
     if (!email) {

@@ -1,31 +1,33 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getAuthUser } from '@/lib/auth-middleware'
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
+
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { getAuthUser } from '@/lib/auth-middleware'
 
 // GET /api/trading-accounts/[id]/stats - إحصائيات حساب
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
   try {
+    const { id } = await params
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'Auth required' },
+        { status: 401 }
+      )
     }
 
     // التحقق من ملكية الحساب
     const account = await prisma.tradingAccount.findFirst({
       where: {
         id,
-        userId: user.userId
+        userId: user.userId,
+        deletedAt: null
       }
     })
 
@@ -37,14 +39,12 @@ export async function GET(
     const trades = await prisma.trade.findMany({
       where: {
         accountId: id,
-        status: 'closed'
+        status: 'closed',
+        deletedAt: null
       },
       select: {
         profitLoss: true,
-        openedAt: true,
-        closedAt: true,
-        symbol: true,
-        type: true
+        closedAt: true
       }
     })
 
@@ -54,22 +54,12 @@ export async function GET(
     const totalProfit = trades.reduce((sum, t) => sum + (t.profitLoss || 0), 0)
     const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0
 
-    // إحصائيات الأسبوع الحالي
-    const weekStart = new Date()
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay())
-    weekStart.setHours(0, 0, 0, 0)
-
-    const weeklyTrades = trades.filter(t => t.closedAt && t.closedAt >= weekStart)
-    const weeklyProfit = weeklyTrades.reduce((sum, t) => sum + (t.profitLoss || 0), 0)
-
     return NextResponse.json({
       totalTrades,
       winningTrades,
       losingTrades,
       totalProfit,
       winRate,
-      weeklyTrades: weeklyTrades.length,
-      weeklyProfit,
       balance: account.balance,
       equity: account.equity,
       profitLoss: account.equity - account.balance

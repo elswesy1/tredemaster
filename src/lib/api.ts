@@ -10,6 +10,7 @@ export async function apiGet<T>(url: string): Promise<T> {
   const response = await fetch(url, {
     method: 'GET',
     headers: getApiHeaders(),
+    credentials: 'include',
   })
   
   if (!response.ok) {
@@ -24,6 +25,7 @@ export async function apiPost<T>(url: string, data: unknown): Promise<T> {
     method: 'POST',
     headers: getApiHeaders(),
     body: JSON.stringify(data),
+    credentials: 'include',
   })
   
   if (!response.ok) {
@@ -38,6 +40,7 @@ export async function apiPut<T>(url: string, data: unknown): Promise<T> {
     method: 'PUT',
     headers: getApiHeaders(),
     body: JSON.stringify(data),
+    credentials: 'include',
   })
   
   if (!response.ok) {
@@ -51,6 +54,7 @@ export async function apiDelete<T>(url: string): Promise<T> {
   const response = await fetch(url, {
     method: 'DELETE',
     headers: getApiHeaders(),
+    credentials: 'include',
   })
   
   if (!response.ok) {

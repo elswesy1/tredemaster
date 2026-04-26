@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
+
+
+import { revalidateTag } from 'next/cache'
+import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
 
 // GET - Fetch all setups
 export async function GET(request: Request) {
@@ -62,6 +65,7 @@ export async function POST(request: Request) {
       },
     })
     return NextResponse.json(setup, { status: 201 })
+    revalidateTag('setups')
   } catch (error) {
     console.error('Error creating setup:', error)
     return NextResponse.json({ error: 'Failed to create setup' }, { status: 500 })

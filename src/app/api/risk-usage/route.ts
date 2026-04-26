@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
+
+
+import { revalidateTag } from 'next/cache'
+import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
 
 // GET - Fetch risk usage for a profile
 export async function GET(request: Request) {

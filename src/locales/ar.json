@@ -19,6 +19,28 @@
     "zenMode": "وضع ZEN",
     "pricing": "الأسعار"
   },
+  "features": {
+    "title": "المميزات الأربع الرئيسية",
+    "subtitle": "منصة متكاملة لإدارة تداولك بشكل احترافي",
+    "pillars": {
+      "tradingJournal": {
+        "title": "يومية التداول الذكية",
+        "description": "تتبع جلساتك بثلاث مراحل: ما قبل الجلسة، أثناء الجلسة، وما بعدها. سجل تحليلاتك، صفقاتك، ومشاعرك في مكان واحد."
+      },
+      "aiMentor": {
+        "title": "مُوجه التداول الذكي",
+        "description": "محرك ذكي يحلل صفقاتك ويقدم توصيات مبنية على أسلوب SMC (Smart Money Concepts). يتعلم من أنماط تداولك ويطور أداءك."
+      },
+      "psychologyAssistant": {
+        "title": "مساعد علم النفس المتقدم",
+        "description": "راقب حالتك النفسية، مستوى التوتر، والانضباط. احصل على تنبيهات عند الانحراف عن خطتك واقتراحات لتحسين السيكولوجية."
+      },
+      "playbookBuilder": {
+        "title": "باني الـ Playbook الاحترافي",
+        "description": "أنشئ playbook خاص بك يحتوي على قواعد الدخول والخروج، إدارة المخاطر، والسيناريوهات المفضلة. طبقه بشكل منهجي في كل صفقة."
+      }
+    }
+  },
   "dashboard": {
     "title": "لوحة التحكم",
     "totalAssets": "إجمالي الأصول",
@@ -392,5 +414,68 @@
     "close": "إغلاق",
     "yes": "نعم",
     "no": "لا"
+  },
+  "playbook": {
+    "title": "كتيب القواعد (Playbook)",
+    "subtitle": "أنشئ وأدر كتب القواعد الخاصة بك",
+    "description": "قم بإدارة نماذج التداول الخاصة بك والقواعد الصارمة لكل نموذج.",
+    "create_model": "إنشاء نموذج تداول",
+    "model_name": "اسم النموذج (Model Name)",
+    "model_name_placeholder": "مثال: DAX ChoCH Setup",
+    "setup_name": "اسم الإعداد (A+ Setup)",
+    "setup_name_placeholder": "مثال: London Kill Zone ChoCH",
+    "description": "الوصف",
+    "description_placeholder": "وصف مختصر للنموذج...",
+    "reference_chart": "الرسم البياني المرجعي (A+ Setup)",
+    "drag_and_drop_image": "اسحب وأفلت صورة هنا أو انقر للاختيار",
+    "image_size_limit": "PNG, JPG حتى 5MB",
+    "select_image_file": "يرجى اختيار ملف صورة",
+    "file_size_limit": "حجم الملف يجب أن يكون أقل من 5MB",
+    "confluence_checklist": "قائمة التقاء الشروط (Confluence Checklist)",
+    "kill_zones": "مناطق التداول (Kill Zones)",
+    "execution_rules": "قواعد التنفيذ والملاحظات",
+    "execution_rules_placeholder": "مثال:\n- لا تدخل بدون 3 شروط على الأقل\n- وقف الخسارة دائماً عند الـ swing low\n- لا تتداول خلال الأخبار العالية...",
+    "category": "الفئة",
+    "timeframe": "الإطار الزمني",
+    "entry_rules": "قواعد الدخول",
+    "entry_rules_placeholder": "قواعد الدخول...",
+    "exit_rules": "قواعد الخروج",
+    "exit_rules_placeholder": "قواعد الخروج...",
+    "trading_models": "نماذج التداول",
+    "create_and_manage": "أنشئ وأدر نماذج التداول الخاصة بك مع قواعد محددة",
+    "no_models_yet": "لا توجد نماذج تداول بعد",
+    "start_by_creating": "ابدأ بإنشاء نموذجك الأول",
+    "trades": "الصفقات",
+    "win_rate": "نسبة الفوز",
+    "p_l": "P/L",
+    "edit": "تعديل",
+    "cancel": "إلغاء",
+    "create": "إنشاء",
+    "saving": "جاري الحفظ...",
+    "updating": "جاري التحديث...",
+    "create_new_model": "إنشاء نموذج تداول جديد",
+    "define_rules": "حدد قواعد الدخول والخروج ومناطق التداول",
+    "edit_model": "تعديل نموذج التداول",
+    "update_rules": "تحديث قواعد وإعدادات النموذج",
+    "save_changes": "حفظ التغييرات",
+    "confirm_delete": "تأكيد الحذف",
+    "delete": "حذف",
+    "enter_model_name": "يرجى إدخال اسم النموذج",
+    "failed_to_load": "فشل في تحميل نماذج التداول",
+    "failed_to_add": "فشل في إضافة نموذج التداول",
+    "failed_to_update": "فشل في تحديث نموذج التداول",
+    "failed_to_delete": "فشل في حذف نموذج التداول",
+    "added_successfully": "تم إضافة نموذج التداول بنجاح",
+    "updated_successfully": "تم تحديث نموذج التداول بنجاح",
+    "deleted_successfully": "تم حذف نموذج التداول بنجاح",
+    "core_check_key_levels": "المستويات الرئيسية",
+    "core_check_liquidity": "سحب السيولة",
+    "core_check_fvg": "فجوة القيمة العادلة (FVG)",
+    "core_check_trend": "توافق الاتجاه",
+    "core_check_sr": "الدعم والمقاومة",
+    "core_check_bos": "كسر الهيكل (BOS)",
+    "add_custom_rule": "إضافة قاعدة مخصصة",
+    "custom_rule_placeholder": "اكتب قاعدتك هنا...",
+    "notes": "ملاحظات"
   }
 }

@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { logAudit, AuditAction } from '@/lib/audit'
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
 
 // GET /api/trading-accounts/[id] - جلب حساب محدد
 export async function GET(
@@ -15,14 +12,13 @@ export async function GET(
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'غير مصرح', message: 'يجب تسجيل الدخول للوصول لهذه البيانات' },
+        { status: 401 }
+      )
     }
 
     const { id } = await params
-
     const account = await prisma.tradingAccount.findFirst({
       where: {
         id,
@@ -36,7 +32,7 @@ export async function GET(
         },
         dailySyncLogs: {
           take: 30,
-          orderBy: { syncDate: 'desc' }  // ✅ تم الإصلاح: syncDate بدلاً من date
+          orderBy: { syncDate: 'desc' }
         },
         _count: {
           select: { trades: true }
@@ -67,10 +63,10 @@ export async function PUT(
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'غير مصرح', message: 'يجب تسجيل الدخول للوصول لهذه البيانات' },
+        { status: 401 }
+      )
     }
 
     const { id } = await params
@@ -89,13 +85,13 @@ export async function PUT(
     }
 
     // تحديث الحساب
-    const updateData: any = { ...body }
-    
+    const updateData: Record<string, unknown> = { ...body }
+
     if (body.startDate) updateData.startDate = new Date(body.startDate)
     if (body.endDate) updateData.endDate = new Date(body.endDate)
     if (body.challengeStart) updateData.challengeStart = new Date(body.challengeStart)
     if (body.challengeEnd) updateData.challengeEnd = new Date(body.challengeEnd)
-    
+
     const account = await prisma.tradingAccount.update({
       where: { id },
       data: updateData
@@ -120,10 +116,10 @@ export async function DELETE(
     const user = await getAuthUser(request)
     
     if (!user) {
-      return NextResponse.json({ 
-        error: 'غير مصرح', 
-        message: 'يجب تسجيل الدخول للوصول لهذه البيانات' 
-      }, { status: 401 })
+      return NextResponse.json(
+        { error: 'غير مصرح', message: 'يجب تسجيل الدخول للوصول للددات' },
+        { status: 401 }
+      )
     }
 
     const { id } = await params

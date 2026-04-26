@@ -1,6 +1,48 @@
 /** @type {import('next').NextConfig} */
+
+// Security Headers
+const securityHeaders = [
+  {
+    key: 'X-DNS-Prefetch-Control',
+    value: 'on'
+  },
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload'
+  },
+  {
+    key: 'X-Frame-Options',
+    value: 'DENY'
+  },
+  {
+    key: 'X-Content-Type-Options',
+    value: 'nosniff'
+  },
+  {
+    key: 'X-XSS-Protection',
+    value: '1; mode=block'
+  },
+  {
+    key: 'Referrer-Policy',
+    value: 'strict-origin-when-cross-origin'
+  },
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=()'
+  }
+]
+
 const nextConfig = {
   output: 'standalone',
+  
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: securityHeaders
+      }
+    ]
+  },
   
   images: {
     remotePatterns: [
@@ -12,7 +54,9 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
   
+  // Force dynamic rendering for API routes
   experimental: {
+    serverComponentsExternalPackages: ['@prisma/client'],
     optimizePackageImports: [
       'lucide-react',
       'recharts',
@@ -20,8 +64,9 @@ const nextConfig = {
     ],
   },
   
-  reactStrictMode: true,
+  // Disable static optimization for API routes
   poweredByHeader: false,
+  reactStrictMode: true,
   
   eslint: {
     ignoreDuringBuilds: true,

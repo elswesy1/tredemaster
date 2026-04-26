@@ -47,6 +47,18 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
       const data = await response.json()
 
       if (!response.ok) {
+        // ✅ معالجة Rate Limiting (429)
+        if (response.status === 429) {
+          const retryAfter = data.retryAfter || 60
+          setError(
+            language === 'ar' 
+              ? `عدد محاولات كثيرة، يرجى الانتظار ${retryAfter} ثانية`
+              : `Too many attempts. Please wait ${retryAfter} seconds.`
+          )
+          setIsLoading(false)
+          return
+        }
+        
         setError(data.error || (language === 'ar' ? 'بيانات الدخول غير صحيحة' : 'Invalid credentials'))
         if (data.requiresVerification) {
           setRequiresVerification(true)

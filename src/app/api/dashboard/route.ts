@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { getAuthUser } from '@/lib/auth-middleware'
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
+
+
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { getAuthUser } from '@/lib/auth-middleware'
 /**
  * Dashboard Aggregation API
  * يجمع كل البيانات المطلوبة للـ Dashboard في طلب واحد
@@ -49,6 +51,8 @@ export async function GET(request: NextRequest) {
                 name: true,
                 maxDailyLoss: true,
                 maxWeeklyLoss: true,
+                maxMonthlyLoss: true,
+                maxDrawdown: true,
               }
             }
           },
@@ -77,6 +81,8 @@ export async function GET(request: NextRequest) {
             name: true,
             maxDailyLoss: true,
             maxWeeklyLoss: true,
+            maxMonthlyLoss: true,
+            maxDrawdown: true,
           }
         }
       },

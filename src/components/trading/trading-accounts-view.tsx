@@ -43,7 +43,7 @@ import { Switch } from '@/components/ui/switch'
 import { Progress } from '@/components/ui/progress'
 import { useI18n } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   Plus, 
   Wallet, 
@@ -82,6 +82,7 @@ import {
 } from 'lucide-react'
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts'
 import { useTradingStore } from '@/lib/store'
+
 
 // Types
 interface TradingAccount {
@@ -217,8 +218,8 @@ const COLORS = ['#22C55E', '#3B82F6', '#A855F7', '#F59E0B', '#EF4444', '#06B6D4'
 
 export function TradingAccountsView() {
   const { t, language } = useI18n()
-  const { toast } = useToast()
   const { setConnectedAccounts, addConnectedAccount, removeConnectedAccount } = useTradingStore()
+
   const isRTL = language === 'ar'
   
   // State
@@ -242,22 +243,25 @@ export function TradingAccountsView() {
   const fetchAccounts = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/trading-accounts')
-        if (response.ok) {
-          const data = await response.json()
-          setAccounts(data)
-          
-          // Sync global store
-          setConnectedAccounts(data.map((a: any) => ({
-            id: a.id,
-            name: a.name,
-            type: a.accountType || 'broker',
-            currency: a.currency,
-            balance: a.balance,
-            status: a.isActive ? 'connected' : 'disconnected',
-            broker: a.broker,
-            accountNumber: a.accountNumber
-          })))
+      const response = await fetch('/api/trading-accounts', {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setAccounts(data)
+        
+        // Sync global store
+        setConnectedAccounts(data.map((a: any) => ({
+          id: a.id,
+           name: a.name,
+           type: a.accountType || 'broker',
+           currency: a.currency,
+           balance: a.balance,
+           status: a.isActive ? 'connected' : 'disconnected',
+           broker: a.broker,
+           accountNumber: a.accountNumber
+        })))
+
         
         // Fetch stats for each account
         data.forEach((account: TradingAccount) => {
@@ -273,7 +277,9 @@ export function TradingAccountsView() {
 
   const fetchAccountStats = async (accountId: string) => {
     try {
-      const response = await fetch(`/api/trading-accounts/${accountId}/stats`)
+      const response = await fetch(`/api/trading-accounts/${accountId}/stats`, {
+        credentials: 'include'
+      })
       if (response.ok) {
         const data = await response.json()
         setStats(prev => ({ ...prev, [accountId]: data.performance }))
@@ -334,10 +340,7 @@ export function TradingAccountsView() {
   // Handle add account
   const handleAddAccount = async () => {
     if (!formData.name) {
-      toast({
-        title: t('portfolio.messages.requiredFields'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.requiredFields'))
       return
     }
 
@@ -346,6 +349,7 @@ export function TradingAccountsView() {
       const response = await fetch('/api/trading-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           ...formData,
           balance: parseFloat(formData.balance) || 0,
@@ -360,36 +364,32 @@ export function TradingAccountsView() {
         })
       })
 
-        if (response.ok) {
-          const newAccount = await response.json()
-          toast({
-            title: t('portfolio.messages.accountAdded')
-          })
-          
-          // Update global store
-          addConnectedAccount({
-            id: newAccount.id,
-            name: newAccount.name,
-            type: newAccount.accountType || 'broker',
-            currency: newAccount.currency,
-            balance: newAccount.balance,
-            status: 'connected',
-            broker: newAccount.broker,
-            accountNumber: newAccount.accountNumber
-          })
-          
-          setShowAddDialog(false)
-          setFormData(initialFormData)
-          fetchAccounts()
-        } else {
+      if (response.ok) {
+        const newAccount = await response.json()
+        toast.success(t('portfolio.messages.accountAdded'))
+        
+        // Update global store
+        addConnectedAccount({
+          id: newAccount.id,
+          name: newAccount.name,
+          type: newAccount.accountType || 'broker',
+          currency: newAccount.currency,
+          balance: newAccount.balance,
+          status: 'connected',
+          broker: newAccount.broker,
+          accountNumber: newAccount.accountNumber
+        })
+        
+        setShowAddDialog(false)
+        setFormData(initialFormData)
+        fetchAccounts()
+      } else {
+
         throw new Error('Failed to add account')
       }
     } catch (error) {
       console.error('Error adding account:', error)
-      toast({
-        title: t('portfolio.messages.connectionError'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.connectionError'))
     } finally {
       setSaving(false)
     }
@@ -398,10 +398,7 @@ export function TradingAccountsView() {
   // Handle edit account
   const handleEditAccount = async () => {
     if (!selectedAccount || !formData.name) {
-      toast({
-        title: t('portfolio.messages.requiredFields'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.requiredFields'))
       return
     }
 
@@ -410,6 +407,7 @@ export function TradingAccountsView() {
       const response = await fetch(`/api/trading-accounts/${selectedAccount.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           ...formData,
           balance: parseFloat(formData.balance) || 0,
@@ -424,9 +422,7 @@ export function TradingAccountsView() {
       })
 
       if (response.ok) {
-        toast({
-          title: t('portfolio.messages.accountUpdated')
-        })
+        toast.success(t('portfolio.messages.accountUpdated'))
         setShowEditDialog(false)
         setSelectedAccount(null)
         setFormData(initialFormData)
@@ -436,10 +432,7 @@ export function TradingAccountsView() {
       }
     } catch (error) {
       console.error('Error updating account:', error)
-      toast({
-        title: t('portfolio.messages.connectionError'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.connectionError'))
     } finally {
       setSaving(false)
     }
@@ -451,14 +444,14 @@ export function TradingAccountsView() {
 
     try {
       const response = await fetch(`/api/trading-accounts/${selectedAccount.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       })
 
       if (response.ok) {
-        toast({
-          title: t('portfolio.messages.accountDeleted')
-        })
+        toast.success(t('portfolio.messages.accountDeleted'))
         removeConnectedAccount(selectedAccount.id)
+
         setShowDeleteDialog(false)
         setSelectedAccount(null)
         fetchAccounts()
@@ -467,10 +460,7 @@ export function TradingAccountsView() {
       }
     } catch (error) {
       console.error('Error deleting account:', error)
-      toast({
-        title: t('portfolio.messages.connectionError'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.connectionError'))
     }
   }
 
@@ -482,21 +472,17 @@ export function TradingAccountsView() {
     
     try {
       const response = await fetch(`/api/trading-accounts/${account.id}/sync`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
       })
 
       if (response.ok) {
-        toast({
-          title: t('portfolio.messages.syncSuccess')
-        })
+        toast.success(t('portfolio.messages.syncSuccess'))
         fetchAccounts()
       }
     } catch (error) {
       console.error('Error syncing:', error)
-      toast({
-        title: t('portfolio.messages.syncFailed'),
-        variant: 'destructive'
-      })
+      toast.error(t('portfolio.messages.syncFailed'))
     }
   }
 

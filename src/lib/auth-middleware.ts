@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from './auth-simple'
 import { prisma } from './prisma'
+import { auth } from './auth'
 
 // المسارات التي لا تحتاج مصادقة
 const publicPaths = [
@@ -177,31 +178,38 @@ export async function getCurrentUser(request: NextRequest) {
  * الحصول على المستخدم مع userId (للتوافقية مع الكود القديم)
  * يدعم نظامين: jose token cookie
  */
-export async function getAuthUser(request?: NextRequest): Promise<{ userId: string; email: string; name?: string } | null> {
+export async function getAuthUser(
+  request?: NextRequest
+): Promise<{ userId: string; email: string; name?: string } | null> {
   try {
-    const tokenData = await getTokenFromCookies(request)
-    
-    if (!tokenData) {
-      return null
+    const session = await auth()
+
+    if (session?.user?.id && session.user.email) {
+      return {
+        userId: session.user.id,
+        email: session.user.email,
+        name: session.user.name || undefined,
+      }
     }
-    
-    // التحقق من وجود المستخدم في قاعدة البيانات
+
+    const tokenData = await getTokenFromCookies(request)
+
+    if (!tokenData) return null
+
     const user = await prisma.user.findUnique({
       where: { id: tokenData.userId },
-      select: { id: true, email: true, name: true }
+      select: { id: true, email: true, name: true },
     })
-    
-    if (!user) {
-      return null
-    }
-    
+
+    if (!user) return null
+
     return {
       userId: user.id,
       email: user.email,
       name: user.name || undefined,
     }
   } catch (error) {
-    console.error('getAuthUser error:', error)
+    console.error('[Auth Middleware Error]:', error)
     return null
   }
 }

@@ -46,7 +46,8 @@ model User {
   psychologyLogs    PsychologyLog[]
   audits            Audit[]
   subscription      Subscription?
-  playbooks        Playbook[]
+  playbooks         Playbook[]  @relation("UserPlaybooks")
+
   zenStates         ZenState[]
   tradingRules      TradingRule[]
   riskUsages        RiskUsage[]
@@ -105,6 +106,7 @@ model TradingAccount {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deletedAt      DateTime?
+
 
   // Broker Fields (MT4/MT5)
   broker          String?
@@ -173,6 +175,8 @@ model TradingAccount {
   @@index([portfolioId])
   @@index([accountType])
   @@index([connectionStatus])
+  @@index([deletedAt])
+  @@unique([id, deletedAt])
 }
 
 // MetaAPI Token للربط مع MT4/MT5
@@ -269,12 +273,15 @@ model Trade {
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   portfolio Portfolio?       @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
   account   TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  playbook  Playbook?       @relation(fields: [playbookId], references: [id], onDelete: SetNull)
+  playbook  Playbook?        @relation(fields: [playbookId], references: [id], onDelete: SetNull)
+
 
   @@index([userId])
   @@index([symbol])
   @@index([status])
   @@index([openedAt])
+  @@index([deletedAt])
+  @@index([playbookId])
 }
 
 // خطط التداول
@@ -582,33 +589,36 @@ model Usage {
   @@index([type])
 }
 
-// كتيب القواعد (Playbook)
+// الاستراتيجيات
 model Playbook {
-  id                 String    @id @default(cuid())
-  userId             String
-  name               String
-  description        String?
-  category           String?
-  timeframe          String?
-  entryRules         String?
-  exitRules          String?
-  riskRules          String?
-  setupName          String?
-  rulesChecklist     String?   // JSON array of checklist items
-  setupScreenshotUrl String?
-  totalTrades        Int       @default(0)
-  winningTrades      Int       @default(0)
-  losingTrades       Int       @default(0)
-  profitLoss         Float     @default(0)
-  winRate            Float?
-  avgRRR             Float?
-  isActive           Boolean   @default(true)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  deletedAt          DateTime?
-  
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  trades Trade[]
+  id              String    @id @default(cuid())
+  userId          String
+  name            String
+  description     String?
+  setupName       String?   // اسم النموذج (A+ Setup Name)
+  imageUrl        String?   // صورة المرجع (Reference Chart)
+  confluences     String?   // JSON array: ["Liquidity Swept", "ChoCH", ...]
+  killZones       String?   // JSON array: ["asia", "london", "ny_am", "ny_pm"]
+  hardRules       String?   // قواعد التنفيذ (Execution Rules)
+  category        String?
+  timeframe       String?
+  entryRules      String?
+  exitRules       String?
+  riskRules       String?
+  totalTrades     Int       @default(0)
+  winningTrades   Int       @default(0)
+  losingTrades    Int       @default(0)
+  profitLoss      Float     @default(0)
+  winRate         Float?
+  avgRRR          Float?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  trades          Trade[]
+
+  user User @relation("UserPlaybooks", fields: [userId], references: [id], onDelete: Cascade)
+
 
   @@index([userId])
   @@index([category])
@@ -824,6 +834,11 @@ model AuditLog {
   id        String   @id @default(cuid())
   userId    String
   action    String
+  entity    String?
+  entityId  String?
+  oldData   Json?
+  newData   Json?
+  timestamp DateTime?
   details   Json?
   ipAddress String?
   userAgent String?

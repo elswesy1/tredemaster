@@ -1,10 +1,12 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+
 import { NextRequest, NextResponse } from "next/server";
 import { TOTP } from "otplib";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
 
 // تفعيل 2FA - التحقق من الكود وتفعيل الحماية
 export async function POST(request: NextRequest) {

@@ -95,6 +95,18 @@ export function SignupPage({ onSignup, onLogin, onBack }: SignupPageProps) {
       const data = await response.json()
 
       if (!response.ok) {
+        // ✅ معالجة Rate Limiting (429)
+        if (response.status === 429) {
+          const retryAfter = data.retryAfter || 60
+          setError(
+            language === 'ar' 
+              ? `عدد محاولات كثيرة، يرجى الانتظار ${retryAfter} ثانية`
+              : `Too many attempts. Please wait ${retryAfter} seconds.`
+          )
+          setIsLoading(false)
+          return
+        }
+        
         setError(data.error || (language === 'ar' ? 'حدث خطأ أثناء التسجيل' : 'Registration failed'))
         setIsLoading(false)
         return

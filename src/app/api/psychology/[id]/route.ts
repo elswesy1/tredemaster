@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { logAudit, AuditAction } from '@/lib/audit'
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
+
 
 // GET - Fetch a single psychology log
 export async function GET(
@@ -15,6 +13,7 @@ export async function GET(
     const user = await getAuthUser(request)
     if (!user) {
       return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+
     }
 
     const { id } = await params
@@ -27,6 +26,11 @@ export async function GET(
 
     if (!log) {
       return NextResponse.json({ error: 'Psychology log not found' }, { status: 404 })
+    }
+
+    // Ownership verification
+    if (log.userId !== user.userId) {
+      return NextResponse.json({ error: 'غير مصرح', message: 'لا يمكنك الوصول لهذا السجل' }, { status: 403 })
     }
 
     return NextResponse.json(log)
@@ -45,9 +49,25 @@ export async function PUT(
     const user = await getAuthUser(request)
     if (!user) {
       return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+
     }
 
     const { id } = await params
+    
+    // Verify ownership first
+    const existingLog = await db.psychologyLog.findUnique({
+      where: { id },
+      select: { userId: true }
+    })
+    
+    if (!existingLog) {
+      return NextResponse.json({ error: 'Psychology log not found' }, { status: 404 })
+    }
+    
+    if (existingLog.userId !== user.userId) {
+      return NextResponse.json({ error: 'غير مصرح', message: 'لا يمكنك تعديل هذا السجل' }, { status: 403 })
+    }
+
     const body = await request.json()
     const {
       type,
@@ -67,14 +87,6 @@ export async function PUT(
       notes,
     } = body
 
-    // Check if log exists and belongs to user
-    const existingLog = await db.psychologyLog.findFirst({
-      where: { id, userId: user.userId },
-    })
-
-    if (!existingLog) {
-      return NextResponse.json({ error: 'Psychology log not found' }, { status: 404 })
-    }
 
     const log = await db.psychologyLog.update({
       where: { id },
@@ -124,16 +136,22 @@ export async function DELETE(
 
     const { id } = await params
 
-    // Check if log exists and belongs to user
-    const existingLog = await db.psychologyLog.findFirst({
-      where: { id, userId: user.userId },
+    // Verify ownership first
+    const existingLog = await db.psychologyLog.findUnique({
+      where: { id },
+      select: { userId: true }
     })
-
+    
     if (!existingLog) {
       return NextResponse.json({ error: 'Psychology log not found' }, { status: 404 })
     }
+    
+    if (existingLog.userId !== user.userId) {
+      return NextResponse.json({ error: 'غير مصرح', message: 'لا يمكنك حذف هذا السجل' }, { status: 403 })
+    }
 
     await db.psychologyLog.update({
+
       where: { id },
       data: { deletedAt: new Date() }
     })

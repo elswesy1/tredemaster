@@ -1,75 +1,131 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { getAuthUser } from '@/lib/auth-middleware'
-import { logAudit, AuditAction } from '@/lib/audit'
-import { Prisma } from '@prisma/client'
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
-// GET /api/accounts - Get accounts for authenticated user only
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { getAuthUser } from '@/lib/auth-middleware'
+import { Prisma } from '@prisma/client'
+import { rateLimit, getRateLimitKey, getClientIp, getRateLimitHeaders } from '@/lib/rate-limiter'
+import { logAudit, AuditAction } from '@/lib/audit'
+
+/**
+ * Accounts API Route - GET & POST
+ * 
+ * GET: جلب جميع الحسابات غير المحذوفة للمستخدم الحالي
+ * POST: إنشاء حساب جديد مع منع التكرار
+ */
+
+// Response helper for consistent JSON structure with rate limit headers
+const jsonResponse = (
+  success: boolean,
+  data?: unknown,
+  error?: string,
+  status: number = 200,
+  rateLimitInfo?: { limit: number; remaining: number; resetAt: number }
+) => {
+  const response: any = { success };
+  if (data) response["data"] = data;
+  if (error) response["error"] = error;
+
+  const headers = rateLimitInfo
+    ? getRateLimitHeaders(rateLimitInfo.limit, rateLimitInfo.remaining, rateLimitInfo.resetAt)
+    : new Headers();
+
+  return NextResponse.json(response, { status, headers })
+}
+
+// ============================================
+// GET /api/accounts
+// جلب جميع الحسابات غير المحذوفة للمستخدم الحالي
+// ============================================
 export async function GET(request: NextRequest) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
+
     if (!user) {
-      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
+    // ✅ Rate Limiting على GET
+    const ip = getClientIp(request)
+    const limit = rateLimit(getRateLimitKey(user.userId, 'accounts_get', ip), 'accounts_get')
+    if (!limit.success) return jsonResponse(false, undefined, 'Too many requests', 429, limit)
+
+    // 2. جلب الحسابات مع فلتر Soft Delete
     const accounts = await db.tradingAccount.findMany({
-      where: { 
+      where: {
         userId: user.userId,
-        deletedAt: null 
+        deletedAt: null  // فقط الحسابات غير المحذوفة
       },
       include: {
         portfolio: {
-          select: { name: true }
+          select: {
+            id: true,
+            name: true
+          }
         },
         _count: {
-          select: { trades: true }
+          select: {
+            trades: {
+              where: { deletedAt: null }
+            }
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json(accounts)
+    return jsonResponse(true, accounts, undefined, 200, limit)
+
   } catch (error) {
-    console.error('[ACCOUNTS_GET]', error)
-    return NextResponse.json({ error: 'Failed to fetch accounts' }, { status: 500 })
+    console.error('[API_ERR] GET /api/accounts:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// POST /api/accounts - Create new account for authenticated user
+// ============================================
+// POST /api/accounts
+// إنشاء حساب جديد مع منع التكرار
+// ============================================
 export async function POST(request: NextRequest) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
+
     if (!user) {
-      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
-    const { checkRateLimit } = await import('@/lib/rate-limiter');
-    const limit = checkRateLimit(request);
+    // ✅ Rate Limiting
+    const limit = rateLimit(getRateLimitKey(user.userId, 'accounts_create'), 'accounts_create');
+    if (!limit.success) return jsonResponse(false, undefined, 'Too many requests', 429, limit);
 
-    if (!limit.success) {
-      const retryAfter = Math.ceil((limit.resetTime - Date.now()) / 1000);
-      return NextResponse.json(
-        { error: 'Too many requests' }, 
-        { status: 429, headers: { 'Retry-After': String(retryAfter) } }
-      );
-    }
-
+    // 2. قراءة البيانات
     const data = await request.json()
 
+    // 3. التحقق من الحقول المطلوبة
+    if (!data.name || !data.name.trim()) {
+      return jsonResponse(false, undefined, 'اسم الحساب مطلوب', 400, limit)
+    }
+
+    // 4. محاولة إنشاء الحساب
     const account = await db.tradingAccount.create({
       data: {
         userId: user.userId,
-        name: data.name,
-        broker: data.broker,
-        accountNumber: data.accountNumber,
-        accountType: data.accountType || 'broker',
+        name: data.name.trim(),
+        broker: data.broker || data.platform || null,
+        platform: data.platform || data.broker || null,
+        accountNumber: data.accountNumber || null,
+        accountType: data.accountType || data.type || 'broker',
         currency: data.currency || 'USD',
         balance: parseFloat(data.balance) || 0,
         equity: parseFloat(data.equity) || 0,
-        portfolioId: data.portfolioId || null
+        portfolioId: data.portfolioId || null,
+        connectionMethod: data.connectionMethod || 'manual',
+        connectionStatus: 'disconnected',
+        isActive: true
       }
     })
 
@@ -77,43 +133,56 @@ export async function POST(request: NextRequest) {
     await logAudit(request, {
       userId: user.userId,
       action: AuditAction.ACCOUNT_CREATED,
-      details: { accountId: account.id, name: account.name, via: 'legacy-api' }
+      details: { accountId: account.id, name: account.name }
     })
 
-    return NextResponse.json(account, { status: 201 })
+    // 5. إرجاع النجاح
+    return jsonResponse(true, account, undefined, 201, limit)
+
   } catch (error) {
+    // 6. معالجة خطأ التكرار (P2002 - Unique constraint violation)
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
-        return NextResponse.json(
-          { 
-            error: 'Conflict', 
-            message: 'اسم الحساب موجود مسبقاً لهذا النوع من المنصات' 
-          }, 
-          { status: 409 }
-        )
+        return jsonResponse(false, undefined, 'حساب مكرر على هذه المنصة', 409)
       }
     }
-    console.error('[ACCOUNTS_POST]', error)
-    return NextResponse.json({ error: 'Failed to create account' }, { status: 500 })
+
+    console.error('[API_ERR] POST /api/accounts:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// PUT /api/accounts - Update account (only if owned by user)
+// ============================================
+// PUT /api/accounts
+// تحديث حساب موجود (للتوافقية)
+// ============================================
 export async function PUT(request: NextRequest) {
   try {
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
+
+    const limit = rateLimit(getRateLimitKey(user.userId, 'accounts_update'), 'accounts_update');
+    if (!limit.success) return jsonResponse(false, undefined, 'Too many requests', 429, limit);
 
     const data = await request.json()
 
+    if (!data.id) {
+      return jsonResponse(false, undefined, 'معرف الحساب مطلوب', 400, limit)
+    }
+
+    // التحقق من الملكية وحساب غير محذوف
     const existingAccount = await db.tradingAccount.findFirst({
-      where: { id: data.id, userId: user.userId, deletedAt: null }
+      where: {
+        id: data.id,
+        userId: user.userId,
+        deletedAt: null
+      }
     })
 
     if (!existingAccount) {
-      return NextResponse.json({ error: 'الحساب غير موجود' }, { status: 404 })
+      return jsonResponse(false, undefined, 'الحساب غير موجود', 404, limit)
     }
 
     const account = await db.tradingAccount.update({
@@ -132,54 +201,69 @@ export async function PUT(request: NextRequest) {
     await logAudit(request, {
       userId: user.userId,
       action: AuditAction.ACCOUNT_UPDATED,
-      details: { accountId: data.id, action: 'update', via: 'legacy-api' }
+      details: { accountId: data.id, action: 'update' }
     })
 
-    return NextResponse.json({ account })
+    return jsonResponse(true, account, undefined, 200, limit)
+
   } catch (error) {
-    console.error('[ACCOUNTS_PUT]', error)
-    return NextResponse.json({ error: 'Failed to update account' }, { status: 500 })
+    console.error('[API_ERR] PUT /api/accounts:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// DELETE /api/accounts - Delete account (only if owned by user)
+// ============================================
+// DELETE /api/accounts
+// حذف ناعم (Soft Delete) للحساب
+// ============================================
 export async function DELETE(request: NextRequest) {
   try {
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
+
+    const limit = rateLimit(getRateLimitKey(user.userId, 'accounts_delete'), 'accounts_delete');
+    if (!limit.success) return jsonResponse(false, undefined, 'Too many requests', 429, limit);
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
     if (!id) {
-      return NextResponse.json({ error: 'Account ID required' }, { status: 400 })
+      return jsonResponse(false, undefined, 'معرف الحساب مطلوب', 400, limit)
     }
 
     const existingAccount = await db.tradingAccount.findFirst({
-      where: { id, userId: user.userId, deletedAt: null }
+      where: {
+        id,
+        userId: user.userId,
+        deletedAt: null
+      }
     })
 
     if (!existingAccount) {
-      return NextResponse.json({ error: 'الحساب غير موجود' }, { status: 404 })
+      return jsonResponse(false, undefined, 'الحساب غير موجود', 404, limit)
     }
 
-    await db.tradingAccount.update({ 
+    await db.tradingAccount.update({
       where: { id },
-      data: { deletedAt: new Date() }
+      data: {
+        deletedAt: new Date(),
+        isActive: false
+      }
     })
 
     // تسجيل في سجل التدقيق
     await logAudit(request, {
       userId: user.userId,
       action: AuditAction.ACCOUNT_DELETED,
-      details: { accountId: id, action: 'soft-delete', via: 'legacy-api' }
+      details: { accountId: id, action: 'soft-delete' }
     })
 
-    return NextResponse.json({ success: true })
+    return jsonResponse(true, { success: true }, undefined, 200, limit)
+
   } catch (error) {
-    console.error('[ACCOUNTS_DELETE]', error)
-    return NextResponse.json({ error: 'Failed to delete account' }, { status: 500 })
+    console.error('[API_ERR] DELETE /api/accounts:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }

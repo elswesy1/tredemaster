@@ -1,15 +1,28 @@
-import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-import nodemailer from 'nodemailer'
-
-import { prisma } from '@/lib/prisma'
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
-export async function POST(req: Request) {
+
+import { NextRequest, NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
+import nodemailer from 'nodemailer'
+
+import { prisma } from '@/lib/prisma'
+import { rateLimit, getRateLimitKey, getClientIp } from '@/lib/rate-limiter'
+
+export async function POST(request: NextRequest) {
   try {
-    const { email } = await req.json()
+    // ✅ Rate Limiting على إرسال استعادة كلمة المرور
+    const ip = getClientIp(request)
+    const rl = rateLimit(getRateLimitKey(null, 'password_reset', ip), 'password_reset')
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'عدد محاولات كثيرة، حاول بعد ' + rl.retryAfter + ' ثانية' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      )
+    }
+
+    const { email } = await request.json()
     
     if (!email) {
       return NextResponse.json(

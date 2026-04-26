@@ -1,138 +1,274 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { getAuthUser } from '@/lib/auth-middleware'
-import { logAudit, AuditAction } from '@/lib/audit'
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
-// GET /api/accounts/[id] - Get a single account for authenticated user
+/**
+ * Accounts [id] API Route - GET, PATCH, DELETE
+ * 
+ * GET: جلب حساب واحد بالتفاصيل
+ * PATCH: تحديث حساب موجود
+ * DELETE: حذف ناعم (Soft Delete) للحساب
+ * 
+ * Protection:
+ * - Session verification via getAuthUser()
+ * - Ownership verification (403 on non-ownership)
+ * - Soft delete filter (deletedAt: null)
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { getAuthUser } from '@/lib/auth-middleware'
+import { logAudit, AuditAction } from '@/lib/audit'
+
+// Response helper for consistent JSON structure
+const jsonResponse = (success: boolean, data?: unknown, error?: string, status: number = 200) => {
+  const response: any = { success }
+  if (data) {
+    response['data'] = data
+  }
+  if (error) {
+    response['error'] = error
+  }
+  return NextResponse.json(response, { status })
+}
+
+// ============================================
+// GET /api/accounts/[id]
+// جلب حساب واحد بالتفاصيل
+// ============================================
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
     const { id } = await params
-    
+
+    // 2. جلب الحساب مع فلتر Soft Delete
     const account = await db.tradingAccount.findFirst({
       where: { 
-        id, 
+        id,
         userId: user.userId,
-        deletedAt: null 
+        deletedAt: null  // فقط الحسابات غير المحذوفة
       },
       include: {
         portfolio: {
-          select: { name: true }
+          select: { 
+            id: true,
+            name: true 
+          }
+        },
+        riskProfiles: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            name: true,
+            riskTolerance: true,
+            maxDailyLoss: true
+          }
+        },
+        trades: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            symbol: true,
+            type: true,
+            status: true,
+            profitLoss: true,
+            openedAt: true,
+            closedAt: true
+          },
+          orderBy: { openedAt: 'desc' },
+          take: 10
         },
         _count: {
-          select: { trades: true }
+          select: { 
+            trades: {
+              where: { deletedAt: null }
+            }
+          }
         }
       }
     })
-    
+
     if (!account) {
-      return NextResponse.json({ error: 'Account not found' }, { status: 404 })
+      return jsonResponse(false, undefined, 'الحساب غير موجود', 404)
     }
-    
-    return NextResponse.json(account)
+
+    return jsonResponse(true, account)
+
   } catch (error) {
-    console.error('[ACCOUNTS_GET_BY_ID]', error)
-    return NextResponse.json({ error: 'Failed to fetch account' }, { status: 500 })
+    console.error('[API_ERR] GET /api/accounts/[id]:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// PUT /api/accounts/[id] - Update an account
-export async function PUT(
+// ============================================
+// PATCH /api/accounts/[id]
+// تحديث حساب موجود (PATCH للأجزاء فقط)
+// ============================================
+export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
     const { id } = await params
     const data = await request.json()
 
-    // Check ownership
-    const existing = await db.tradingAccount.findFirst({
-      where: { id, userId: user.userId, deletedAt: null }
+    // 2. التحقق من الملكية والحالة
+    const existingAccount = await db.tradingAccount.findFirst({
+      where: { 
+        id,
+        userId: user.userId,
+        deletedAt: null  // لا يمكن تعديل حساب محذوف
+      }
     })
 
-    if (!existing) {
-      return NextResponse.json({ error: 'Account not found' }, { status: 404 })
+    if (!existingAccount) {
+      return jsonResponse(false, undefined, 'الحساب غير موجود', 404)
     }
+
+    // 3. بناء بيانات التحديث
+    const updateData: Record<string, any> = {}
     
+    if (data.name) updateData.name = data.name
+    if (data.broker) updateData.broker = data.broker
+    if (data.platform) updateData.platform = data.platform
+    if (data.accountNumber) updateData.accountNumber = data.accountNumber
+    if (data.balance !== undefined) updateData.balance = parseFloat(data.balance) || 0
+    if (data.equity !== undefined) updateData.equity = parseFloat(data.equity) || 0
+    if (data.isActive !== undefined) updateData.isActive = data.isActive
+    
+    // تحديث وقت آخر مزامنة
+    updateData.lastSync = new Date()
+
+    // 4. تنفيذ التحديث
     const account = await db.tradingAccount.update({
       where: { id },
-      data: {
-        name: data.name,
-        broker: data.broker,
-        accountNumber: data.accountNumber,
-        accountType: data.accountType,
-        balance: data.balance !== undefined ? parseFloat(data.balance) : undefined,
-        equity: data.equity !== undefined ? parseFloat(data.equity) : undefined,
-        lastSync: new Date()
-      }
+      data: updateData
     })
 
     // تسجيل في سجل التدقيق
     await logAudit(request, {
       userId: user.userId,
       action: AuditAction.ACCOUNT_UPDATED,
-      details: { accountId: id, action: 'update', via: 'legacy-api' }
+      details: { accountId: id, action: 'update' }
     })
-    
-    return NextResponse.json(account)
+
+    return jsonResponse(true, { account })
+
   } catch (error) {
-    console.error('[ACCOUNTS_PUT]', error)
-    return NextResponse.json({ error: 'Failed to update account' }, { status: 500 })
+    console.error('[API_ERR] PATCH /api/accounts/[id]:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
 }
 
-// DELETE /api/accounts/[id] - Delete an account
+// ============================================
+// PUT /api/accounts/[id]
+// تحديث حساب كامل (للتوافقية)
+// ============================================
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // إعادة استخدام PATCH
+  return PATCH(request, { params })
+}
+
+// ============================================
+// DELETE /api/accounts/[id]
+// حذف ناعم (Soft Delete) للحساب
+// ============================================
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 1. تحقق من الجلسة
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'غير مصرح - يجب تسجيل الدخول' }, { status: 401 })
+      return jsonResponse(false, undefined, 'غير مصرح - يجب تسجيل الدخول', 401)
     }
 
     const { id } = await params
 
-    // Check ownership
-    const existing = await db.tradingAccount.findFirst({
-      where: { id, userId: user.userId, deletedAt: null }
+    // 2. التحقق من الملكية والحالة
+    const existingAccount = await db.tradingAccount.findFirst({
+      where: { 
+        id,
+        userId: user.userId,
+        deletedAt: null  // لا يمكن حذف حساب محذوف مسبقاً
+      },
+      select: { 
+        userId: true,
+        name: true 
+      }
     })
 
-    if (!existing) {
-      return NextResponse.json({ error: 'Account not found' }, { status: 404 })
+    if (!existingAccount) {
+      return jsonResponse(false, undefined, 'الحساب غير موجود', 404)
     }
-    
-    await db.tradingAccount.update({ 
+
+    // 3. التحقق من الصلاحيات (تأكيد إضافي)
+    if (existingAccount.userId !== user.userId) {
+      return jsonResponse(false, undefined, 'غير مصرح - لا يمكنك حذف هذا الحساب', 403)
+    }
+
+    // 4. تنفيذ Soft Delete على الحساب
+    await db.tradingAccount.update({
       where: { id },
-      data: { deletedAt: new Date() }
+      data: { 
+        deletedAt: new Date(),
+        isActive: false,
+        connectionStatus: 'disconnected'
+      }
+    })
+
+    // 5. Soft Delete للملفات المرتبطة (Risk Profiles)
+    await db.riskProfile.updateMany({
+      where: { accountId: id, deletedAt: null },
+      data: { 
+        deletedAt: new Date(),
+        isActive: false
+      }
+    })
+
+    // 6. Soft Delete للصفقات المرتبطة
+    await db.trade.updateMany({
+      where: { 
+        accountId: id,
+        deletedAt: null
+      },
+      data: { 
+        deletedAt: new Date()
+      }
     })
 
     // تسجيل في سجل التدقيق
     await logAudit(request, {
       userId: user.userId,
       action: AuditAction.ACCOUNT_DELETED,
-      details: { accountId: id, action: 'soft-delete', via: 'legacy-api' }
+      details: { accountId: id, name: existingAccount.name, action: 'soft-delete' }
     })
-    
-    return NextResponse.json({ success: true })
+
+    return jsonResponse(true, { 
+      message: 'تم حذف الحساب بنجاح',
+      accountName: existingAccount.name 
+    })
+
   } catch (error) {
-    console.error('[ACCOUNTS_DELETE]', error)
-    return NextResponse.json({ error: 'Failed to delete account' }, { status: 500 })
+    console.error('[API_ERR] DELETE /api/accounts/[id]:', error)
+    return jsonResponse(false, undefined, 'خطأ داخلي في الخادم', 500)
   }
-}
+}

@@ -583,7 +583,7 @@ export function TradingView() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {openTrades.length === 0 ? (
+                {Array.isArray(openTrades) && openTrades.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p>{isRTL ? 'لا توجد صفقات مفتوحة' : 'No open trades'}</p>
@@ -790,7 +790,7 @@ export function TradingView() {
                 </p>
                 <Button onClick={() => setIsAddTradeOpen(true)} className="bg-green-500">
                   <Plus className="h-4 w-4 mr-2" />
-                  {isRTL ? 'صفقة جديدة' : 'New Trade'}
+                  {isRTL ? 'صفحة جديدة' : 'New Trade'}
                 </Button>
               </CardContent>
             </Card>
@@ -1079,6 +1079,7 @@ export function TradingView() {
                   <SelectItem value="none">{isRTL ? 'بدون نموذج' : 'No playbook'}</SelectItem>
                   {playbooks.map(p => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+
                   ))}
                 </SelectContent>
               </Select>

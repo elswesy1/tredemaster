@@ -1,10 +1,13 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { logAudit, AuditAction } from '@/lib/audit'
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
 
 // GET - Fetch all trading rules for authenticated user
 export async function GET(request: NextRequest) {
@@ -68,6 +71,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(rule, { status: 201 })
+    revalidateTag('rules')
   } catch (error) {
     console.error('[RULES_POST]', error)
     return NextResponse.json({ error: 'Failed to create trading rule' }, { status: 500 })

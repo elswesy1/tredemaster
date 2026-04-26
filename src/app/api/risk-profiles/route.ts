@@ -1,9 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { getAuthUser } from '@/lib/auth-middleware'
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
+
+
+import { revalidateTag } from 'next/cache'
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { getAuthUser } from '@/lib/auth-middleware'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limiter'
 
 // GET - Fetch risk profiles for authenticated user only
 export async function GET(request: NextRequest) {
@@ -51,6 +55,10 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
+
+    // ✅ استخدام rateLimit بشكل صحيح
+    const rl2 = rateLimit(getRateLimitKey(user.userId, 'risk_profile_create'), 'risk_profile_create')
+    if (!rl2.success) return NextResponse.json({ error: "Too many requests", retryAfter: rl2.retryAfter }, { status: 429 })
 
     const body = await request.json()
     const {
@@ -128,6 +136,7 @@ export async function POST(request: NextRequest) {
       }
     })
     return NextResponse.json(profile, { status: 201 })
+    revalidateTag('risk-profiles')
   } catch (error) {
     console.error('Error creating risk profile:', error)
     return NextResponse.json({ error: 'Failed to create risk profile' }, { status: 500 })

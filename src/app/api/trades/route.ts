@@ -1,10 +1,14 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { logAudit, AuditAction } from '@/lib/audit'
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limiter'
 
 // GET - Fetch trades for authenticated user only
 export async function GET(request: NextRequest) {
@@ -53,6 +57,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ✅ استخدام rateLimit بشكل صحيح
+    const rl1 = rateLimit(getRateLimitKey(user.userId, 'trade_create'), 'create_trade')
+    if (!rl1.success) return NextResponse.json({ error: "Too many requests", retryAfter: rl1.retryAfter }, { status: 429 })
+
     const body = await request.json()
     const {
       symbol,
@@ -93,6 +101,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(trade, { status: 201 })
+    revalidateTag('trades')
   } catch (error) {
     console.error('Error creating trade:', error)
     return NextResponse.json({ error: 'Failed to create trade' }, { status: 500 })

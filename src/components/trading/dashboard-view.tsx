@@ -159,7 +159,7 @@ function DailyGoalsCard({
           </div>
         ) : (
           <div className="space-y-3">
-            {goals.map((goal) => (
+            {(goals || []).map((goal) => (
               <div 
                 key={goal.id}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-all ${

@@ -1,10 +1,14 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { logAudit, AuditAction } from '@/lib/audit'
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limiter'
 
 // GET - Fetch journal entries for authenticated user only
 export async function GET(request: NextRequest) {
@@ -72,6 +76,10 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
+
+    // ✅ استخدام rateLimit بشكل صحيح
+    const rl4 = rateLimit(getRateLimitKey(user.userId, 'journal_create'), 'journal_create')
+    if (!rl4.success) return NextResponse.json({ error: "Too many requests", retryAfter: rl4.retryAfter }, { status: 429 })
 
     const body = await request.json()
 
@@ -162,6 +170,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(entry, { status: 201 })
+    revalidateTag('journal')
   } catch (error) {
     console.error('[JOURNAL_POST]', error)
     return NextResponse.json({ error: 'Failed to create journal entry' }, { status: 500 })

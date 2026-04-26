@@ -27,6 +27,7 @@ import { AIChat } from '@/components/trading/ai-chat'
 import { AuditsView } from '@/components/trading/audits-view'
 import { LoginHistoryView } from '@/components/trading/login-history-view'
 import { TwoFactorSetup } from '@/components/auth/2fa-setup'
+
 import { ThemeToggle } from '@/components/trading/theme-toggle'
 import { LanguageToggle } from '@/components/trading/language-toggle'
 import { Toaster } from '@/components/ui/toaster'
@@ -239,6 +240,7 @@ export default function Home() {
             <TwoFactorSetup />
           </div>
         )
+
       // Redirect old sections to new unified trading view
       case 'log-trade':
         return <TradingView />
@@ -267,6 +269,7 @@ export default function Home() {
     pricing: t('sidebar.pricing'),
     'login-history': language === 'ar' ? 'سجل تسجيلات الدخول' : 'Login History',
     security: t('sidebar.security'),
+
   }
 
   // Loading state - show loading until client-side mounted

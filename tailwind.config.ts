@@ -50,12 +50,32 @@ const config: Config = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+  			// TradeMaster Custom Colors
+  			navy: {
+  				dark: '#0a0f1a',
+  				DEFAULT: '#0f172a',
+  				light: '#1e293b'
+  			},
+  			gold: {
+  				DEFAULT: '#d4af37',
+  				light: '#f4d03f',
+  				dark: '#b8860b'
+  			},
+  			profit: '#22c55e',
+  			loss: '#ef4444',
+  			warning: '#f59e0b'
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
+  		},
+  		backgroundColor: {
+  			'navy-dark': '#0a0f1a'
+  		},
+  		textColor: {
+  			'gold': '#d4af37'
   		}
   	}
   },

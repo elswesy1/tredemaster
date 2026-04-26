@@ -1,14 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useI18n } from '@/lib/i18n'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
+
 import { 
   Plus, 
   Link2, 
@@ -19,11 +31,10 @@ import {
   TrendingUp,
   DollarSign,
   Clock,
-  ExternalLink,
-  Settings,
   MoreVertical,
   Edit2,
-  Trash2
+  Trash2,
+  Loader2
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -34,18 +45,25 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useTradingStore } from '@/lib/store'
 
-interface Account {
+// Types matching Prisma TradingAccount model
+interface TradingAccount {
   id: string
+  userId: string
   name: string
-  broker?: string
-  accountNumber?: string
-  type: string
+  accountType: 'broker' | 'propfirm' | 'indices' | 'stocks'
+  currency: string
   balance: number
   equity: number
-  currency: string
-  lastSync?: string
   isActive: boolean
+  broker?: string
+  platform?: string
+  accountNumber?: string
+  server?: string
+  connectionStatus?: string
+  lastSync?: string
   createdAt: string
+  updatedAt: string
+  deletedAt?: string | null
 }
 
 interface RiskProfile {
@@ -62,17 +80,111 @@ interface RiskProfile {
   isConfigured: boolean
 }
 
+// Delete Account Button Component
+function DeleteAccountButton({ 
+  accountId, 
+  accountName,
+  onSuccess 
+}: { 
+  accountId: string
+  accountName: string
+  onSuccess: () => void 
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { language } = useI18n()
+  const router = useRouter()
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true)
+      
+      const response = await fetch(`/api/accounts/${accountId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        toast.success(language === 'ar' ? 'تم حذف الحساب بنجاح' : 'Account deleted successfully')
+        onSuccess()
+        router.refresh()
+      } else {
+        throw new Error(data.error || 'Failed to delete account')
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      toast.error(language === 'ar' ? 'فشل في حذف الحساب' : 'Failed to delete account')
+    } finally {
+      setIsDeleting(false)
+      setIsOpen(false)
+    }
+  }
+
+  return (
+    <>
+      <DropdownMenuItem 
+        className="text-destructive focus:text-destructive"
+        onClick={() => setIsOpen(true)}
+      >
+        <Trash2 className="h-4 w-4 mr-2" />
+        {language === 'ar' ? 'حذف' : 'Delete'}
+      </DropdownMenuItem>
+
+      <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === 'ar' ? 'تأكيد حذف الحساب' : 'Confirm Account Deletion'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'ar' 
+                ? `هل أنت متأكد من حذف حساب "${accountName}"؟ هذا الإجراء لا يمكن التراجع عنه.`
+                : `Are you sure you want to delete account "${accountName}"? This action cannot be undone.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {language === 'ar' ? 'جاري الحذف...' : 'Deleting...'}
+                </>
+              ) : (
+                language === 'ar' ? 'حذف' : 'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+}
+
 export function AccountsView() {
+  const router = useRouter()
   const { t, language } = useI18n()
-  const { toast } = useToast()
+  const isRTL = language === 'ar'
+  const [mounted, setMounted] = useState(false)
   const { setConnectedAccounts, addConnectedAccount, removeConnectedAccount } = useTradingStore()
+
   const [showAddForm, setShowAddForm] = useState(false)
-  const [accounts, setAccounts] = useState<Account[]>([])
+  const [accounts, setAccounts] = useState<TradingAccount[]>([])
   const [riskProfiles, setRiskProfiles] = useState<RiskProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [syncingId, setSyncingId] = useState<string | null>(null)
-
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  
   // Form state for new account
   const [formData, setFormData] = useState({
     name: '',
@@ -84,18 +196,28 @@ export function AccountsView() {
     balance: '',
     currency: 'USD',
   })
-
-  const isRTL = language === 'ar'
-
-  // Fetch accounts and risk profiles
+  
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [accountsRes, profilesRes] = await Promise.all([
-          fetch('/api/accounts'),
-          fetch('/api/risk-profiles')
-        ])
-        
+    setMounted(true)
+  }, [])
+  
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+  
+  // Fetch accounts with AbortController and proper dependencies
+  const fetchAccounts = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const [accountsRes, profilesRes] = await Promise.all([
+        fetch('/api/accounts', { signal, credentials: 'include' }),
+        fetch('/api/risk-profiles', { signal, credentials: 'include' })
+      ])
+      
+      if (!signal?.aborted) {
         if (accountsRes.ok) {
           const accountsData = await accountsRes.json()
           setAccounts(accountsData)
@@ -117,50 +239,69 @@ export function AccountsView() {
           const profilesData = await profilesRes.json()
           setRiskProfiles(profilesData)
         }
-      } catch (error) {
+      }
+    } catch (error) {
+      if (!signal?.aborted) {
         console.error('Error fetching data:', error)
-      } finally {
+        toast.error(language === 'ar' ? 'فشل في تحميل البيانات' : 'Failed to load data')
+      }
+    } finally {
+      if (!signal?.aborted) {
         setLoading(false)
       }
     }
+  }, [language])
+
+  useEffect(() => {
+    const controller = new AbortController()
     
-    fetchData()
-  }, [])
+    setLoading(true)
+    fetchAccounts(controller.signal)
+    
+    return () => {
+      controller.abort()
+    }
+  }, [fetchAccounts])
 
   const handleCreateAccount = async () => {
-    if (!formData.name || isCreating) return
+    if (!formData.name.trim() || isSubmitting) return
 
     try {
-      setIsCreating(true)
+      setIsSubmitting(true)
+
       const response = await fetch('/api/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           name: formData.name,
           broker: formData.platform,
           accountNumber: formData.accountNumber,
+          accountType: 'broker',
           type: formData.type,
           balance: formData.balance ? parseFloat(formData.balance) : 0,
           currency: formData.currency,
         })
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        const newAccount = await response.json()
-        setAccounts([newAccount, ...accounts])
+        toast.success(language === 'ar' ? 'تم إنشاء الحساب بنجاح' : 'Account created successfully')
+        setAccounts([data, ...accounts])
         
         // Update global store
         addConnectedAccount({
-          id: newAccount.id,
-          name: newAccount.name,
-          type: newAccount.accountType || 'broker',
-          currency: newAccount.currency,
-          balance: newAccount.balance,
+          id: data.id,
+          name: data.name,
+          type: data.accountType || 'broker',
+          currency: data.currency,
+          balance: data.balance,
           status: 'connected',
-          broker: newAccount.broker,
-          accountNumber: newAccount.accountNumber
+          broker: data.broker,
+          accountNumber: data.accountNumber
         })
-        
+
         setShowAddForm(false)
         setFormData({
           name: '',
@@ -172,64 +313,24 @@ export function AccountsView() {
           balance: '',
           currency: 'USD',
         })
-        toast({
-          title: language === 'ar' ? 'تم الربط بنجاح' : 'Connected Successfully',
-          description: language === 'ar' ? 'تمت إضافة حساب التداول بنجاح' : 'Trading account added successfully',
-        })
+        router.refresh()
       } else {
-        toast({
-          title: language === 'ar' ? 'خطأ في الربط' : 'Connection Error',
-          description: language === 'ar' ? 'فشل في إضافة الحساب' : 'Failed to add account',
-          variant: 'destructive',
-        })
+        throw new Error(data.error || 'Failed to create account')
       }
     } catch (error) {
       console.error('Error creating account:', error)
-      toast({
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'حدث خطأ غير متوقع' : 'An unexpected error occurred',
-        variant: 'destructive',
-      })
+      toast.error(language === 'ar' ? 'فشل في إنشاء الحساب' : 'Failed to create account')
     } finally {
-      setIsCreating(false)
-    }
-  }
-
-  const handleDeleteAccount = async (accountId: string) => {
-    try {
-      const response = await fetch(`/api/accounts/${accountId}`, {
-        method: 'DELETE'
-      })
-      
-      if (response.ok) {
-        setAccounts(accounts.filter(a => a.id !== accountId))
-        removeConnectedAccount(accountId)
-        toast({
-          title: language === 'ar' ? 'تم الحذف' : 'Deleted',
-          description: language === 'ar' ? 'تم حذف الحساب بنجاح' : 'Account deleted successfully',
-        })
-      } else {
-        toast({
-          title: language === 'ar' ? 'خطأ' : 'Error',
-          description: language === 'ar' ? 'فشل في حذف الحساب' : 'Failed to delete account',
-          variant: 'destructive',
-        })
-      }
-    } catch (error) {
-      console.error('Error deleting account:', error)
-      toast({
-        title: language === 'ar' ? 'خطأ' : 'Error',
-        description: language === 'ar' ? 'حدث خطأ أثناء الحذف' : 'An error occurred during deletion',
-        variant: 'destructive',
-      })
+      setIsSubmitting(false)
     }
   }
 
   const handleSync = async (accountId: string) => {
     setSyncingId(accountId)
-    // Simulate sync
+    // Simulate sync - in real app would call actual sync API
     await new Promise(resolve => setTimeout(resolve, 2000))
     setSyncingId(null)
+    toast.success(language === 'ar' ? 'تمت المزامنة' : 'Synced successfully')
   }
 
   const getRiskProfileForAccount = (accountId: string) => {
@@ -257,6 +358,10 @@ export function AccountsView() {
     }
   }
 
+  const removeAccountFromList = (accountId: string) => {
+    setAccounts(accounts.filter(a => a.id !== accountId))
+  }
+
   return (
     <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
@@ -270,7 +375,11 @@ export function AccountsView() {
             {t('accounts.subtitle')}
           </p>
         </div>
-        <Button onClick={() => setShowAddForm(!showAddForm)} className="bg-gradient-to-r from-cyan-500 to-blue-600">
+        <Button 
+          onClick={() => setShowAddForm(!showAddForm)} 
+          className="bg-gradient-to-r from-cyan-500 to-blue-600"
+          disabled={isSubmitting}
+        >
           <Plus className="h-4 w-4 mr-2" />
           {t('accounts.connectAccount')}
         </Button>
@@ -290,11 +399,12 @@ export function AccountsView() {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{language === 'ar' ? 'اسم الحساب' : 'Account Name'}</Label>
+                <Label>{language === 'ar' ? 'اسم الحساب' : 'Account Name'} *</Label>
                 <Input 
                   placeholder={language === 'ar' ? 'مثال: حساب التداول الرئيسي' : 'e.g., Main Trading Account'} 
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  disabled={isSubmitting}
                 />
               </div>
               <div className="space-y-2">
@@ -302,6 +412,7 @@ export function AccountsView() {
                 <Select 
                   value={formData.platform} 
                   onValueChange={(value) => setFormData({ ...formData, platform: value })}
+                  disabled={isSubmitting}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -320,6 +431,7 @@ export function AccountsView() {
                   placeholder={language === 'ar' ? 'اسم الخادم' : 'Server name'} 
                   value={formData.server}
                   onChange={(e) => setFormData({ ...formData, server: e.target.value })}
+                  disabled={isSubmitting}
                 />
               </div>
               <div className="space-y-2">
@@ -328,6 +440,7 @@ export function AccountsView() {
                   placeholder="12345678" 
                   value={formData.accountNumber}
                   onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                  disabled={isSubmitting}
                 />
               </div>
               <div className="space-y-2">
@@ -337,6 +450,7 @@ export function AccountsView() {
                   placeholder="********" 
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  disabled={isSubmitting}
                 />
               </div>
               <div className="space-y-2">
@@ -344,6 +458,7 @@ export function AccountsView() {
                 <Select 
                   value={formData.type} 
                   onValueChange={(value) => setFormData({ ...formData, type: value })}
+                  disabled={isSubmitting}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -361,6 +476,7 @@ export function AccountsView() {
                   placeholder="10000" 
                   value={formData.balance}
                   onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
+                  disabled={isSubmitting}
                 />
               </div>
               <div className="space-y-2">
@@ -368,6 +484,7 @@ export function AccountsView() {
                 <Select 
                   value={formData.currency} 
                   onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                  disabled={isSubmitting}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -387,14 +504,22 @@ export function AccountsView() {
               <Button 
                 onClick={handleCreateAccount}
                 className="bg-gradient-to-r from-cyan-500 to-blue-600"
-                disabled={!formData.name || isCreating}
+                disabled={isSubmitting || !formData.name.trim()}
               >
-                {isCreating ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : null}
-                {t('accounts.connect')}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {language === 'ar' ? 'جاري الإنشاء...' : 'Creating...'}
+                  </>
+                ) : (
+                  t('accounts.connect')
+                )}
               </Button>
-              <Button variant="outline" onClick={() => setShowAddForm(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAddForm(false)}
+                disabled={isSubmitting}
+              >
                 {t('common.cancel')}
               </Button>
             </div>
@@ -403,7 +528,11 @@ export function AccountsView() {
       )}
 
       {/* Accounts List */}
-      {accounts.length > 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : Array.isArray(accounts) && accounts.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {accounts.map((account) => {
             const riskProfile = getRiskProfileForAccount(account.id)
@@ -430,11 +559,8 @@ export function AccountsView() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={account.type === 'live' ? 'default' : 'secondary'}>
-                        {account.type === 'live' 
-                          ? (language === 'ar' ? 'حقيقي' : 'Live')
-                          : (language === 'ar' ? 'تجريبي' : 'Demo')
-                        }
+                      <Badge variant={account.accountType === 'broker' ? 'default' : 'secondary'}>
+                        {account.accountType}
                       </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -444,7 +570,7 @@ export function AccountsView() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleSync(account.id)}>
-                            <RefreshCw className="h-4 w-4 mr-2" />
+                            <RefreshCw className={`h-4 w-4 mr-2 ${syncingId === account.id ? 'animate-spin' : ''}`} />
                             {language === 'ar' ? 'مزامنة' : 'Sync'}
                           </DropdownMenuItem>
                           <DropdownMenuItem>
@@ -452,13 +578,11 @@ export function AccountsView() {
                             {t('common.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={() => handleDeleteAccount(account.id)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            {t('common.delete')}
-                          </DropdownMenuItem>
+                          <DeleteAccountButton 
+                            accountId={account.id}
+                            accountName={account.name}
+                            onSuccess={() => removeAccountFromList(account.id)}
+                          />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -530,15 +654,6 @@ export function AccountsView() {
                             </Badge>
                           )}
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="w-full mt-2"
-                          onClick={() => window.location.href = '/#risk'}
-                        >
-                          <ExternalLink className="h-3 w-3 mr-2" />
-                          {language === 'ar' ? 'عرض ملف المخاطر' : 'View Risk Profile'}
-                        </Button>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center py-3">
@@ -549,7 +664,7 @@ export function AccountsView() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => window.location.href = '/#risk'}
+                          onClick={() => router.push('/#risk')}
                         >
                           <Plus className="h-3 w-3 mr-2" />
                           {t('accounts.createRiskProfile')}

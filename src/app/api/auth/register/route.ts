@@ -1,13 +1,15 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+
 // ⚠️ هذا الكود للتطوير فقط
 
 import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { SignJWT } from 'jose'
-import { checkRateLimit } from '@/lib/rate-limiter'
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
+import { rateLimit, getRateLimitKey, getClientIp } from '@/lib/rate-limiter'
 
 // التحقق من صحة البريد الإلكتروني
 function isValidEmail(email: string): boolean {
@@ -38,15 +40,12 @@ function isStrongPassword(password: string): { valid: boolean; errors: string[] 
 export async function POST(request: NextRequest) {
   try {
     // ⚠️ Rate Limiting - حماية من الهجمات
-    const rateLimit = checkRateLimit(request, {
-      windowMs: 15 * 60 * 1000, // 15 دقيقة
-      maxRequests: 5, // 5 محاولات فقط
-    })
-    
-    if (!rateLimit.success) {
+    const ip = getClientIp(request)
+    const rl = rateLimit(getRateLimitKey(null, 'register', ip), 'register')
+    if (!rl.success) {
       return NextResponse.json(
-        { error: 'عدد محاولات كثيرة، حاول بعد 15 دقيقة' },
-        { status: 429 }
+        { error: 'عدد محاولات كثيرة، حاول بعد ' + rl.retryAfter + ' ثانية' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
       )
     }
 

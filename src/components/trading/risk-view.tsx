@@ -43,7 +43,7 @@ interface Account {
   name: string
   broker?: string
   accountNumber?: string
-  type: string
+  accountType: string  // Changed from 'type' to 'accountType' to match API response
   balance: number
   currency: string
 }
@@ -92,8 +92,9 @@ export function RiskView() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [profileToDelete, setProfileToDelete] = useState<RiskProfile | null>(null)
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
   
-  // Form state
+  // Form state - riskDegree and maxDrawdown are READ-ONLY calculated fields
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -101,11 +102,9 @@ export function RiskView() {
     accountName: '',
     accountType: 'account',
     riskTolerance: 'moderate',
-    riskDegree: 5,
     maxDailyLoss: '',
     maxWeeklyLoss: '',
     maxMonthlyLoss: '',
-    maxDrawdown: '',
     maxPositionSize: '',
     maxRiskPerTrade: '',
     maxCorrelatedTrades: '',
@@ -119,11 +118,12 @@ export function RiskView() {
 
   // Fetch profiles and accounts
   useEffect(() => {
+    setMounted(true)
     const fetchData = async () => {
       try {
         const [profilesRes, accountsRes] = await Promise.all([
-          fetch('/api/risk-profiles'),
-          fetch('/api/accounts')
+          fetch('/api/risk-profiles', { credentials: 'include' }),
+          fetch('/api/accounts', { credentials: 'include' })
         ])
         
         if (profilesRes.ok) {
@@ -153,11 +153,9 @@ export function RiskView() {
       accountName: '',
       accountType: 'account',
       riskTolerance: 'moderate',
-      riskDegree: 5,
       maxDailyLoss: '',
       maxWeeklyLoss: '',
       maxMonthlyLoss: '',
-      maxDrawdown: '',
       maxPositionSize: '',
       maxRiskPerTrade: '',
       maxCorrelatedTrades: '',
@@ -180,11 +178,9 @@ export function RiskView() {
         accountName: selectedAccount?.name || null,
         accountType: formData.accountType,
         riskTolerance: formData.riskTolerance,
-        riskDegree: formData.riskDegree,
         maxDailyLoss: formData.maxDailyLoss ? parseFloat(formData.maxDailyLoss) : null,
         maxWeeklyLoss: formData.maxWeeklyLoss ? parseFloat(formData.maxWeeklyLoss) : null,
         maxMonthlyLoss: formData.maxMonthlyLoss ? parseFloat(formData.maxMonthlyLoss) : null,
-        maxDrawdown: formData.maxDrawdown ? parseFloat(formData.maxDrawdown) : null,
         maxPositionSize: formData.maxPositionSize ? parseFloat(formData.maxPositionSize) : null,
         maxRiskPerTrade: formData.maxRiskPerTrade ? parseFloat(formData.maxRiskPerTrade) : null,
         maxCorrelatedTrades: formData.maxCorrelatedTrades ? parseInt(formData.maxCorrelatedTrades) : null,
@@ -200,12 +196,14 @@ export function RiskView() {
         response = await fetch(`/api/risk-profiles/${editingProfile.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(profileData)
         })
       } else {
         response = await fetch('/api/risk-profiles', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(profileData)
         })
       }
@@ -234,11 +232,9 @@ export function RiskView() {
       accountName: profile.accountName || '',
       accountType: profile.accountType || 'account',
       riskTolerance: profile.riskTolerance,
-      riskDegree: profile.riskDegree,
       maxDailyLoss: profile.maxDailyLoss?.toString() || '',
       maxWeeklyLoss: profile.maxWeeklyLoss?.toString() || '',
       maxMonthlyLoss: profile.maxMonthlyLoss?.toString() || '',
-      maxDrawdown: profile.maxDrawdown?.toString() || '',
       maxPositionSize: profile.maxPositionSize?.toString() || '',
       maxRiskPerTrade: profile.maxRiskPerTrade?.toString() || '',
       maxCorrelatedTrades: profile.maxCorrelatedTrades?.toString() || '',
@@ -255,7 +251,8 @@ export function RiskView() {
     
     try {
       const response = await fetch(`/api/risk-profiles/${profileToDelete.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       })
       
       if (response.ok) {
@@ -297,6 +294,15 @@ export function RiskView() {
     daily: profiles.reduce((sum, p) => sum + (p.maxDailyLoss || 0), 0),
     weekly: profiles.reduce((sum, p) => sum + (p.maxWeeklyLoss || 0), 0),
     monthly: profiles.reduce((sum, p) => sum + (p.maxMonthlyLoss || 0), 0),
+  }
+
+  // Prevent hydration mismatch by waiting for mount
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    )
   }
 
   return (
@@ -464,7 +470,7 @@ export function RiskView() {
                                 <Link2 className="h-3 w-3" />
                                 {account.name}
                                 <span className="text-xs text-muted-foreground">
-                                  ({account.broker || account.type})
+                                  ({account.broker || account.accountType})
                                 </span>
                               </div>
                             </SelectItem>
@@ -532,25 +538,16 @@ export function RiskView() {
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <Label>{t('risk.riskDegree')}: {formData.riskDegree}</Label>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-green-500">1</span>
-                      <Slider
-                        value={[formData.riskDegree]}
-                        onValueChange={(value) => setFormData({ ...formData, riskDegree: value[0] })}
-                        max={10}
-                        min={1}
-                        step={1}
-                        className="flex-1"
-                      />
-                      <span className="text-sm text-red-500">10</span>
+                  {/* Read-only Risk Degree Display */}
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">{t('risk.riskDegree')}</Label>
+                    <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 border">
+                      <span className="text-2xl font-bold">{formData.riskTolerance === 'conservative' ? 3 : formData.riskTolerance === 'moderate' ? 5 : 8}</span>
+                      <span className="text-sm text-muted-foreground">/ 10</span>
                     </div>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{t('risk.conservative')}</span>
-                      <span>{t('risk.moderate')}</span>
-                      <span>{t('risk.aggressive')}</span>
-                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Auto-calculated based on risk tolerance
+                    </p>
                   </div>
                 </TabsContent>
 
@@ -587,12 +584,9 @@ export function RiskView() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>{t('risk.maxDrawdown')}</Label>
                       <Input 
                         type="number" 
                         placeholder="10"
-                        value={formData.maxDrawdown}
-                        onChange={(e) => setFormData({ ...formData, maxDrawdown: e.target.value })}
                       />
                     </div>
                   </div>

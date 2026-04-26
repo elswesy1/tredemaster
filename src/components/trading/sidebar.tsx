@@ -31,17 +31,14 @@ import {
   Brain,
   History,
 } from 'lucide-react'
-
 // Menu items data - defined outside component
 const coreFeatures: { id: ActiveSection; labelKey: string; icon: React.ElementType }[] = [
   { id: 'dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard },
   { id: 'portfolio', labelKey: 'sidebar.portfolio', icon: Wallet },
   { id: 'risk', labelKey: 'sidebar.risk', icon: Shield },
   { id: 'trading', labelKey: 'sidebar.trading', icon: LineChart },
-  { id: 'playbook', labelKey: 'sidebar.playbook', icon: ClipboardCheck },
-  { id: 'journal', labelKey: 'sidebar.journal', icon: BookOpen },
+  { id: 'playbook', labelKey: 'sidebar.playbook', icon: Target },
 ]
-
 const tradingTools: { id: ActiveSection; labelKey: string; icon: React.ElementType }[] = [
   { id: 'accounts', labelKey: 'sidebar.accounts', icon: Link2 },
   { id: 'security', labelKey: 'sidebar.security', icon: Shield },
@@ -55,8 +52,9 @@ const analyticsFeatures: { id: ActiveSection; labelKey: string; icon: React.Elem
 ]
 
 const psychologyFeatures: { id: ActiveSection; labelKey: string; icon: React.ElementType }[] = [
-  { id: 'audits', labelKey: 'sidebar.audits', icon: ClipboardCheck },
+  { id: 'journal', labelKey: 'sidebar.journal', icon: BookOpen },
   { id: 'psychology', labelKey: 'sidebar.psychology', icon: Brain },
+  { id: 'audits', labelKey: 'sidebar.audits', icon: ClipboardCheck },
   { id: 'zen-mode', labelKey: 'sidebar.zenMode', icon: Moon },
 ]
 
