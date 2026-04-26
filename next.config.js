@@ -43,7 +43,7 @@ const nextConfig = {
       }
     ]
   },
-  
+
   images: {
     remotePatterns: [
       {
@@ -53,25 +53,27 @@ const nextConfig = {
     ],
     formats: ['image/avif', 'image/webp'],
   },
-  
+
   // Force dynamic rendering for API routes
+  // serverComponentsExternalPackages moved to root level in Next.js 15+
+  serverExternalPackages: ['@prisma/client'],
+
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client'],
     optimizePackageImports: [
       'lucide-react',
       'recharts',
       'date-fns',
     ],
   },
-  
+
   // Disable static optimization for API routes
   poweredByHeader: false,
   reactStrictMode: true,
-  
+
   eslint: {
     ignoreDuringBuilds: true,
   },
-  
+
   typescript: {
     ignoreBuildErrors: false,
   },

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const ip = getClientIp(request)
     const limit = rateLimit(getRateLimitKey(user.userId, 'api_call', ip), 'api_call')
     if (!limit.success) return NextResponse.json({ error: 'Too many requests', retryAfter: limit.retryAfter }, { status: 429 })
-
+    
     // 2. جلب الحسابات مع فلتر Soft Delete
     const accounts = await db.tradingAccount.findMany({
       where: { 
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    return jsonResponse(true, accounts)
+    return jsonResponse(true, accounts, undefined, 200, { limit: limit.limit, remaining: limit.remaining, resetAt: limit.resetAt })
     
   } catch (error) {
     console.error('[API_ERR] GET /api/accounts:', error)
