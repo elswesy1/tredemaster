@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getAuthUser } from '@/lib/auth-middleware'
 import { logAudit, AuditAction } from '@/lib/audit'
-import { checkRateLimit } from '@/lib/rate-limiter'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limiter'
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
@@ -39,34 +40,19 @@ async function getPlaybooksHandler(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  // 1. تحقق من Rate Limit أولاً
-  const limit = checkRateLimit(request, {
-    windowMs: 60 * 1000,
-    maxRequests: 30,
-    message: 'لقد تجاوزت حد الطلبات المسموح به (5 طلبات في الدقيقة)'
-  });
-
-  // 2. إذا تم تجاوز الحد، أعد خطأ 429
-if (!limit.success) {
-  const retryAfter = Math.ceil((limit.resetTime - Date.now()) / 1000);
+  // 1. تحقق من الجلسة أولاً للحصول على معرف المستخدم
+  const user = await getAuthUser(request)
   
-  return NextResponse.json(
-    { 
-      error: 'Too many requests. Please try again later.',
-      retryAfter: retryAfter
-    },
-    { 
-      status: 429,
-      headers: {
-        'X-RateLimit-Remaining': String(limit.remaining),
-        'X-RateLimit-Reset': new Date(limit.resetTime).toISOString(),
-        'Retry-After': String(retryAfter)
-      }
-    }
-  );
-}
+  // 2. تحقق من Rate Limit
+  const ip = getClientIp(request)
+  const limit = checkRateLimit(user?.userId || null, 'playbook_get', 'api_call', ip)
 
-  // 3. إذا نجح، نفذ الدالة الأصلية
+  // 3. إذا تم تجاوز الحد، أعد الرد المجهز من الدالة
+  if (!limit.success && limit.response) {
+    return limit.response
+  }
+
+  // 4. إذا نجح، نفذ الدالة الأصلية
   return getPlaybooksHandler(request);
 }
 
@@ -109,8 +95,8 @@ export async function POST(request: NextRequest) {
         exitRules,
         riskRules,
         setupName,
-        rulesChecklist: rulesChecklist ? JSON.stringify(rulesChecklist) : null,
-        setupScreenshotUrl,
+        confluences: rulesChecklist ? JSON.stringify(rulesChecklist) : null,
+        imageUrl: setupScreenshotUrl,
         userId: user.userId,
         totalTrades: 0,
         winningTrades: 0,
@@ -145,7 +131,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { id, rulesChecklist, ...updateData } = body
+    const { id, rulesChecklist, setupScreenshotUrl, ...updateData } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Playbook ID is required' }, { status: 400 })
@@ -169,7 +155,10 @@ export async function PUT(request: NextRequest) {
 
     const data: any = { ...updateData }
     if (rulesChecklist !== undefined) {
-      data.rulesChecklist = rulesChecklist ? JSON.stringify(rulesChecklist) : null
+      data.confluences = rulesChecklist ? JSON.stringify(rulesChecklist) : null
+    }
+    if (setupScreenshotUrl !== undefined) {
+      data.imageUrl = setupScreenshotUrl
     }
 
     const playbook = await db.playbook.update({

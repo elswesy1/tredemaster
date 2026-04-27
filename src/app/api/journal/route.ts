@@ -169,8 +169,8 @@ export async function POST(request: NextRequest) {
       details: { entryId: entry.id, type: entry.type }
     })
 
+    revalidateTag('journal', 'max')
     return NextResponse.json(entry, { status: 201 })
-    revalidateTag('journal')
   } catch (error) {
     console.error('[JOURNAL_POST]', error)
     return NextResponse.json({ error: 'Failed to create journal entry' }, { status: 500 })

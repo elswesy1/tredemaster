@@ -64,8 +64,8 @@ export async function POST(request: Request) {
         userId: userId || 'default-user',
       },
     })
+    revalidateTag('plans', 'max')
     return NextResponse.json(plan, { status: 201 })
-    revalidateTag('plans')
   } catch (error) {
     console.error('Error creating trading plan:', error)
     return NextResponse.json({ error: 'Failed to create trading plan' }, { status: 500 })

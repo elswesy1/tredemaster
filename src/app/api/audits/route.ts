@@ -81,8 +81,8 @@ export async function POST(request: NextRequest) {
       details: { auditId: audit.id, title: audit.title }
     })
 
+    revalidateTag('audits', 'max')
     return NextResponse.json(audit, { status: 201 })
-    revalidateTag('audits')
   } catch (error) {
     console.error('[AUDITS_POST]', error)
     return NextResponse.json({ error: 'Failed to create audit' }, { status: 500 })

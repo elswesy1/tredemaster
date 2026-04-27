@@ -100,8 +100,8 @@ export async function POST(request: NextRequest) {
       details: { tradeId: trade.id, symbol: trade.symbol }
     })
 
+    revalidateTag('trades', 'max')
     return NextResponse.json(trade, { status: 201 })
-    revalidateTag('trades')
   } catch (error) {
     console.error('Error creating trade:', error)
     return NextResponse.json({ error: 'Failed to create trade' }, { status: 500 })

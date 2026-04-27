@@ -64,8 +64,8 @@ export async function POST(request: Request) {
         userId: userId || 'default-user',
       },
     })
+    revalidateTag('setups', 'max')
     return NextResponse.json(setup, { status: 201 })
-    revalidateTag('setups')
   } catch (error) {
     console.error('Error creating setup:', error)
     return NextResponse.json({ error: 'Failed to create setup' }, { status: 500 })

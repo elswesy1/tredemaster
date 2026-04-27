@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
       details: { sessionId: session.id, sessionName: session.session }
     })
     
+    revalidateTag('sessions', 'max')
     return NextResponse.json({ session }, { status: 201 })
-    revalidateTag('sessions')
   } catch (error) {
     console.error('[SESSIONS_POST]', error)
     return NextResponse.json({ error: 'Failed to create session review' }, { status: 500 })

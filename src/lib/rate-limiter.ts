@@ -7,6 +7,7 @@ interface RateLimitConfig {
 
 interface RateLimitResult {
   success: boolean;
+  limit: number;
   remaining: number;
   resetAt: number;
   retryAfter?: number;
@@ -51,6 +52,7 @@ export function rateLimit(
     
     return {
       success: true,
+      limit: effectiveConfig.limit,
       remaining: effectiveConfig.limit - 1,
       resetAt,
     };
@@ -60,6 +62,7 @@ export function rateLimit(
   if (record.count >= effectiveConfig.limit) {
     return {
       success: false,
+      limit: effectiveConfig.limit,
       remaining: 0,
       resetAt: record.resetAt,
       retryAfter: Math.ceil((record.resetAt - now) / 1000),
@@ -71,6 +74,7 @@ export function rateLimit(
   
   return {
     success: true,
+    limit: effectiveConfig.limit,
     remaining: effectiveConfig.limit - record.count,
     resetAt: record.resetAt,
   };

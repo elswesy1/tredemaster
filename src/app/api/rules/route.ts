@@ -70,8 +70,8 @@ export async function POST(request: NextRequest) {
       details: { ruleId: rule.id, name: rule.name }
     })
 
+    revalidateTag('rules', 'max')
     return NextResponse.json(rule, { status: 201 })
-    revalidateTag('rules')
   } catch (error) {
     console.error('[RULES_POST]', error)
     return NextResponse.json({ error: 'Failed to create trading rule' }, { status: 500 })
