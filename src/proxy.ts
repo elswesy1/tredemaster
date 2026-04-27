@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { rateLimit, getRateLimitKey, getClientIp } from '@/lib/rate-limiter';
 
-export function proxy(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const response = NextResponse.next();
   
   // Content Security Policy - Updated to allow Google Fonts and Vercel

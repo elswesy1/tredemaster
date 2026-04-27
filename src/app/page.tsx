@@ -1,8 +1,7 @@
 'use client'
 
-// TradeMaster v7.0 - User Profile Menu with Logout, Settings, and Upgrade
-
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
+// TradeMaster v7.1 - Consolidated render to fix hook/hydration issues
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTradingStore } from '@/lib/store'
 import { useI18n } from '@/lib/i18n'
 import { TradingSidebar } from '@/components/trading/sidebar'
@@ -41,14 +40,13 @@ import {
   User, 
   Settings, 
   LogOut, 
-  CreditCard,
-  ChevronDown,
-  Mail,
-  Shield
+  Mail, 
+  Shield, 
+  ChevronDown 
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// User state
+// User state interface
 interface User {
   id: string
   email: string
@@ -57,7 +55,7 @@ interface User {
   trialEndsAt?: string
 }
 
-// دالة للحصول على المستخدم الحالي
+// Helper to fetch current user
 async function fetchCurrentUser(): Promise<User | null> {
   try {
     const response = await fetch('/api/auth/me')
@@ -72,30 +70,20 @@ async function fetchCurrentUser(): Promise<User | null> {
 }
 
 export default function Home() {
-  // ============================================
-  // ALL HOOKS MUST BE AT THE TOP - NO CONDITIONAL HOOKS
-  // ============================================
-  
-  // Store hooks (always called first)
+  // 1. All hooks at the top, unconditionally
   const { activeSection, setActiveSection, sidebarCollapsed } = useTradingStore()
-  const { direction, language, t, isHydrated } = useI18n()
+  const { direction, language, t } = useI18n()
   
-  // State hooks (always unconditional)
   const [mounted, setMounted] = useState(false)
   const [appView, setAppView] = useState<'landing' | 'signup' | 'login' | 'dashboard'>('landing')
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   
-  // Refs
   const profileMenuRef = useRef<HTMLDivElement>(null)
   const mountedRef = useRef(false)
 
-  // ============================================
-  // EFFECTS - All unconditional
-  // ============================================
-  
-  // Effect: Handle client-side mounting
+  // 2. Effects
   useEffect(() => {
     if (mountedRef.current) return
     mountedRef.current = true
@@ -127,15 +115,13 @@ export default function Home() {
     initializeState()
   }, [])
   
-  // Effect: Apply direction
   useEffect(() => {
-    if (mounted && isHydrated) {
+    if (mounted) {
       document.documentElement.dir = direction
       document.documentElement.lang = language
     }
-  }, [direction, language, mounted, isHydrated])
+  }, [direction, language, mounted])
   
-  // Effect: Close menu on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
@@ -146,11 +132,8 @@ export default function Home() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // ============================================
-  // CALLBACKS - Must be defined before any conditional returns
-  // ============================================
-  
-  const handleSignup = useCallback(async (data: { email: string; password: string; name: string }) => {
+  // 3. Callbacks
+  const handleSignup = useCallback(async () => {
     const currentUser = await fetchCurrentUser()
     if (currentUser) {
       setUser(currentUser)
@@ -165,7 +148,7 @@ export default function Home() {
     }
   }, [language])
   
-  const handleLogin = useCallback(async (data: { email: string; password: string }) => {
+  const handleLogin = useCallback(async () => {
     const currentUser = await fetchCurrentUser()
     if (currentUser) {
       setUser(currentUser)
@@ -182,9 +165,7 @@ export default function Home() {
     setProfileMenuOpen(false)
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
     setUser(null)
     localStorage.removeItem('trademaster_user')
     setAppView('landing')
@@ -193,74 +174,35 @@ export default function Home() {
       description: language === 'ar' ? 'تم تسجيل خروجك بنجاح' : 'You have been logged out successfully',
     })
   }, [language])
-  
-  const handleSelectPlan = useCallback((plan: 'free' | 'pro') => {
-    if (user) {
-      const updatedUser = { ...user, plan }
-      setUser(updatedUser)
-      localStorage.setItem('trademaster_user', JSON.stringify(updatedUser))
-      toast({
-        title: language === 'ar' ? 'تم تحديث الخطة' : 'Plan updated',
-        description: language === 'ar' 
-          ? `تم الترقية إلى الخطة ${plan === 'pro' ? 'الاحترافية' : 'المجانية'}` 
-          : `Upgraded to ${plan} plan`,
-      })
-    }
-  }, [user, language])
 
-  // ============================================
-  // CONTENT RENDERING - All conditional returns AFTER hooks
-  // ============================================
-  
-  const renderContent = useCallback(() => {
+  const renderActiveSection = useCallback(() => {
     switch (activeSection) {
-      case 'dashboard':
-        return <DashboardView />
-      case 'accounts':
-        return <TradingAccountsView />
-      case 'portfolio':
-        return <PortfolioView />
-      case 'risk':
-        return <RiskView />
-      case 'trading':
-        return <TradingView />
-      case 'playbook':
-        return <PlaybookView />
-      case 'journal':
-        return <JournalView />
-      case 'psychology':
-        return <PsychologyView />
-      case 'statistics':
-        return <StatisticsView />
-      case 'zen-mode':
-        return <ZenModeView />
-      case 'sessions':
-        return <SessionRecording />
-      case 'pricing':
-        return <PricingView />
-      case 'trading-hub':
-        return <TradingHubView />
-      case 'rules':
-        return <RulesView />
-      case 'ai-assistant':
-        return <AIChat />
-      case 'audits':
-        return <AuditsView />
-      case 'login-history':
-        return <LoginHistoryView />
-      case 'security':
-        return (
-          <div className="max-w-2xl mx-auto py-8">
-            <TwoFactorSetup />
-          </div>
-        )
-
-      // Redirect old sections to new unified trading view
+      case 'dashboard': return <DashboardView />
+      case 'accounts': return <TradingAccountsView />
+      case 'portfolio': return <PortfolioView />
+      case 'risk': return <RiskView />
+      case 'trading': return <TradingView />
+      case 'playbook': return <PlaybookView />
+      case 'journal': return <JournalView />
+      case 'psychology': return <PsychologyView />
+      case 'statistics': return <StatisticsView />
+      case 'zen-mode': return <ZenModeView />
+      case 'sessions': return <SessionRecording />
+      case 'pricing': return <PricingView />
+      case 'trading-hub': return <TradingHubView />
+      case 'rules': return <RulesView />
+      case 'ai-assistant': return <AIChat />
+      case 'audits': return <AuditsView />
+      case 'login-history': return <LoginHistoryView />
+      case 'security': return (
+        <div className="max-w-2xl mx-auto py-8">
+          <TwoFactorSetup />
+        </div>
+      )
       case 'strategies':
       case 'log-trade':
         return <TradingView />
-      default:
-        return <DashboardView />
+      default: return <DashboardView />
     }
   }, [activeSection])
 
@@ -284,40 +226,27 @@ export default function Home() {
     pricing: t('sidebar.pricing'),
     'login-history': language === 'ar' ? 'سجل تسجيلات الدخول' : 'Login History',
     security: t('sidebar.security'),
-
   }
 
-  // ============================================
-  // CONDITIONAL RETURNS - ONLY AFTER ALL HOOKS
-  // ============================================
-  
-  // Loading state
+  // 4. Final Render - Unified to prevent hook mismatches
   if (!mounted || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
-        <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                  <span className="text-white font-bold">T</span>
-                </div>
-                <span className="text-xl font-bold">TradeMaster</span>
-              </div>
-            </div>
+      <div className="min-h-screen bg-background flex flex-col">
+        <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md px-4 py-4">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center font-bold text-white">T</div>
+            <span className="text-xl font-bold">TradeMaster</span>
           </div>
         </nav>
-        <div className="flex items-center justify-center py-32">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 animate-pulse" />
-            <div className="text-muted-foreground">جاري التحميل...</div>
-          </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 animate-pulse" />
+          <div className="text-muted-foreground">جاري التحميل...</div>
         </div>
+        <Toaster />
       </div>
     )
   }
 
-  // Landing page
   if (appView === 'landing') {
     return (
       <div dir={direction}>
@@ -327,7 +256,6 @@ export default function Home() {
     )
   }
 
-  // Signup page
   if (appView === 'signup') {
     return (
       <div dir={direction}>
@@ -337,7 +265,6 @@ export default function Home() {
     )
   }
 
-  // Login page
   if (appView === 'login') {
     return (
       <div dir={direction}>
@@ -347,7 +274,6 @@ export default function Home() {
     )
   }
 
-  // Dashboard view - now we have user
   const isRTL = direction === 'rtl'
 
   return (
@@ -361,122 +287,73 @@ export default function Home() {
           marginRight: isRTL ? (sidebarCollapsed ? '4rem' : '16rem') : 0,
         }}
       >
-        {/* Header */}
-        <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
-          <div className="flex h-16 items-center justify-between px-4 sm:px-6">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent truncate">
-                {sidebarTitleMap[activeSection] || t('sidebar.dashboard')}
-              </h1>
-              {user && (
-                <Badge 
-                  variant={user.plan === 'pro' ? 'default' : 'secondary'}
-                  className={cn(
-                    'text-xs hidden sm:flex',
-                    user.plan === 'pro' && 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0'
-                  )}
-                >
-                  {user.plan === 'pro' ? (
-                    <><Crown className="h-3 w-3 mr-1" />Pro</>
-                  ) : 'Free'}
-                </Badge>
-              )}
-            </div>
-            
-            {/* Right Side - User Profile Menu */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <LanguageToggle />
-              <ThemeToggle />
-              
-              {user && (
-                <div className="relative" ref={profileMenuRef}>
-                  <button
-                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200",
-                      "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20",
-                      "hover:from-green-500/20 hover:to-emerald-500/20 hover:border-green-500/30",
-                      profileMenuOpen && "ring-2 ring-green-500/30"
-                    )}
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white text-sm font-medium">
-                        {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="hidden sm:block text-left">
-                      <div className="text-sm font-medium text-foreground">{user.name}</div>
-                      <div className="text-xs text-muted-foreground">{user.email}</div>
-                    </div>
-                    <ChevronDown className={cn(
-                      "h-4 w-4 text-muted-foreground transition-transform duration-200",
-                      profileMenuOpen && "rotate-180"
-                    )} />
-                  </button>
+        <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur h-16 flex items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-4">
+            <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent truncate">
+              {sidebarTitleMap[activeSection] || t('sidebar.dashboard')}
+            </h1>
+            {user && (
+              <Badge variant={user.plan === 'pro' ? 'default' : 'secondary'} className={cn('text-xs hidden sm:flex', user.plan === 'pro' && 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0')}>
+                {user.plan === 'pro' ? <><Crown className="h-3 w-3 mr-1" />Pro</> : 'Free'}
+              </Badge>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageToggle />
+            <ThemeToggle />
+            {user && (
+              <div className="relative" ref={profileMenuRef}>
+                <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className={cn("flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 hover:from-green-500/20 hover:to-emerald-500/20 hover:border-green-500/30", profileMenuOpen && "ring-2 ring-green-500/30")}>
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white text-sm font-medium">
+                      {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden sm:block text-left">
+                    <div className="text-sm font-medium">{user.name}</div>
+                    <div className="text-xs text-muted-foreground">{user.email}</div>
+                  </div>
+                  <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", profileMenuOpen && "rotate-180")} />
+                </button>
 
-                  {profileMenuOpen && (
-                    <div className={cn(
-                      "absolute top-full mt-2 w-72 rounded-xl border border-border bg-card shadow-xl z-50",
-                      "animate-in fade-in-0 zoom-in-95 duration-200",
-                      isRTL ? "right-0" : "left-0"
-                    )}>
-                      <div className="p-4 border-b border-border bg-gradient-to-r from-green-500/5 to-emerald-500/5 rounded-t-xl">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-12 w-12">
-                            <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white text-lg font-medium">
-                              {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-semibold text-foreground">{user.name}</div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {user.email}
-                            </div>
-                            <Badge variant={user.plan === 'pro' ? 'default' : 'secondary'} className="mt-1 text-xs">
-                              {user.plan === 'pro' ? <><Crown className="h-3 w-3 mr-1" />Pro</> : 'Free'}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-2">
-                        <button onClick={() => { setProfileMenuOpen(false); toast({ title: language === 'ar' ? 'قريباً' : 'Coming Soon' }) }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left">
-                          <div className="p-2 rounded-lg bg-blue-500/10"><User className="h-4 w-4 text-blue-500" /></div>
-                          <div><div className="text-sm font-medium">{language === 'ar' ? 'البيانات الشخصية' : 'Profile'}</div><div className="text-xs text-muted-foreground">{language === 'ar' ? 'إدارة معلومات حسابك' : 'Manage your account'}</div></div>
-                        </button>
-                        <button onClick={() => { setProfileMenuOpen(false); toast({ title: language === 'ar' ? 'قريباً' : 'Coming Soon' }) }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left">
-                          <div className="p-2 rounded-lg bg-purple-500/10"><Settings className="h-4 w-4 text-purple-500" /></div>
-                          <div><div className="text-sm font-medium">{language === 'ar' ? 'الإعدادات' : 'Settings'}</div><div className="text-xs text-muted-foreground">{language === 'ar' ? 'تخصيص التطبيق' : 'Customize app'}</div></div>
-                        </button>
-                        {user.plan === 'free' && (
-                          <button onClick={() => { setProfileMenuOpen(false); setActiveSection('pricing') }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-500/10 transition-colors text-left">
-                            <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20"><Sparkles className="h-4 w-4 text-amber-500" /></div>
-                            <div><div className="text-sm font-medium text-amber-600 dark:text-amber-400">{language === 'ar' ? 'ترقية إلى Pro' : 'Upgrade to Pro'}</div><div className="text-xs text-muted-foreground">{language === 'ar' ? 'احصل على مميزات إضافية' : 'Get premium features'}</div></div>
-                          </button>
-                        )}
-                        <button onClick={() => { setProfileMenuOpen(false); setActiveSection('login-history') }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left">
-                          <div className="p-2 rounded-lg bg-green-500/10"><Shield className="h-4 w-4 text-green-500" /></div>
-                          <div><div className="text-sm font-medium">{language === 'ar' ? 'سجل الدخول' : 'Login History'}</div><div className="text-xs text-muted-foreground">{language === 'ar' ? 'عرض نشاط الدخول' : 'View login activity'}</div></div>
-                        </button>
-                        <div className="my-2 border-t border-border" />
-                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-500/10 transition-colors text-left group">
-                          <div className="p-2 rounded-lg bg-red-500/10 group-hover:bg-red-500/20 transition-colors"><LogOut className="h-4 w-4 text-red-500" /></div>
-                          <div><div className="text-sm font-medium text-red-500">{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</div><div className="text-xs text-muted-foreground">{language === 'ar' ? 'الخروج من حسابك' : 'Sign out'}</div></div>
-                        </button>
+                {profileMenuOpen && (
+                  <div className={cn("absolute top-full mt-2 w-72 rounded-xl border border-border bg-card shadow-xl z-50 p-2", isRTL ? "right-0" : "left-0")}>
+                    <div className="p-2 border-b border-border bg-gradient-to-r from-green-500/5 to-emerald-500/5 rounded-t-xl mb-2 flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white font-medium">
+                          {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-semibold text-sm">{user.name}</div>
+                        <div className="text-xs text-muted-foreground truncate w-40">{user.email}</div>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
+                    
+                    <button onClick={() => { setProfileMenuOpen(false); toast({ title: language === 'ar' ? 'قريباً' : 'Coming Soon' }) }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left text-sm">
+                      <User className="h-4 w-4 text-blue-500" /> {language === 'ar' ? 'البيانات الشخصية' : 'Profile'}
+                    </button>
+                    <button onClick={() => { setProfileMenuOpen(false); toast({ title: language === 'ar' ? 'قريباً' : 'Coming Soon' }) }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left text-sm">
+                      <Settings className="h-4 w-4 text-purple-500" /> {language === 'ar' ? 'الإعدادات' : 'Settings'}
+                    </button>
+                    <button onClick={() => { setProfileMenuOpen(false); setActiveSection('login-history') }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors text-left text-sm">
+                      <Shield className="h-4 w-4 text-green-500" /> {language === 'ar' ? 'سجل الدخول' : 'Login History'}
+                    </button>
+                    <div className="my-1 border-t border-border" />
+                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-500/10 transition-colors text-left text-sm text-red-500">
+                      <LogOut className="h-4 w-4" /> {language === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </header>
 
-        {/* Page Content */}
-        <div className="p-4 sm:p-6">
-          {renderContent()}
-        </div>
+        <main className="p-4 sm:p-6">
+          {renderActiveSection()}
+        </main>
       </div>
       <Toaster />
     </div>
