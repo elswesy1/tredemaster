@@ -148,6 +148,7 @@ export type ActiveSection =
   | 'pricing'
   | 'login-history'
   | 'security'
+  | 'strategies'
 
 // Store State
 interface TradingStore {

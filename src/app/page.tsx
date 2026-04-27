@@ -310,7 +310,7 @@ export default function Home() {
         <div className="flex items-center justify-center py-32">
           <div className="flex flex-col items-center gap-4">
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 animate-pulse" />
-            <div className="text-muted-foreground">{t('common.loading')}</div>
+            <div className="text-muted-foreground">جاري التحميل...</div>
           </div>
         </div>
       </div>
