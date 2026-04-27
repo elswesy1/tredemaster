@@ -5,24 +5,25 @@ import { rateLimit, getRateLimitKey, getClientIp } from '@/lib/rate-limiter';
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
   
-  // Content Security Policy
+  // Content Security Policy - Updated to allow Google Fonts and Vercel
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net;
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    img-src 'self' data: https: blob:;
-    font-src 'self' https://fonts.gstatic.com;
-    connect-src 'self' https://api.neon.tech https://*.vercel.app;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://*.vercel.app;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
+    font-src 'self' https://fonts.gstatic.com https://*.vercel.app data:;
+    img-src 'self' data: https: blob: https://*.vercel.app;
+    connect-src 'self' https://api.neon.tech https://*.vercel.app https://fonts.googleapis.com https://fonts.gstatic.com;
     frame-ancestors 'none';
+    upgrade-insecure-requests;
   `.replace(/\s{2,}/g, ' ').trim();
   
   response.headers.set('Content-Security-Policy', cspHeader);
   
   const path = request.nextUrl.pathname;
-  const ip = getClientIp(request) || 'unknown';
-
+  
   // Rate limiting للـ API routes فقط
   if (path.startsWith('/api/')) {
+    const ip = getClientIp(request) || 'unknown';
     const key = getRateLimitKey(null, ip, 'api_call');
     const limit = rateLimit(key, 'api_call');
 
@@ -36,10 +37,10 @@ export function middleware(request: NextRequest) {
         { 
           status: 429,
           headers: {
+            'Retry-After': String(limit.retryAfter || 60),
             'X-RateLimit-Limit': '1000',
             'X-RateLimit-Remaining': '0',
             'X-RateLimit-Reset': new Date(limit.resetAt).toISOString(),
-            'Content-Security-Policy': cspHeader,
           }
         }
       );
@@ -51,7 +52,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/api/:path*',
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public|icons).*)',
   ],
 };

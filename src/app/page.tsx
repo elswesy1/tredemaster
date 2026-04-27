@@ -2,7 +2,7 @@
 
 // TradeMaster v7.0 - User Profile Menu with Logout, Settings, and Upgrade
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useTradingStore } from '@/lib/store'
 import { useI18n } from '@/lib/i18n'
 import { TradingSidebar } from '@/components/trading/sidebar'
@@ -72,43 +72,42 @@ async function fetchCurrentUser(): Promise<User | null> {
 }
 
 export default function Home() {
-  const { activeSection, setActiveSection, sidebarCollapsed } = useTradingStore()
-  const { direction, language, t } = useI18n()
+  // ============================================
+  // ALL HOOKS MUST BE AT THE TOP - NO CONDITIONAL HOOKS
+  // ============================================
   
-  // Client-side only state - use ref to avoid cascading render warning
-  const mountedRef = useRef(false)
+  // Store hooks (always called first)
+  const { activeSection, setActiveSection, sidebarCollapsed } = useTradingStore()
+  const { direction, language, t, isHydrated } = useI18n()
+  
+  // State hooks (always unconditional)
   const [mounted, setMounted] = useState(false)
   const [appView, setAppView] = useState<'landing' | 'signup' | 'login' | 'dashboard'>('landing')
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  
+  // Refs
   const profileMenuRef = useRef<HTMLDivElement>(null)
+  const mountedRef = useRef(false)
 
-  // Close menu when clicking outside
+  // ============================================
+  // EFFECTS - All unconditional
+  // ============================================
+  
+  // Effect: Handle client-side mounting
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-        setProfileMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  // Handle client-side mounting
-  useEffect(() => {
+    if (mountedRef.current) return
+    mountedRef.current = true
+    setMounted(true)
+    
     const initializeState = async () => {
-      if (!mountedRef.current) {
-        mountedRef.current = true
-        setMounted(true)
-        
-        // محاولة الحصول على المستخدم من API أولاً
+      try {
         const currentUser = await fetchCurrentUser()
         if (currentUser) {
           setUser(currentUser)
           setAppView('dashboard')
         } else {
-          // fallback to localStorage for offline mode
           const savedUser = localStorage.getItem('trademaster_user')
           if (savedUser) {
             try {
@@ -120,29 +119,43 @@ export default function Home() {
             }
           }
         }
+      } finally {
+        setIsLoading(false)
       }
     }
-    // Use queueMicrotask to defer setState outside effect body
-    queueMicrotask(initializeState)
+    
+    initializeState()
   }, [])
-
-  // Apply direction on mount and language change
+  
+  // Effect: Apply direction
   useEffect(() => {
-    if (mounted) {
+    if (mounted && isHydrated) {
       document.documentElement.dir = direction
       document.documentElement.lang = language
     }
-  }, [direction, language, mounted])
+  }, [direction, language, mounted, isHydrated])
+  
+  // Effect: Close menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
-  const handleSignup = async (data: { email: string; password: string; name: string }) => {
-    // التسجيل تم بالفعل في SignupPage عبر API
-    // الآن نحصل على المستخدم الحالي
+  // ============================================
+  // CALLBACKS - Must be defined before any conditional returns
+  // ============================================
+  
+  const handleSignup = useCallback(async (data: { email: string; password: string; name: string }) => {
     const currentUser = await fetchCurrentUser()
     if (currentUser) {
       setUser(currentUser)
       localStorage.setItem('trademaster_user', JSON.stringify(currentUser))
       setAppView('dashboard')
-      
       toast({
         title: language === 'ar' ? 'مرحباً بك!' : 'Welcome!',
         description: language === 'ar' 
@@ -150,25 +163,22 @@ export default function Home() {
           : `Welcome ${currentUser.name}, your account has been created`,
       })
     }
-  }
-
-  const handleLogin = async (data: { email: string; password: string }) => {
-    // الدخول تم بالفعل في LoginPage عبر API
-    // الآن نحصل على المستخدم الحالي
+  }, [language])
+  
+  const handleLogin = useCallback(async (data: { email: string; password: string }) => {
     const currentUser = await fetchCurrentUser()
     if (currentUser) {
       setUser(currentUser)
       localStorage.setItem('trademaster_user', JSON.stringify(currentUser))
       setAppView('dashboard')
-      
       toast({
         title: language === 'ar' ? 'مرحباً بعودتك!' : 'Welcome back!',
         description: language === 'ar' ? 'تم تسجيل الدخول بنجاح' : 'You have been logged in successfully',
       })
     }
-  }
-
-  const handleLogout = async () => {
+  }, [language])
+  
+  const handleLogout = useCallback(async () => {
     setProfileMenuOpen(false)
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
@@ -182,9 +192,9 @@ export default function Home() {
       title: language === 'ar' ? 'تم تسجيل الخروج' : 'Logged out',
       description: language === 'ar' ? 'تم تسجيل خروجك بنجاح' : 'You have been logged out successfully',
     })
-  }
-
-  const handleSelectPlan = (plan: 'free' | 'pro') => {
+  }, [language])
+  
+  const handleSelectPlan = useCallback((plan: 'free' | 'pro') => {
     if (user) {
       const updatedUser = { ...user, plan }
       setUser(updatedUser)
@@ -196,9 +206,13 @@ export default function Home() {
           : `Upgraded to ${plan} plan`,
       })
     }
-  }
+  }, [user, language])
 
-  const renderContent = () => {
+  // ============================================
+  // CONTENT RENDERING - All conditional returns AFTER hooks
+  // ============================================
+  
+  const renderContent = useCallback(() => {
     switch (activeSection) {
       case 'dashboard':
         return <DashboardView />
@@ -242,12 +256,13 @@ export default function Home() {
         )
 
       // Redirect old sections to new unified trading view
+      case 'strategies':
       case 'log-trade':
         return <TradingView />
       default:
         return <DashboardView />
     }
-  }
+  }, [activeSection])
 
   const sidebarTitleMap: Record<string, string> = {
     dashboard: t('sidebar.dashboard'),
@@ -272,11 +287,14 @@ export default function Home() {
 
   }
 
-  // Loading state - show loading until client-side mounted
-  if (!mounted) {
+  // ============================================
+  // CONDITIONAL RETURNS - ONLY AFTER ALL HOOKS
+  // ============================================
+  
+  // Loading state
+  if (!mounted || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
-        {/* Navigation */}
         <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
@@ -303,10 +321,7 @@ export default function Home() {
   if (appView === 'landing') {
     return (
       <div dir={direction}>
-        <LandingPage 
-          onGetStarted={() => setAppView('signup')} 
-          onLogin={() => setAppView('login')} 
-        />
+        <LandingPage onGetStarted={() => setAppView('signup')} onLogin={() => setAppView('login')} />
         <Toaster />
       </div>
     )
@@ -316,11 +331,7 @@ export default function Home() {
   if (appView === 'signup') {
     return (
       <div dir={direction}>
-        <SignupPage 
-          onSignup={handleSignup}
-          onLogin={() => setAppView('login')}
-          onBack={() => setAppView('landing')}
-        />
+        <SignupPage onSignup={handleSignup} onLogin={() => setAppView('login')} onBack={() => setAppView('landing')} />
         <Toaster />
       </div>
     )
@@ -330,33 +341,24 @@ export default function Home() {
   if (appView === 'login') {
     return (
       <div dir={direction}>
-        <LoginPage 
-          onLogin={handleLogin}
-          onSignup={() => setAppView('signup')}
-          onBack={() => setAppView('landing')}
-        />
+        <LoginPage onLogin={handleLogin} onSignup={() => setAppView('signup')} onBack={() => setAppView('landing')} />
         <Toaster />
       </div>
     )
   }
 
-  // Dashboard view
+  // Dashboard view - now we have user
   const isRTL = direction === 'rtl'
 
   return (
     <div className="min-h-screen bg-background" dir={direction}>
       <TradingSidebar />
       
-      {/* Main Content - No margin on mobile, margin on desktop */}
       <div
         className="transition-all duration-300 min-h-screen"
         style={{
-          marginLeft: !isRTL && typeof window !== 'undefined' && window.innerWidth >= 1024 
-            ? (sidebarCollapsed ? '4rem' : '16rem') 
-            : 0,
-          marginRight: isRTL && typeof window !== 'undefined' && window.innerWidth >= 1024 
-            ? (sidebarCollapsed ? '4rem' : '16rem') 
-            : 0,
+          marginLeft: !isRTL ? (sidebarCollapsed ? '4rem' : '16rem') : 0,
+          marginRight: isRTL ? (sidebarCollapsed ? '4rem' : '16rem') : 0,
         }}
       >
         {/* Header */}
@@ -375,10 +377,7 @@ export default function Home() {
                   )}
                 >
                   {user.plan === 'pro' ? (
-                    <>
-                      <Crown className="h-3 w-3 mr-1" />
-                      Pro
-                    </>
+                    <><Crown className="h-3 w-3 mr-1" />Pro</>
                   ) : 'Free'}
                 </Badge>
               )}
@@ -389,7 +388,6 @@ export default function Home() {
               <LanguageToggle />
               <ThemeToggle />
               
-              {/* User Profile Dropdown */}
               {user && (
                 <div className="relative" ref={profileMenuRef}>
                   <button
@@ -416,14 +414,12 @@ export default function Home() {
                     )} />
                   </button>
 
-                  {/* Dropdown Menu */}
                   {profileMenuOpen && (
                     <div className={cn(
                       "absolute top-full mt-2 w-72 rounded-xl border border-border bg-card shadow-xl z-50",
                       "animate-in fade-in-0 zoom-in-95 duration-200",
                       isRTL ? "right-0" : "left-0"
                     )}>
-                      {/* User Info Header */}
                       <div className="p-4 border-b border-border bg-gradient-to-r from-green-500/5 to-emerald-500/5 rounded-t-xl">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-12 w-12">
@@ -437,119 +433,36 @@ export default function Home() {
                               <Mail className="h-3 w-3" />
                               {user.email}
                             </div>
-                            <Badge 
-                              variant={user.plan === 'pro' ? 'default' : 'secondary'}
-                              className={cn(
-                                'mt-1 text-xs',
-                                user.plan === 'pro' && 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0'
-                              )}
-                            >
-                              {user.plan === 'pro' ? (
-                                <>
-                                  <Crown className="h-3 w-3 mr-1" />
-                                  Pro
-                                </>
-                              ) : 'Free'}
+                            <Badge variant={user.plan === 'pro' ? 'default' : 'secondary'} className="mt-1 text-xs">
+                              {user.plan === 'pro' ? <><Crown className="h-3 w-3 mr-1" />Pro</> : 'Free'}
                             </Badge>
                           </div>
                         </div>
                       </div>
 
-                      {/* Menu Items */}
                       <div className="p-2">
-                        {/* Profile */}
-                        <button
-                          onClick={() => {
-                            setProfileMenuOpen(false)
-                            toast({
-                              title: language === 'ar' ? 'قريباً' : 'Coming Soon',
-                              description: language === 'ar' ? 'صفحة البيانات الشخصية قيد التطوير' : 'Profile page is under development',
-                            })
-                          }}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
-                        >
-                          <div className="p-2 rounded-lg bg-blue-500/10">
-                            <User className="h-4 w-4 text-blue-500" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium">{language === 'ar' ? 'البيانات الشخصية' : 'Profile'}</div>
-                            <div className="text-xs text-muted-foreground">{language === 'ar' ? 'إدارة معلومات حسابك' : 'Manage your account info'}</div>
-                          </div>
+                        <button onClick={() => { setProfileMenuOpen(false); toast({ title: language === 'ar' ? 'قريباً' : 'Coming Soon' }) }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left">
+                          <div className="p-2 rounded-lg bg-blue-500/10"><User className="h-4 w-4 text-blue-500" /></div>
+                          <div><div className="text-sm font-medium">{language === 'ar' ? 'البيانات الشخصية' : 'Profile'}</div><div className="text-xs text-muted-foreground">{language === 'ar' ? 'إدارة معلومات حسابك' : 'Manage your account'}</div></div>
                         </button>
-
-                        {/* Settings */}
-                        <button
-                          onClick={() => {
-                            setProfileMenuOpen(false)
-                            toast({
-                              title: language === 'ar' ? 'قريباً' : 'Coming Soon',
-                              description: language === 'ar' ? 'صفحة الإعدادات قيد التطوير' : 'Settings page is under development',
-                            })
-                          }}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
-                        >
-                          <div className="p-2 rounded-lg bg-purple-500/10">
-                            <Settings className="h-4 w-4 text-purple-500" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium">{language === 'ar' ? 'الإعدادات' : 'Settings'}</div>
-                            <div className="text-xs text-muted-foreground">{language === 'ar' ? 'تخصيص التطبيق' : 'Customize the app'}</div>
-                          </div>
+                        <button onClick={() => { setProfileMenuOpen(false); toast({ title: language === 'ar' ? 'قريباً' : 'Coming Soon' }) }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left">
+                          <div className="p-2 rounded-lg bg-purple-500/10"><Settings className="h-4 w-4 text-purple-500" /></div>
+                          <div><div className="text-sm font-medium">{language === 'ar' ? 'الإعدادات' : 'Settings'}</div><div className="text-xs text-muted-foreground">{language === 'ar' ? 'تخصيص التطبيق' : 'Customize app'}</div></div>
                         </button>
-
-                        {/* Upgrade - Only for free users */}
                         {user.plan === 'free' && (
-                          <button
-                            onClick={() => {
-                              setProfileMenuOpen(false)
-                              setActiveSection('pricing')
-                            }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-500/10 transition-colors text-left"
-                          >
-                            <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20">
-                              <Sparkles className="h-4 w-4 text-amber-500" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                                {language === 'ar' ? 'ترقية إلى Pro' : 'Upgrade to Pro'}
-                              </div>
-                              <div className="text-xs text-muted-foreground">{language === 'ar' ? 'احصل على مميزات إضافية' : 'Get premium features'}</div>
-                            </div>
+                          <button onClick={() => { setProfileMenuOpen(false); setActiveSection('pricing') }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-500/10 transition-colors text-left">
+                            <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20"><Sparkles className="h-4 w-4 text-amber-500" /></div>
+                            <div><div className="text-sm font-medium text-amber-600 dark:text-amber-400">{language === 'ar' ? 'ترقية إلى Pro' : 'Upgrade to Pro'}</div><div className="text-xs text-muted-foreground">{language === 'ar' ? 'احصل على مميزات إضافية' : 'Get premium features'}</div></div>
                           </button>
                         )}
-
-                        {/* Login History */}
-                        <button
-                          onClick={() => {
-                            setProfileMenuOpen(false)
-                            setActiveSection('login-history')
-                          }}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
-                        >
-                          <div className="p-2 rounded-lg bg-green-500/10">
-                            <Shield className="h-4 w-4 text-green-500" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium">{language === 'ar' ? 'سجل الدخول' : 'Login History'}</div>
-                            <div className="text-xs text-muted-foreground">{language === 'ar' ? 'عرض نشاط الدخول' : 'View login activity'}</div>
-                          </div>
+                        <button onClick={() => { setProfileMenuOpen(false); setActiveSection('login-history') }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left">
+                          <div className="p-2 rounded-lg bg-green-500/10"><Shield className="h-4 w-4 text-green-500" /></div>
+                          <div><div className="text-sm font-medium">{language === 'ar' ? 'سجل الدخول' : 'Login History'}</div><div className="text-xs text-muted-foreground">{language === 'ar' ? 'عرض نشاط الدخول' : 'View login activity'}</div></div>
                         </button>
-
-                        {/* Divider */}
                         <div className="my-2 border-t border-border" />
-
-                        {/* Logout */}
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-500/10 transition-colors text-left group"
-                        >
-                          <div className="p-2 rounded-lg bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
-                            <LogOut className="h-4 w-4 text-red-500" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-red-500">{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</div>
-                            <div className="text-xs text-muted-foreground">{language === 'ar' ? 'الخروج من حسابك' : 'Sign out of your account'}</div>
-                          </div>
+                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-500/10 transition-colors text-left group">
+                          <div className="p-2 rounded-lg bg-red-500/10 group-hover:bg-red-500/20 transition-colors"><LogOut className="h-4 w-4 text-red-500" /></div>
+                          <div><div className="text-sm font-medium text-red-500">{language === 'ar' ? 'تسجيل الخروج' : 'Logout'}</div><div className="text-xs text-muted-foreground">{language === 'ar' ? 'الخروج من حسابك' : 'Sign out'}</div></div>
                         </button>
                       </div>
                     </div>
@@ -560,7 +473,7 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Page Content - Responsive padding */}
+        {/* Page Content */}
         <div className="p-4 sm:p-6">
           {renderContent()}
         </div>

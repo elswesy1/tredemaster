@@ -408,6 +408,11 @@ function ThemeToggle({ language }: { language: string }) {
 export function DashboardView() {
   const { t, language } = useI18n()
   const { hideBalance, toggleHideBalance } = useTradingStore()
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // State for real data
   const [data, setData] = useState<DashboardData | null>(null)
