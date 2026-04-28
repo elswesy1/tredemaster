@@ -1,9 +1,17 @@
 'use client'
 
-// TradeMaster v7.1 - Consolidated render to fix hook/hydration issues
+/**
+ * TradeMaster v7.2 - Stable Core
+ * Resolves Minified React error #310 and hydration conflicts.
+ * Follows strict hooks rules: all hooks at top, zero early returns before hooks.
+ */
+
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTradingStore } from '@/lib/store'
 import { useI18n } from '@/lib/i18n'
+import { setStorageVersion } from '@/lib/clear-stale-storage'
+
+// Components
 import { TradingSidebar } from '@/components/trading/sidebar'
 import { DashboardView } from '@/components/trading/dashboard-view'
 import { PortfolioView } from '@/components/trading/portfolio-view'
@@ -27,16 +35,14 @@ import { AuditsView } from '@/components/trading/audits-view'
 import { LoginHistoryView } from '@/components/trading/login-history-view'
 import { TwoFactorSetup } from '@/components/auth/2fa-setup'
 
+// UI Components
 import { ThemeToggle } from '@/components/trading/theme-toggle'
 import { LanguageToggle } from '@/components/trading/language-toggle'
-import { Toaster } from '@/components/ui/toaster'
-import { toast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { toast } from '@/hooks/use-toast'
 import { 
   Crown, 
-  Sparkles, 
   User, 
   Settings, 
   LogOut, 
@@ -70,57 +76,60 @@ async function fetchCurrentUser(): Promise<User | null> {
 }
 
 export default function Home() {
-  // 1. All hooks at the top, unconditionally
+  // 1. ALL HOOKS MUST BE AT THE TOP
   const { activeSection, setActiveSection, sidebarCollapsed } = useTradingStore()
   const { direction, language, t } = useI18n()
   
-  const [mounted, setMounted] = useState(false)
   const [appView, setAppView] = useState<'landing' | 'signup' | 'login' | 'dashboard'>('landing')
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   
   const profileMenuRef = useRef<HTMLDivElement>(null)
-  const mountedRef = useRef(false)
+  const initializedRef = useRef(false)
 
-  // 2. Effects
-  useEffect(() => {
-    if (mountedRef.current) return
-    mountedRef.current = true
-    setMounted(true)
-    
-    const initializeState = async () => {
-      try {
-        const currentUser = await fetchCurrentUser()
-        if (currentUser) {
-          setUser(currentUser)
-          setAppView('dashboard')
-        } else {
-          const savedUser = localStorage.getItem('trademaster_user')
-          if (savedUser) {
-            try {
-              const parsed = JSON.parse(savedUser)
-              setUser(parsed)
-              setAppView('dashboard')
-            } catch {
-              localStorage.removeItem('trademaster_user')
-            }
+  // 2. Auth Initialization Logic
+  const initializeAuth = useCallback(async () => {
+    try {
+      const currentUser = await fetchCurrentUser()
+      if (currentUser) {
+        setUser(currentUser)
+        setAppView('dashboard')
+        // Fix storage version to prevent migration loops
+        setStorageVersion(currentUser.id)
+      } else {
+        const saved = localStorage.getItem('trademaster_user')
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved)
+            setUser(parsed)
+            setAppView('dashboard')
+          } catch {
+            localStorage.removeItem('trademaster_user')
           }
         }
-      } finally {
-        setIsLoading(false)
       }
+    } catch (err) {
+      console.error('Failed to initialize auth:', err)
+    } finally {
+      setIsLoading(false)
     }
-    
-    initializeState()
   }, [])
+
+  // 3. Effects
+  useEffect(() => {
+    if (initializedRef.current) return
+    initializedRef.current = true
+    initializeAuth()
+  }, [initializeAuth])
   
   useEffect(() => {
-    if (mounted) {
+    // Only update DOM on client side
+    if (typeof document !== 'undefined') {
       document.documentElement.dir = direction
       document.documentElement.lang = language
     }
-  }, [direction, language, mounted])
+  }, [direction, language])
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -132,35 +141,7 @@ export default function Home() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // 3. Callbacks
-  const handleSignup = useCallback(async () => {
-    const currentUser = await fetchCurrentUser()
-    if (currentUser) {
-      setUser(currentUser)
-      localStorage.setItem('trademaster_user', JSON.stringify(currentUser))
-      setAppView('dashboard')
-      toast({
-        title: language === 'ar' ? 'مرحباً بك!' : 'Welcome!',
-        description: language === 'ar' 
-          ? `مرحباً ${currentUser.name}، تم إنشاء حسابك بنجاح` 
-          : `Welcome ${currentUser.name}, your account has been created`,
-      })
-    }
-  }, [language])
-  
-  const handleLogin = useCallback(async () => {
-    const currentUser = await fetchCurrentUser()
-    if (currentUser) {
-      setUser(currentUser)
-      localStorage.setItem('trademaster_user', JSON.stringify(currentUser))
-      setAppView('dashboard')
-      toast({
-        title: language === 'ar' ? 'مرحباً بعودتك!' : 'Welcome back!',
-        description: language === 'ar' ? 'تم تسجيل الدخول بنجاح' : 'You have been logged in successfully',
-      })
-    }
-  }, [language])
-  
+  // 4. Action Handlers
   const handleLogout = useCallback(async () => {
     setProfileMenuOpen(false)
     try {
@@ -171,11 +152,11 @@ export default function Home() {
     setAppView('landing')
     toast({
       title: language === 'ar' ? 'تم تسجيل الخروج' : 'Logged out',
-      description: language === 'ar' ? 'تم تسجيل خروجك بنجاح' : 'You have been logged out successfully',
     })
   }, [language])
 
-  const renderActiveSection = useCallback(() => {
+  // 5. Render Logic Helper
+  const renderActiveSectionContent = () => {
     switch (activeSection) {
       case 'dashboard': return <DashboardView />
       case 'accounts': return <TradingAccountsView />
@@ -204,7 +185,7 @@ export default function Home() {
         return <TradingView />
       default: return <DashboardView />
     }
-  }, [activeSection])
+  }
 
   const sidebarTitleMap: Record<string, string> = {
     dashboard: t('sidebar.dashboard'),
@@ -228,21 +209,14 @@ export default function Home() {
     security: t('sidebar.security'),
   }
 
-  // 4. Final Render - Unified to prevent hook mismatches
-  if (!mounted || isLoading) {
+  // 6. Final Render Structure - ZERO Redundant Conditionals
+  // Note: Hydration check is handled by layout.tsx wrapper
+  
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md px-4 py-4">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center font-bold text-white">T</div>
-            <span className="text-xl font-bold">TradeMaster</span>
-          </div>
-        </nav>
-        <div className="flex-1 flex flex-col items-center justify-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 animate-pulse" />
-          <div className="text-muted-foreground">جاري التحميل...</div>
-        </div>
-        <Toaster />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 animate-pulse" />
+        <div className="text-muted-foreground">{language === 'ar' ? 'جاري التحميل...' : 'Loading...'}</div>
       </div>
     )
   }
@@ -251,7 +225,6 @@ export default function Home() {
     return (
       <div dir={direction}>
         <LandingPage onGetStarted={() => setAppView('signup')} onLogin={() => setAppView('login')} />
-        <Toaster />
       </div>
     )
   }
@@ -259,8 +232,7 @@ export default function Home() {
   if (appView === 'signup') {
     return (
       <div dir={direction}>
-        <SignupPage onSignup={handleSignup} onLogin={() => setAppView('login')} onBack={() => setAppView('landing')} />
-        <Toaster />
+        <SignupPage onSignup={initializeAuth} onLogin={() => setAppView('login')} onBack={() => setAppView('landing')} />
       </div>
     )
   }
@@ -268,8 +240,7 @@ export default function Home() {
   if (appView === 'login') {
     return (
       <div dir={direction}>
-        <LoginPage onLogin={handleLogin} onSignup={() => setAppView('signup')} onBack={() => setAppView('landing')} />
-        <Toaster />
+        <LoginPage onLogin={initializeAuth} onSignup={() => setAppView('signup')} onBack={() => setAppView('landing')} />
       </div>
     )
   }
@@ -352,10 +323,9 @@ export default function Home() {
         </header>
 
         <main className="p-4 sm:p-6">
-          {renderActiveSection()}
+          {renderActiveSectionContent()}
         </main>
       </div>
-      <Toaster />
     </div>
   )
 }
