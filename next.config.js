@@ -23,7 +23,14 @@ const nextConfig = {
   },
 
   images: {
-    remotePatterns: [{ protocol: 'https', hostname: '**' }],
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.neon.tech' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: '*.googleusercontent.com' },
+      { protocol: 'https', hostname: '*.vercel.app' },
+      { protocol: 'https', hostname: '*.vercel-dns.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+    ],
     formats: ['image/avif', 'image/webp'],
   },
 
