@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
         }
       }
     })
-    revalidateTag('risk-profiles', 'max')
+    // revalidateTag removed
     return NextResponse.json(profile, { status: 201 })
   } catch (error) {
     console.error('Error creating risk profile:', error)

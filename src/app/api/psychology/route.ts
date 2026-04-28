@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
       details: { logId: log.id, emotion: log.emotion }
     })
 
-    revalidateTag('psychology', 'max')
+    // revalidateTag removed
     return NextResponse.json(log, { status: 201 })
   } catch (error) {
     console.error('[PSYCHOLOGY_POST]', error)

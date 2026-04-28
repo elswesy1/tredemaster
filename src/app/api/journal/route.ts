@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       details: { entryId: entry.id, type: entry.type }
     })
 
-    revalidateTag('journal', 'max')
+    // revalidateTag removed
     return NextResponse.json(entry, { status: 201 })
   } catch (error) {
     console.error('[JOURNAL_POST]', error)

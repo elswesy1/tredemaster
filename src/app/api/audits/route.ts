@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       details: { auditId: audit.id, title: audit.title }
     })
 
-    revalidateTag('audits', 'max')
+    // revalidateTag removed
     return NextResponse.json(audit, { status: 201 })
   } catch (error) {
     console.error('[AUDITS_POST]', error)

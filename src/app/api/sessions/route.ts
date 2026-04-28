@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       details: { sessionId: session.id, sessionName: session.session }
     })
     
-    revalidateTag('sessions', 'max')
+    // revalidateTag removed
     return NextResponse.json({ session }, { status: 201 })
   } catch (error) {
     console.error('[SESSIONS_POST]', error)

@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       details: { portfolioId: portfolio.id, name: portfolio.name }
     })
 
-    revalidateTag('portfolios', 'max')
+    // revalidateTag removed
     return NextResponse.json(portfolio, { status: 201 })
   } catch (error) {
     console.error('[PORTFOLIO_POST]', error)

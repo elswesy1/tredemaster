@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       details: { accountId: account.id, name: account.name }
     })
 
-    revalidateTag('trading-accounts', 'max')
+    // revalidateTag removed
     return NextResponse.json(account, { status: 201 })
   } catch (error) {
     console.error('[TRADING_ACCOUNT_POST]', error)

@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       details: { ruleId: rule.id, name: rule.name }
     })
 
-    revalidateTag('rules', 'max')
+    // revalidateTag removed
     return NextResponse.json(rule, { status: 201 })
   } catch (error) {
     console.error('[RULES_POST]', error)
