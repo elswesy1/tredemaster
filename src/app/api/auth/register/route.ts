@@ -10,6 +10,7 @@ import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { SignJWT } from 'jose'
 import { rateLimit, getRateLimitKey, getClientIp } from '@/lib/rate-limiter'
+import { getRequiredEnv } from '@/lib/env-fallback'
 
 // التحقق من صحة البريد الإلكتروني
 function isValidEmail(email: string): boolean {
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('24h')
-      .sign(new TextEncoder().encode(process.env.NEXTAUTH_SECRET))
+      .sign(new TextEncoder().encode(getRequiredEnv('NEXTAUTH_SECRET')))
 
     // إنشاء المستخدم
     const user = await prisma.user.create({

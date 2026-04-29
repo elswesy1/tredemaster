@@ -3,8 +3,9 @@ import { cookies } from 'next/headers'
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 import { TOTP } from 'otplib'
+import { getRequiredEnv } from './env-fallback'
 
-const secretKey = process.env.NEXTAUTH_SECRET || 'trademaster-super-secret-key-2024'
+const secretKey = getRequiredEnv('NEXTAUTH_SECRET')
 const key = new TextEncoder().encode(secretKey)
 
 // إنشاء JWT Token
