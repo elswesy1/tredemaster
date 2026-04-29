@@ -32,6 +32,8 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
     password: ''
   })
   
+  const [mounted, setMounted] = useState(false)
+  
   useEffect(() => {
     setMounted(true)
   }, [])
