@@ -409,7 +409,14 @@ export function PortfolioView() {
       
       if (response.ok) {
         const data = await response.json()
-        setAccounts(data)
+        if (data.success && Array.isArray(data.data)) {
+          setAccounts(data.data)
+        } else if (Array.isArray(data)) {
+          setAccounts(data)
+        } else {
+          console.error('Invalid accounts data format:', data)
+          setAccounts([])
+        }
       } else {
         console.error('Failed to fetch accounts')
       }
@@ -436,11 +443,12 @@ export function PortfolioView() {
     )
   }
 
-  // Separate accounts by type
-  const brokerAccounts = accounts.filter(a => a.accountType === 'broker')
-  const propfirmAccounts = accounts.filter(a => a.accountType === 'propfirm')
-  const indicesAccounts = accounts.filter(a => a.accountType === 'indices')
-  const stocksAccounts = accounts.filter(a => a.accountType === 'stocks')
+  // Separate accounts by type with safety check
+  const safeAccounts = Array.isArray(accounts) ? accounts : []
+  const brokerAccounts = safeAccounts.filter(a => a.accountType === 'broker')
+  const propfirmAccounts = safeAccounts.filter(a => a.accountType === 'propfirm')
+  const indicesAccounts = safeAccounts.filter(a => a.accountType === 'indices')
+  const stocksAccounts = safeAccounts.filter(a => a.accountType === 'stocks')
 
   // Calculate totals
   const totals = {
@@ -448,13 +456,13 @@ export function PortfolioView() {
       accounts: brokerAccounts.length,
       balance: brokerAccounts.reduce((sum, a) => sum + a.balance, 0),
       equity: brokerAccounts.reduce((sum, a) => sum + a.equity, 0),
-      connected: brokerAccounts.filter(a => a.connectionStatus === 'connected').length
+      connected: (brokerAccounts || []).filter(a => a.connectionStatus === 'connected').length
     },
     propfirm: {
       accounts: propfirmAccounts.length,
       balance: propfirmAccounts.reduce((sum, a) => sum + a.balance, 0),
-      funded: propfirmAccounts.filter(a => a.propFirmPhase === 'Funded').length,
-      active: propfirmAccounts.filter(a => a.isActive).length
+      funded: (propfirmAccounts || []).filter(a => a.propFirmPhase === 'Funded').length,
+      active: (propfirmAccounts || []).filter(a => a.isActive).length
     },
     indices: {
       accounts: indicesAccounts.length,
@@ -471,7 +479,7 @@ export function PortfolioView() {
   const totalAccounts = totals.broker.accounts + totals.propfirm.accounts + totals.indices.accounts + totals.stocks.accounts
 
   // Asset Allocation Data for Tree Map
-  const assetAllocationData = accounts.map(a => ({
+  const assetAllocationData = safeAccounts.map(a => ({
     name: a.name,
     value: a.balance,
     type: a.accountType,
