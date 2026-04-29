@@ -399,18 +399,6 @@ export function PortfolioView() {
   const [accounts, setAccounts] = useState<TradingAccount[]>([])
   const [loading, setLoading] = useState(true)
   
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-  
-  if (!mounted) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-  
   // Fetch accounts from API
   const fetchAccounts = useCallback(async () => {
     try {
@@ -435,6 +423,18 @@ export function PortfolioView() {
   useEffect(() => {
     fetchAccounts()
   }, [fetchAccounts])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   // Separate accounts by type
   const brokerAccounts = accounts.filter(a => a.accountType === 'broker')

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     // 1️⃣ جلب المحافظ مع الحسابات والصفقات
     const portfolios = await db.portfolio.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       include: {
         tradingAccounts: {
           where: { deletedAt: null },
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
 
     // 4️⃣ جلب ملفات المخاطر مع الحسابات المرتبطة
     const riskProfiles = await db.riskProfile.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       include: {
         account: {
           select: {
@@ -138,6 +138,7 @@ export async function GET(request: NextRequest) {
       where: {
         userId,
         date: { gte: todayStart },
+        deletedAt: null,
       },
       include: {
         account: {
@@ -151,6 +152,7 @@ export async function GET(request: NextRequest) {
       where: {
         userId,
         date: { gte: todayStart },
+        deletedAt: null,
       },
       include: {
         account: {
@@ -357,6 +359,7 @@ async function calculateDisciplineStreak(userId: string): Promise<number> {
     where: {
       userId,
       planAdherence: { gte: 7 }, // اتباع الخطة بنسبة 70% أو أكثر
+      deletedAt: null,
     },
     orderBy: { date: 'desc' },
     take: 30, // آخر 30 يوم

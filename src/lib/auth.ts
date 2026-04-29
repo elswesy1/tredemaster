@@ -3,11 +3,11 @@ import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
-import { getRequiredEnv } from "@/lib/env-fallback"
+import { NEXTAUTH_SECRET } from "@/lib/secrets"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  secret: getRequiredEnv('NEXTAUTH_SECRET'),
+  secret: NEXTAUTH_SECRET,
   session: { strategy: "jwt" },
   providers: [
     Credentials({

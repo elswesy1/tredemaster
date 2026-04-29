@@ -197,18 +197,6 @@ export function AccountsView() {
     currency: 'USD',
   })
   
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-  
-  if (!mounted) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-  
   // Fetch accounts with AbortController and proper dependencies
   const fetchAccounts = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -262,6 +250,18 @@ export function AccountsView() {
       controller.abort()
     }
   }, [fetchAccounts])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   const handleCreateAccount = async () => {
     if (!formData.name.trim() || isSubmitting) return

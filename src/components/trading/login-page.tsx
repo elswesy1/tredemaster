@@ -17,21 +17,6 @@ interface LoginPageProps {
 
 export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
   const { t, language } = useI18n()
-  const [mounted, setMounted] = useState(false)
-  
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-  
-  // Prevent hydration mismatch
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 flex items-center justify-center p-4">
-        <div className="w-8 h-8 rounded-full border-4 border-green-500 border-t-transparent animate-spin" />
-      </div>
-    )
-  }
-  
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -46,6 +31,19 @@ export function LoginPage({ onLogin, onSignup, onBack }: LoginPageProps) {
     email: '',
     password: ''
   })
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 flex items-center justify-center p-4">
+        <div className="w-8 h-8 rounded-full border-4 border-green-500 border-t-transparent animate-spin" />
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
